@@ -57,7 +57,7 @@ def test_detection_limit_sensitivity_spans_the_published_range():
 
 
 def test_concurrent_negatives_counts_only_shared_timestamps():
-    """One timestamp is negative in both analysers; two are negative in one only."""
+    """One timestamp is negative in both analyzers; two are negative in one only."""
     frame = raw_frame(
         **{
             TGA: [-5.0, -5.0, 5.0, 5.0],

@@ -43,7 +43,7 @@ def test_compare_finds_nothing_when_periods_match():
 
 
 def test_deseasonalised_comparison_survives_uneven_month_composition():
-    """Comparing whole years against summer months alone is a seasonal artefact."""
+    """Comparing whole years against summer months alone is a seasonal artifact."""
     frame = seasonal_frame(4)
     summer = pd.PeriodIndex([p for p in frame.index if p.month in (6, 7, 8)], freq="M")
     winter = pd.PeriodIndex([p for p in frame.index if p.month in (12, 1, 2)], freq="M")

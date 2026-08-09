@@ -1,6 +1,6 @@
 """Least-absolute-deviation fitting and prediction intervals without a normal assumption.
 
-Minimising absolute deviations is maximum likelihood under Laplace errors, which
+Minimizing absolute deviations is maximum likelihood under Laplace errors, which
 Deventer et al. (2019) established for fluxes at this site and which the
 ingestion layer reproduced. The fit is expressed as a linear program and solved
 exactly, so nothing here is stochastic.
@@ -39,7 +39,7 @@ class Fit:
 
 
 def fit_lad(design: pd.DataFrame, target: pd.Series, weights: pd.Series | None = None) -> Fit:
-    """Fit by minimising the sum of absolute deviations, optionally weighted.
+    """Fit by minimizing the sum of absolute deviations, optionally weighted.
 
     Solved as a linear program in the coefficients and the positive and negative
     parts of each residual, which gives the exact optimum rather than an

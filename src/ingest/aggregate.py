@@ -49,7 +49,7 @@ def monthly_stats_all_columns(
 ) -> pd.DataFrame:
     """Aggregate several value columns independently and join them on month.
 
-    Each column is summarised on its own; no coalescing between columns occurs.
+    Each column is summarized on its own; no coalescing between columns occurs.
     """
     parts = [
         monthly_stats(frame, column, timestamp_column=timestamp_column)
@@ -59,7 +59,7 @@ def monthly_stats_all_columns(
 
 
 def observation_count_distribution(stats: pd.DataFrame, count_column: str) -> pd.Series:
-    """Summarise the distribution of observation counts across months."""
+    """Summarize the distribution of observation counts across months."""
     counts = stats[count_column].dropna()
     described = counts.describe()
     for threshold in (10, 30, 100):

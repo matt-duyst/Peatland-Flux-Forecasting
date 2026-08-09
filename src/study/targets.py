@@ -1,7 +1,7 @@
 """Published budgets this reconstruction will be checked against, and unit conversion.
 
 Olson et al. (2013) report annual budgets for this site as carbon mass, in grams
-of carbon per square metre per year. The ingestion layer reports methane mass,
+of carbon per square meter per year. The ingestion layer reports methane mass,
 in grams of methane over the same area and period. The two differ by the ratio
 of molar masses and are not comparable until converted.
 """

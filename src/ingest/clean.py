@@ -99,9 +99,9 @@ def label_derived_subset(long: pd.DataFrame, decimals: int = 3) -> pd.DataFrame:
     return long
 
 
-def derived_provenance(labelled: pd.DataFrame) -> pd.DataFrame:
+def derived_provenance(labeled: pd.DataFrame) -> pd.DataFrame:
     """Source column of each retained value in the derived file, by year."""
-    kept = labelled[labelled["in_derived"]]
+    kept = labeled[labeled["in_derived"]]
     counts = (
         kept.assign(year=kept["timestamp_start"].dt.year)
         .groupby(["year", "column"])
@@ -112,27 +112,27 @@ def derived_provenance(labelled: pd.DataFrame) -> pd.DataFrame:
     return counts.pivot(index="year", columns="column", values="n").fillna(0).astype(int)
 
 
-def derived_rule_tests(labelled: pd.DataFrame) -> dict[str, object]:
+def derived_rule_tests(labeled: pd.DataFrame) -> dict[str, object]:
     """Test whether a threshold or dispersion screen explains the derived subset.
 
     Reports the share of discarded values falling inside the retained range,
     which no threshold rule can produce, together with the accuracy of
     per-month k-sigma screens against the observed retain and discard labels.
     """
-    kept = labelled[labelled["in_derived"]]
-    dropped = labelled[~labelled["in_derived"]]
+    kept = labeled[labeled["in_derived"]]
+    dropped = labeled[~labeled["in_derived"]]
     low, high = kept["value"].min(), kept["value"].max()
     inside = dropped["value"].between(low, high)
 
     sigma_accuracy = {}
-    by_month = labelled.groupby(labelled["timestamp_start"].dt.to_period("M"))
+    by_month = labeled.groupby(labeled["timestamp_start"].dt.to_period("M"))
     for k in (1.0, 1.5, 2.0, 2.5, 3.0):
         correct = 0
         for _, group in by_month:
             mean, sd = group["value"].mean(), group["value"].std()
             predicted = group["value"].between(mean - k * sd, mean + k * sd)
             correct += int((predicted == group["in_derived"]).sum())
-        sigma_accuracy[k] = round(100 * correct / len(labelled), 1)
+        sigma_accuracy[k] = round(100 * correct / len(labeled), 1)
 
     return {
         "kept_range": (low, high),
@@ -141,5 +141,5 @@ def derived_rule_tests(labelled: pd.DataFrame) -> dict[str, object]:
         "n_dropped_inside_kept_range": int(inside.sum()),
         "pct_dropped_inside_kept_range": round(100 * inside.mean(), 1),
         "sigma_screen_accuracy_pct": sigma_accuracy,
-        "base_rate_pct": round(100 * labelled["in_derived"].mean(), 1),
+        "base_rate_pct": round(100 * labeled["in_derived"].mean(), 1),
     }

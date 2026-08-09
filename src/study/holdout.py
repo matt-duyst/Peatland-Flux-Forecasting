@@ -122,7 +122,7 @@ def build_splits(
     ]
 
 
-def summarise(records: list[dict[str, object]], columns: list[str] | None = None) -> pd.DataFrame:
+def summarize(records: list[dict[str, object]], columns: list[str] | None = None) -> pd.DataFrame:
     """Table of experiment results with the model objects dropped."""
     frame = pd.DataFrame([{k: v for k, v in r.items() if k != "fit"} for r in records])
     return frame if columns is None else frame[columns]

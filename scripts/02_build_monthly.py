@@ -1,7 +1,7 @@
 """Build the monthly dataset of methane aggregates and covariates.
 
 Verifies each reconstructed covariate against its known values, reports coverage
-against the target monthly span, summarises observation counts per month, and
+against the target monthly span, summarizes observation counts per month, and
 lists months holding no methane observations.
 
 Run: .venv/bin/python scripts/02_build_monthly.py

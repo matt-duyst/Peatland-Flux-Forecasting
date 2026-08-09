@@ -45,7 +45,7 @@ def raw_frame(**columns: list) -> pd.DataFrame:
 def merged_frame(values: list, analyzers: list, start: str = "2015-06-01 00:00") -> pd.DataFrame:
     """Build a merged-shaped frame directly, bypassing the precedence merge.
 
-    Used where the aggregation or quality-control behaviour is under test rather
+    Used where the aggregation or quality-control behavior is under test rather
     than the merge itself.
     """
     if len(values) != len(analyzers):

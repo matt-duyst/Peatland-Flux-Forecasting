@@ -117,5 +117,5 @@ def test_month_grid_leaves_no_month_out():
 
 def test_analyzer_slug_rejects_unknown_labels():
     assert site.analyzer_slug("TGA-100A") == "tga100a"
-    with pytest.raises(ValueError, match="unknown analyser label"):
+    with pytest.raises(ValueError, match="unknown analyzer label"):
         site.analyzer_slug("NEW-SENSOR")

@@ -18,7 +18,7 @@ def distribution_comparison(
     reconstruction: pd.PeriodIndex,
     columns: tuple[str, ...],
 ) -> pd.DataFrame:
-    """Range and centre of each covariate over both windows, with the share outside."""
+    """Range and center of each covariate over both windows, with the share outside."""
     records = []
     for column in columns:
         f = covariates.loc[fit, column].dropna()
@@ -93,7 +93,7 @@ def joint_support(
 ) -> pd.DataFrame:
     """Distance from each reconstruction month to its nearest fit month.
 
-    Distances are Euclidean in covariate space standardised by the fit-window
+    Distances are Euclidean in covariate space standardized by the fit-window
     mean and standard deviation. Falling inside every covariate's range
     separately does not put a month inside the region the fit window actually
     occupies, so this reports the joint picture the per-covariate ranges miss.
@@ -107,10 +107,10 @@ def joint_support(
     if not usable:
         raise ValueError("no covariate varies over the fit window")
     f, r = f[usable], r[usable]
-    centre, scale = f.mean(), f.std(ddof=1)
+    center, scale = f.mean(), f.std(ddof=1)
 
-    fz = ((f - centre) / scale).to_numpy()
-    rz = ((r - centre) / scale).to_numpy()
+    fz = ((f - center) / scale).to_numpy()
+    rz = ((r - center) / scale).to_numpy()
 
     def nearest(points: np.ndarray, reference: np.ndarray, exclude_self: bool) -> np.ndarray:
         d = np.sqrt(((points[:, None, :] - reference[None, :, :]) ** 2).sum(axis=2))

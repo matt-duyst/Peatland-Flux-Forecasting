@@ -74,7 +74,7 @@ def main() -> None:
         print(textwrap.fill(", ".join(f"{r.month}/{r.covariate}" for r in outside.itertuples()),
                             width=76, initial_indent="  ", subsequent_indent="  "))
 
-    print("\nJoint support, standardised covariate space:")
+    print("\nJoint support, standardized covariate space:")
     print(support.joint_support(cov, built["fit"], built["reconstruction"], columns).round(3).to_string(index=False))
 
     heading("STATIONARITY OF THE COVARIATES")

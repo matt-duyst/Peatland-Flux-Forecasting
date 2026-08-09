@@ -12,14 +12,14 @@ Measurements come from AmeriFlux site **US-MBP**, Marcell Bog Lake Peatland, at
 47.505 N, −93.489 W, in the USDA Forest Service Marcell Experimental Forest,
 Minnesota. The data product is AmeriFlux BASE, DOI
 [10.17190/AMF/1767835](https://doi.org/10.17190/AMF/1767835), cited as Roman,
-Kolka, Griffis and Deventer (2022). BASE is AmeriFlux's standardised half-hourly
+Kolka, Griffis and Deventer (2022). BASE is AmeriFlux's standardized half-hourly
 product; its variable names carry a horizontal, vertical and replicate qualifier
 suffix, so `FCH4_1_1_1` and `FCH4_1_1_2` are two replicates at one position
 while unqualified `FCH4` is the site-aggregated series.
 
-Methane flux is reported throughout in **nanomoles per square metre per second**
+Methane flux is reported throughout in **nanomoles per square meter per second**
 (nmol m⁻² s⁻¹). Annual budgets are expressed in grams of methane per square
-metre per year (g-CH₄ m⁻² yr⁻¹).
+meter per year (g-CH₄ m⁻² yr⁻¹).
 
 The instrumentation is described by Deventer et al. (2019), *Agricultural and
 Forest Meteorology* **278**, 107638, DOI
@@ -34,7 +34,7 @@ The raw sheet holds 227,904 half-hourly slots spanning 2009-01-01 to
 2021-12-31. Of these, 66,946 carry a methane measurement in at least one of the
 three methane columns, and 44,427 carry one in the site-aggregated column; the
 remainder are marked with the value −9999. The pipeline replaces that sentinel
-with a null value, identifies which analyser produced each of the three columns,
+with a null value, identifies which analyzer produced each of the three columns,
 merges them into a single series by precedence while recording which instrument
 each retained value came from, reports diagnostics on negative fluxes against
 the published detection limit, and aggregates to daily and monthly resolution.
@@ -52,11 +52,11 @@ precipitation, carbon dioxide flux and water table elevation.
 
 ## Validation against Deventer et al. (2019)
 
-Three results are reproduced from the published characterisation of this site.
+Three results are reproduced from the published characterization of this site.
 These are the only figures in this document, and they are here because they are
 checks against an external result rather than findings of this work.
 
-**Analyser identification.** The two 2015–2018 methane columns are identified as
+**Analyzer identification.** The two 2015–2018 methane columns are identified as
 `FCH4_1_1_1` = closed-path TGA-100A and `FCH4_1_1_2` = open-path LI-7700, on
 three independent grounds. Deventer et al. report that the LI-7700 was not
 operated before March 2015; `FCH4_1_1_2` begins 2015-03-17 while `FCH4_1_1_1`
@@ -67,7 +67,7 @@ implying the open-path instrument carries about 8% more spread; the data gives a
 ratio of standard deviations of 1.086 under outlier screening, which under the
 opposite assignment would have to be its reciprocal.
 
-**Paired differences.** On the 9,045 timestamps where both analysers reported,
+**Paired differences.** On the 9,045 timestamps where both analyzers reported,
 taking the difference as TGA-100A minus LI-7700:
 
 | Statistic | Published | This pipeline |
@@ -95,7 +95,7 @@ differences by maximum likelihood:
 | Laplace | −34,313.5 | 68,631.1 | 0.058 |
 | Gaussian | −37,827.7 | 75,659.4 | 0.168 |
 
-The difference in the Akaike information criterion is 7,028 in favour of
+The difference in the Akaike information criterion is 7,028 in favor of
 Laplace, and the Kolmogorov–Smirnov distance is smaller by a factor of three.
 The excess kurtosis of the differences is 72.3, against 0 for a Gaussian and 3
 for a Laplace, so the tail is heavier than either.

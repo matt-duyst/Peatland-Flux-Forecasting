@@ -14,7 +14,7 @@ def months(n: int, start: str = "2011-01") -> pd.PeriodIndex:
 
 
 def test_monthly_comparison_converts_flux_to_carbon_mass():
-    """A month of 10 nmol per square metre per second carries a known carbon mass."""
+    """A month of 10 nmol per square meter per second carries a known carbon mass."""
     index = pd.period_range("2011-01", periods=1, freq="M")
     observed = pd.Series([10.0], index=index)
     predicted = pd.Series([10.0], index=index)
@@ -61,8 +61,8 @@ def test_covariate_anomaly_standardises_by_the_reference_spread():
         covariates, index[4:], index[:4], ("x",)
     )
     assert table.loc[0, "difference"] == pytest.approx(2.0)
-    # The reference has zero spread, so the standardised value is undefined.
-    assert np.isnan(table.loc[0, "standardised"])
+    # The reference has zero spread, so the standardized value is undefined.
+    assert np.isnan(table.loc[0, "standardized"])
 
 
 def test_extreme_months_ranks_by_departure_from_the_same_calendar_month():
@@ -77,7 +77,7 @@ def test_extreme_months_ranks_by_departure_from_the_same_calendar_month():
     )
     table = residuals.extreme_months(observed, reference, n=2)
     assert table.index[0] == "2011-08"
-    assert table.loc["2011-08", "standardised"] > table.loc["2011-07", "standardised"]
+    assert table.loc["2011-08", "standardized"] > table.loc["2011-07", "standardized"]
 
 
 def test_extreme_months_leaves_a_spreadless_month_undefined():
@@ -87,4 +87,4 @@ def test_extreme_months_leaves_a_spreadless_month_undefined():
     )
     observed = pd.Series([20.0], index=pd.PeriodIndex(["2011-07"], freq="M"))
     table = residuals.extreme_months(observed, reference, n=1)
-    assert np.isnan(table.loc["2011-07", "standardised"])
+    assert np.isnan(table.loc["2011-07", "standardized"])

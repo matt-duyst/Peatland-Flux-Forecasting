@@ -129,16 +129,16 @@ def _joint_distance_by_month(
     target_months: pd.PeriodIndex,
     columns: tuple[str, ...],
 ) -> pd.Series:
-    """Distance from each target month to its nearest fit month, standardised on the fit."""
+    """Distance from each target month to its nearest fit month, standardized on the fit."""
     f = covariates.loc[fit_months, list(columns)].dropna()
     t = covariates.loc[target_months, list(columns)].dropna()
     usable = [c for c in columns if f[c].std(ddof=1) > 0]
     if not usable:
         raise ValueError("no covariate varies over the fit window")
     f, t = f[usable], t[usable]
-    centre, scale = f.mean(), f.std(ddof=1)
-    fz = ((f - centre) / scale).to_numpy()
-    tz = ((t - centre) / scale).to_numpy()
+    center, scale = f.mean(), f.std(ddof=1)
+    fz = ((f - center) / scale).to_numpy()
+    tz = ((t - center) / scale).to_numpy()
     d = np.sqrt(((tz[:, None, :] - fz[None, :, :]) ** 2).sum(axis=2)).min(axis=1)
     return pd.Series(d, index=t.index)
 

@@ -1,4 +1,4 @@
-"""Characterise the three raw methane columns and the derived FCH4 Data.csv subset.
+"""Characterize the three raw methane columns and the derived FCH4 Data.csv subset.
 
 Reports sentinel removal counts, the temporal coverage and overlap of the three
 columns, the source column behind each value in the derived file, and tests of
@@ -43,19 +43,19 @@ def main() -> None:
     print(clean.column_overlap(halfhourly).to_string(index=False))
 
     long = clean.to_long(halfhourly)
-    labelled = clean.label_derived_subset(long)
+    labeled = clean.label_derived_subset(long)
     paths.ensure_dirs()
-    labelled.to_parquet(paths.interim_dir() / "derived_labelled.parquet", index=False)
+    labeled.to_parquet(paths.interim_dir() / "derived_labelled.parquet", index=False)
 
     print("\n" + "=" * 78)
     print("DERIVED FCH4 Data.csv — SOURCE COLUMN BY YEAR")
     print("=" * 78)
-    print(clean.derived_provenance(labelled).to_string())
+    print(clean.derived_provenance(labeled).to_string())
 
     print("\n" + "=" * 78)
     print("DERIVED FCH4 Data.csv — TESTS OF CANDIDATE SELECTION RULES")
     print("=" * 78)
-    for key, value in clean.derived_rule_tests(labelled).items():
+    for key, value in clean.derived_rule_tests(labeled).items():
         print(f"  {key}: {value}")
 
 

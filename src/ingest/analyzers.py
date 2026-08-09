@@ -1,4 +1,4 @@
-"""Identification of the two methane analysers and comparison with published values.
+"""Identification of the two methane analyzers and comparison with published values.
 
 The closed-path TGA-100A and the open-path LI-7700 both operated between 2015
 and 2018 and appear as separate columns in the AmeriFlux BASE product.
@@ -21,7 +21,7 @@ from . import site
 
 
 def identification_evidence(frame: pd.DataFrame) -> pd.DataFrame:
-    """Deployment dates and observation counts distinguishing the two analysers."""
+    """Deployment dates and observation counts distinguishing the two analyzers."""
     records = []
     for column in (site.TGA_COLUMN, site.LI7700_COLUMN):
         stamps = frame.loc[frame[column].notna(), "timestamp_start"]
@@ -40,7 +40,7 @@ def identification_evidence(frame: pd.DataFrame) -> pd.DataFrame:
 
 
 def paired(frame: pd.DataFrame) -> pd.DataFrame:
-    """Timestamps where both analysers reported, with their difference.
+    """Timestamps where both analyzers reported, with their difference.
 
     The difference is TGA-100A minus LI-7700, the convention under which
     Deventer et al. (2019) report a positive median and positive skewness.

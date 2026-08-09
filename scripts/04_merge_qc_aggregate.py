@@ -39,7 +39,7 @@ def main() -> None:
     print("\nPrecedence contention:")
     for key, value in merge.contention_summary(merged).items():
         print(f"  {key:28s} {value:,}")
-    print("\nAnalyser switching, each switch carrying the inter-analyser scale offset:")
+    print("\nAnalyser switching, each switch carrying the inter-analyzer scale offset:")
     print(merge.switch_summary(merged).to_string(index=False))
     print(f"  total switches across the series: {merge.total_switches(merged):,}")
     print("\nDeployment boundaries, runs of at least 200 half-hours:")
@@ -58,7 +58,7 @@ def main() -> None:
         ["detection_limit", "n_negative", "n_negative_within_detection_limit",
          "n_negative_exceeding_detection_limit", "pct_of_negatives_exceeding_limit"]
     ].to_string(index=False))
-    print("\nConcurrence between analysers:")
+    print("\nConcurrence between analyzers:")
     for key, value in qc.concurrent_negatives(frame).items():
         print(f"  {key:42s} {value}")
     print("\nNegative share by year:")

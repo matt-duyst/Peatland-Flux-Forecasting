@@ -90,7 +90,7 @@ def load_atm_temperature() -> pd.DataFrame:
 
 
 def load_water_table() -> pd.DataFrame:
-    """Monthly mean water table elevation in metres.
+    """Monthly mean water table elevation in meters.
 
     Four water table files exist. This is the unscaled monthly series covering
     the full period; one other is a byte-identical duplicate of it, one is a

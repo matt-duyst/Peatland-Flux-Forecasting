@@ -3,7 +3,7 @@
 Deventer et al. (2019) permit combining observations from different measurement
 systems provided the combined series is treated as carrying the flux uncertainty
 of a single system. Values are selected by precedence and never averaged, so
-every retained value traces to exactly one analyser.
+every retained value traces to exactly one analyzer.
 """
 
 from __future__ import annotations
@@ -57,7 +57,7 @@ def _validate(frame: pd.DataFrame, precedence: tuple[str, ...]) -> None:
 def merge_halfhourly(frame: pd.DataFrame, precedence: tuple[str, ...] = PRECEDENCE) -> pd.DataFrame:
     """Collapse the named columns to one value with a provenance label.
 
-    Returns every half-hourly slot. Slots where no analyser reported carry a
+    Returns every half-hourly slot. Slots where no analyzer reported carry a
     null flux and a source of "none". Provenance counts describe only the
     columns named in ``precedence``.
     """
@@ -81,7 +81,7 @@ def merge_halfhourly(frame: pd.DataFrame, precedence: tuple[str, ...] = PRECEDEN
 
 
 def provenance_summary(merged: pd.DataFrame) -> pd.DataFrame:
-    """Retained value counts by source column and analyser."""
+    """Retained value counts by source column and analyzer."""
     reported = merged[merged["fch4"].notna()]
     summary = (
         reported.groupby(["source_column", "analyzer"]).size().rename("n").reset_index()
@@ -126,7 +126,7 @@ def contention_summary(merged: pd.DataFrame) -> dict[str, int]:
 
 
 def analyzer_runs(merged: pd.DataFrame) -> pd.DataFrame:
-    """Consecutive runs of a single analyser within the merged series."""
+    """Consecutive runs of a single analyzer within the merged series."""
     reported = merged[merged["fch4"].notna()].copy()
     changed = reported["analyzer"].ne(reported["analyzer"].shift())
     runs = reported.assign(run=changed.cumsum()).groupby("run")
@@ -141,7 +141,7 @@ def analyzer_runs(merged: pd.DataFrame) -> pd.DataFrame:
 
 
 def switch_summary(merged: pd.DataFrame) -> pd.DataFrame:
-    """Frequency and length of analyser runs, by year.
+    """Frequency and length of analyzer runs, by year.
 
     Between 2015 and 2018 the two systems interleave at half-hourly scale rather
     than occupying distinct periods, and each switch carries the scale offset
@@ -169,11 +169,11 @@ def switch_summary(merged: pd.DataFrame) -> pd.DataFrame:
 
 
 def total_switches(merged: pd.DataFrame) -> int:
-    """Number of analyser transitions across the whole series."""
+    """Number of analyzer transitions across the whole series."""
     return max(len(analyzer_runs(merged)) - 1, 0)
 
 
 def structural_boundaries(merged: pd.DataFrame, min_run: int = 200) -> pd.DataFrame:
-    """Long single-analyser runs, which mark the boundaries between deployments."""
+    """Long single-analyzer runs, which mark the boundaries between deployments."""
     runs = analyzer_runs(merged)
     return runs[runs["n"] >= min_run].reset_index(drop=True)

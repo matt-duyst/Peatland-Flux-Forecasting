@@ -12,7 +12,7 @@ BASE, TGA, LI = site.BASE_COLUMN, site.TGA_COLUMN, site.LI7700_COLUMN
 
 
 def test_precedence_selects_higher_column_and_never_averages():
-    """Where two analysers report, the merged value equals one of them exactly."""
+    """Where two analyzers report, the merged value equals one of them exactly."""
     frame = raw_frame(**{TGA: [10.0, None], LI: [20.0, 20.0]})
     merged = merge.merge_halfhourly(frame, precedence=(TGA, LI))
 

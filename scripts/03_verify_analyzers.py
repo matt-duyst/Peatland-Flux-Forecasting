@@ -1,8 +1,8 @@
-"""Identify the two methane analysers and compare the pair against published values.
+"""Identify the two methane analyzers and compare the pair against published values.
 
 Reports deployment evidence for the TGA-100A and LI-7700, the distribution of
 their paired differences, competing Laplace and Gaussian fits to those
-differences, and regressions of one analyser on the other across a range of
+differences, and regressions of one analyzer on the other across a range of
 outlier screens.
 
 Run: .venv/bin/python scripts/03_verify_analyzers.py
@@ -33,7 +33,7 @@ def main() -> None:
     print(f"  FCH4 units       {site.FCH4_UNITS}")
 
     print("\n" + "=" * 78)
-    print("ANALYSER IDENTIFICATION")
+    print("ANALYZER IDENTIFICATION")
     print("=" * 78)
     print(analyzers.identification_evidence(frame).to_string(index=False))
     print(

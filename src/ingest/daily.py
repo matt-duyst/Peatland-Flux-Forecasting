@@ -15,7 +15,7 @@ from . import site
 
 
 def _analyzer_fractions(values: pd.DataFrame, key) -> pd.DataFrame:
-    """Share of each group's half-hours contributed by each analyser.
+    """Share of each group's half-hours contributed by each analyzer.
 
     The two systems interleave at half-hourly scale and differ measurably in
     scale and offset, so a single day can draw on both. These fractions travel
@@ -33,7 +33,7 @@ def _analyzer_fractions(values: pd.DataFrame, key) -> pd.DataFrame:
 
 
 def daily_stats(merged: pd.DataFrame, min_halfhours: int = site.MIN_HALFHOURS_PER_DAY) -> pd.DataFrame:
-    """Daily mean, count, dispersion and analyser mix for days meeting the coverage rule."""
+    """Daily mean, count, dispersion and analyzer mix for days meeting the coverage rule."""
     values = merged.dropna(subset=["fch4"]).copy()
     values["date"] = values["timestamp_start"].dt.normalize()
     grouped = values.groupby("date")["fch4"]
@@ -52,9 +52,9 @@ def daily_stats(merged: pd.DataFrame, min_halfhours: int = site.MIN_HALFHOURS_PE
 
 
 def daily_to_monthly(daily: pd.DataFrame) -> pd.DataFrame:
-    """Monthly mean of daily means, with day counts, dispersion and analyser mix.
+    """Monthly mean of daily means, with day counts, dispersion and analyzer mix.
 
-    Analyser fractions are weighted by each day's half-hour count, so they
+    Analyzer fractions are weighted by each day's half-hour count, so they
     describe the month's underlying observations rather than its days.
     """
     frame = daily.copy()

@@ -19,7 +19,7 @@ from . import targets
 def monthly_comparison(observed_flux: pd.Series, predicted_flux: pd.Series) -> pd.DataFrame:
     """Observed against predicted flux per month, with each month's mass contribution.
 
-    Contributions are in grams of carbon per square metre, so a month's share of
+    Contributions are in grams of carbon per square meter, so a month's share of
     an annual shortfall can be read directly.
     """
     months = observed_flux.index.intersection(predicted_flux.index)
@@ -77,7 +77,7 @@ def covariate_anomaly(
                 "period_mean": round(float(target.mean()), 3),
                 "reference_mean": round(float(reference.mean()), 3),
                 "difference": round(float(target.mean() - reference.mean()), 3),
-                "standardised": round(float((target.mean() - reference.mean()) / spread), 2) if spread else np.nan,
+                "standardized": round(float((target.mean() - reference.mean()) / spread), 2) if spread else np.nan,
                 "period_max": round(float(target.max()), 3),
                 "reference_max": round(float(reference.max()), 3),
             }
@@ -95,9 +95,9 @@ def extreme_months(
     frame["reference_mean"] = frame["month_of_year"].map(climatology.mean())
     frame["reference_sd"] = frame["month_of_year"].map(climatology.std(ddof=1))
     # A calendar month with one reference observation, or several identical ones,
-    # has no spread to standardise by; leave those undefined rather than infinite.
+    # has no spread to standardize by; leave those undefined rather than infinite.
     spread = frame["reference_sd"].where(frame["reference_sd"] > 0)
-    frame["standardised"] = (frame["flux"] - frame["reference_mean"]) / spread
-    out = frame.nlargest(n, "standardised")[["flux", "reference_mean", "reference_sd", "standardised"]]
+    frame["standardized"] = (frame["flux"] - frame["reference_mean"]) / spread
+    out = frame.nlargest(n, "standardized")[["flux", "reference_mean", "reference_sd", "standardized"]]
     out.index = out.index.astype(str)
     return out.round(3)

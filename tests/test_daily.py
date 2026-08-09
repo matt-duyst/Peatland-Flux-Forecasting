@@ -1,4 +1,4 @@
-"""Daily and monthly aggregation: coverage rule, dispersion, analyser fractions."""
+"""Daily and monthly aggregation: coverage rule, dispersion, analyzer fractions."""
 
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ def test_analyzer_fractions_sum_to_one_on_every_row():
 
 
 def test_absent_analyzer_yields_a_zero_column_not_a_missing_one():
-    """The fallback path: a frame holding one analyser still emits all three columns."""
+    """The fallback path: a frame holding one analyzer still emits all three columns."""
     frame = merged_day([1, 2], ["site_aggregated"] * 2, "2015-06-01")
     frame["date"] = frame["timestamp_start"].dt.normalize()
     fractions = daily._analyzer_fractions(frame, "date")
@@ -39,7 +39,7 @@ def test_unknown_analyzer_label_raises_rather_than_vanishing():
     frame = merged_day([1, 2], ["site_aggregated", "NEW-SENSOR"], "2015-06-01")
     frame["date"] = frame["timestamp_start"].dt.normalize()
 
-    with pytest.raises(ValueError, match="unknown analyser label"):
+    with pytest.raises(ValueError, match="unknown analyzer label"):
         daily._analyzer_fractions(frame, "date")
 
 

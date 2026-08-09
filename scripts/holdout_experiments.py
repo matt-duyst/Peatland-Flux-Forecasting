@@ -93,7 +93,7 @@ def main() -> None:
         "coverage_empirical", "coverage_laplace",
         "holdout_nn_median", "holdout_nn_max", "holdout_beyond_train_p95",
     ]
-    table = holdout.summarise(records)
+    table = holdout.summarize(records)
     print(table[table.weighting == "unweighted"][view].round(3).to_string(index=False))
 
     heading("RESULTS, INVERSE-VARIANCE WEIGHTED")

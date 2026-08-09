@@ -2,7 +2,7 @@
 
 Deventer et al. (2019) give a flux detection limit of about 3 +/- 2 nmol m-2
 s-1 and treat measured negative net fluxes as questionable: most exceeded the
-detection limit, yet very few appeared in both analysers at the same timestamp,
+detection limit, yet very few appeared in both analyzers at the same timestamp,
 which points to measurement error rather than genuine uptake.
 """
 
@@ -42,7 +42,7 @@ def detection_limit_sensitivity(merged: pd.DataFrame) -> pd.DataFrame:
 
 
 def concurrent_negatives(frame: pd.DataFrame, limit: float = site.DETECTION_LIMIT) -> dict[str, object]:
-    """Count timestamps where both analysers report a negative flux.
+    """Count timestamps where both analyzers report a negative flux.
 
     Genuine uptake should register in both systems at once, whereas independent
     measurement error should rarely coincide, so concurrence discriminates
@@ -72,7 +72,7 @@ def concurrent_negatives(frame: pd.DataFrame, limit: float = site.DETECTION_LIMI
 
 
 def negative_share_by_year(merged: pd.DataFrame) -> pd.DataFrame:
-    """Negative-flux share per year, alongside the analysers active in that year."""
+    """Negative-flux share per year, alongside the analyzers active in that year."""
     reported = merged[merged["fch4"].notna()].copy()
     reported["year"] = reported["timestamp_start"].dt.year
     grouped = reported.groupby("year")

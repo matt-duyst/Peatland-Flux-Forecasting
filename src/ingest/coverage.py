@@ -1,4 +1,4 @@
-"""Coverage of the merged series against the calendar, by month and analyser.
+"""Coverage of the merged series against the calendar, by month and analyzer.
 
 Deventer et al. (2019) note that open-path systems lose data during freezing or
 rainy periods and that snow cover at this site lasts roughly 120 days. Where
@@ -36,7 +36,7 @@ def possible_by_year_month(merged: pd.DataFrame) -> pd.DataFrame:
 
 
 def coverage_by_month_of_year(merged: pd.DataFrame) -> pd.DataFrame:
-    """Valid fraction per calendar month pooled across years, split by analyser."""
+    """Valid fraction per calendar month pooled across years, split by analyzer."""
     observed = merged.dropna(subset=["fch4"]).copy()
     observed["month_of_year"] = observed["timestamp_start"].dt.month
 
@@ -55,7 +55,7 @@ def coverage_by_month_of_year(merged: pd.DataFrame) -> pd.DataFrame:
 
 
 def coverage_by_year_and_month(merged: pd.DataFrame) -> pd.DataFrame:
-    """Valid fraction per calendar month within each year, split by analyser."""
+    """Valid fraction per calendar month within each year, split by analyzer."""
     observed = merged.dropna(subset=["fch4"]).copy()
     observed["year"] = observed["timestamp_start"].dt.year
     observed["month_of_year"] = observed["timestamp_start"].dt.month

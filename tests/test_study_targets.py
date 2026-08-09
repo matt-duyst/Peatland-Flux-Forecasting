@@ -32,7 +32,7 @@ def test_reconstruction_range_converts_both_ends():
 
 
 def test_annual_integration_matches_a_hand_calculation():
-    """Ten nmol per square metre per second held for a 365-day year."""
+    """Ten nmol per square meter per second held for a 365-day year."""
     flux = pd.Series([10.0] * 12, index=pd.period_range("2010-01", periods=12, freq="M"))
     table = targets.monthly_flux_to_annual(flux)
     expected = 10.0 * 365 * 86400 * 1e-9 * targets.MOLAR_MASS_CH4
