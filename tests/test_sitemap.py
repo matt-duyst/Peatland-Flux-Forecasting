@@ -115,9 +115,14 @@ def test_every_panel_carries_its_letter():
     ps.plt.close(fig)
 
 
-def test_imagery_and_layers_are_credited_inside_the_figure():
+def test_the_substantive_layers_are_credited_inside_the_figure():
+    """Imagery and the wetland mapping carry their sources on the panel.
+
+    The state outlines do not: they are a generic base map rather than a layer
+    the figure makes a claim from, and their provenance is in notes/study.md.
+    """
     fig = sitemap.site_overview(image(), wetlands(), states(), sites(), shares())
     said = " ".join(t.get_text() for ax in fig.axes[:3] for t in ax.texts)
     assert "NAIP" in said and "National Wetlands Inventory" in said
-    assert "Census" in said
+    assert "Census" not in said
     ps.plt.close(fig)

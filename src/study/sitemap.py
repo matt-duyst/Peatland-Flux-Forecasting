@@ -52,7 +52,7 @@ TOWER_MARKER = dict(marker="*", markersize=15, markerfacecolor="white",
 
 
 SITEMAP_TEXT = ps.FigureText(
-    title="Marcell Bog Lake Peatland, Minnesota: setting, network context and wind direction",
+    title="The flux tower at Marcell Bog Lake Peatland, Minnesota, and the directions it measures",
     subtitle=(
         "Flux is discarded from 30 to 200 degrees, where upland forest lies, which "
         "removes 40% of the record"
@@ -194,9 +194,12 @@ def draw_site(ax, image, wetlands: dict, origin: tuple[float, float]) -> None:
         Patch(facecolor="none", edgecolor=ps.OUTSIDE, linewidth=1.8,
               label=f"Mapped wetland, {acres * 0.4047:.0f} ha"),
     ]
-    ps.legend(ax, handles=handles, labels=[h.get_label() for h in handles],
-              loc="lower left", fontsize=7.6, borderpad=0.38, labelspacing=0.3,
-              handlelength=1.5, handletextpad=0.5, bbox_to_anchor=(0.03, 0.300))
+    key = ps.legend(ax, handles=handles, labels=[h.get_label() for h in handles],
+                    loc="upper left", fontsize=7.6, borderpad=0.4, labelspacing=0.3,
+                    handlelength=1.5, handletextpad=0.5, title="Legend",
+                    bbox_to_anchor=(0.03, 0.945))
+    key.get_title().set_fontsize(7.8)
+    key.get_title().set_fontweight("bold")
 
 
 def _coordinate_ticks(ax, origin: tuple[float, float]) -> None:
@@ -238,12 +241,11 @@ def draw_network(ax, states: dict, sites: pd.DataFrame,
     for spine in ax.spines.values():
         spine.set_edgecolor(ps.BOUNDARY)
 
-    ps.credit(ax, BOUNDARY_CREDIT, xy=(0.985, 0.02), va="bottom", ha="right")
     handles = [
         Line2D([], [], marker="*", color=ps.OUTSIDE, linestyle="none", markersize=12,
                label=f"{site.SITE_NAME} (not in FLUXNET-CH4)"),
         Line2D([], [], marker="o", color=ps.MUTED, linestyle="none", markersize=4,
-               label=f"FLUXNET-CH4 sites in the lower 48 ({len(inside)})"),
+               label=f"FLUXNET-CH4 sites in the lower 48 states ({len(inside)})"),
     ]
     ps.legend(ax, handles=handles, labels=[h.get_label() for h in handles],
               loc="lower left", fontsize=8.4, borderpad=0.42, labelspacing=0.34)
@@ -262,7 +264,6 @@ def draw_sector(ax, shares: pd.DataFrame) -> None:
     values = shares["pct_of_half_hours_with_wind_direction"].to_numpy()
     excluded = shares["excluded"].to_numpy()
 
-    lo, hi = (math.radians(a) for a in EXCLUDED_SECTOR)
     ax.bar(theta[~excluded], values[~excluded], width=width, color=ps.INSIDE,
            edgecolor="white", linewidth=0.4, zorder=3)
     ax.bar(theta[excluded], values[excluded], width=width, color=ps.OUTSIDE,
@@ -270,8 +271,8 @@ def draw_sector(ax, shares: pd.DataFrame) -> None:
 
     ax.set_theta_zero_location("N")
     ax.set_theta_direction(-1)
-    ax.set_thetagrids(range(0, 360, 45), ["N", "NE", "E", "SE", "S", "SW", "W", "NW"],
-                      fontsize=8.4)
+    labels = [f"{d}\u00b0 N" if d == 0 else f"{d}\u00b0" for d in range(0, 360, 30)]
+    ax.set_thetagrids(range(0, 360, 30), labels, fontsize=8.0)
 
     # Rings stop short of the outer edge, so no radial label sits on the frame.
     top = float(values.max())
@@ -287,6 +288,18 @@ def draw_sector(ax, shares: pd.DataFrame) -> None:
                 color=ps.MUTED)
     ax.grid(color=ps.GRID, linewidth=0.6)
 
+    # The bounds are drawn, because a reader told the sector runs 30 to 200
+    # degrees cannot otherwise find either one on the circle. 30 sits on a
+    # gridline and is labeled there; 200 does not, so it is named on its ray.
+    top = float(values.max())
+    for bound in EXCLUDED_SECTOR:
+        ax.plot([math.radians(bound)] * 2, [0, top * 1.20], color=ps.BOUNDARY,
+                linewidth=1.1, linestyle=(0, (5, 3)), zorder=4)
+    ax.annotate(f"{EXCLUDED_SECTOR[1]:.0f}\u00b0",
+                xy=(math.radians(EXCLUDED_SECTOR[1]), top * 0.72),
+                ha="center", va="center", fontsize=7.8, color=ps.BOUNDARY,
+                zorder=5, path_effects=[ps._outline()])
+
     handles = [
         Patch(facecolor=ps.INSIDE, edgecolor="white", label="Flux retained"),
         Patch(facecolor=ps.OUTSIDE, edgecolor="white", hatch=ps.OUTSIDE_HATCH,
@@ -295,7 +308,7 @@ def draw_sector(ax, shares: pd.DataFrame) -> None:
     ps.legend(ax, handles=handles, labels=[h.get_label() for h in handles],
               loc="lower center", fontsize=7.8, borderpad=0.38, labelspacing=0.3,
               handlelength=1.4, handletextpad=0.5, columnspacing=1.4, ncols=2,
-              bbox_to_anchor=(0.5, 1.005))
+              bbox_to_anchor=(0.5, 1.10))
 
 
 def site_overview(image, wetlands: dict, states: dict, sites: pd.DataFrame,
