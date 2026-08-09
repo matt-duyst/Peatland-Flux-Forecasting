@@ -1,13 +1,13 @@
 """Site identity, instrument constants and published reference values.
 
 Flux data comes from the AmeriFlux BASE product for US-MBP. BASE is AmeriFlux's
-standardised half-hourly product; its variable names carry a horizontal,
+standardized half-hourly product; its variable names carry a horizontal,
 vertical and replicate qualifier suffix, so FCH4_1_1_1 and FCH4_1_1_2 are two
 replicates at the same position while unqualified FCH4 is the site-aggregated
 series.
 
 Instrument, threshold and validation constants are those published in
-Deventer et al. (2019), which characterises the eddy covariance
+Deventer et al. (2019), which characterizes the eddy covariance
 instrumentation at this site.
 """
 
@@ -19,25 +19,36 @@ LATITUDE = 47.505
 LONGITUDE = -93.489
 LOCATION = "USDA Forest Service Marcell Experimental Forest, Minnesota, USA"
 
-#: The same peatland appears in the literature under two names. AmeriFlux
-#: registers it as Marcell Bog Lake Peatland; it is also called Bog Lake Fen.
-#: Both refer to this site.
+#: The same peatland appears under two names. AmeriFlux registers it as Marcell
+#: Bog Lake Peatland; it is also called Bog Lake Fen. The site description in the
+#: product's own BADM metadata confirms both refer to this site, closing with
+#: "This site has also been referred to as Bog Lake Fen in the past."
 SITE_NAME_ALTERNATE = "Bog Lake Fen"
 
 #: Wetland class, following the scheme of Delwiche et al. (2021), which treats
-#: bog and fen as distinct. The evidence favours fen. AmeriFlux carries "Bog" in
-#: the registered name but describes the site as a fen. Deventer et al. (2019)
-#: report the peatland as poorly minerotrophic to oligotrophic, with a mean pore
-#: water pH of 4.5 over a range of 3.8 to 5.3. Minerotrophic means fed by
-#: groundwater that has contacted mineral soil, which is the property separating
-#: a fen from an ombrotrophic, precipitation-fed bog, and that pH range sits
-#: above the strongly acidic values typical of bogs. The classification is an
-#: inference from these two descriptions, not a value recorded in a site
-#: database: US-MBP does not appear in the FLUXNET-CH4 Version 1.0 metadata.
+#: bog and fen as distinct. The data provider states it: the BADM site
+#: description supplied with the AmeriFlux BASE product opens "The study site is
+#: a fen within the Marcell Experimental Forest". That is the primary basis.
+#: Deventer et al. (2019) corroborate it, reporting the peatland as poorly
+#: minerotrophic to oligotrophic, with a mean pore water pH of 4.5 over a range
+#: of 3.8 to 5.3. Minerotrophic means fed by groundwater that has contacted
+#: mineral soil, which is the property separating a fen from an ombrotrophic,
+#: precipitation-fed bog. The pH remains a citation: the metadata carries no soil
+#: chemistry. The registered name carries "Bog" and the class is recorded as WET,
+#: neither of which distinguishes the two.
 WETLAND_CLASS = "Fen"
 WETLAND_CLASS_QUALIFIER = "poor fen"
 PORE_WATER_PH_MEAN = 4.5
 PORE_WATER_PH_RANGE = (3.8, 5.3)
+
+#: Tower elevation, meters above sea level, from the BADM site metadata. Water
+#: table elevation at this site runs 412.5 to 413.8 m, so the two are consistent
+#: and the water table series is confirmed as meters above sea level.
+SITE_ELEVATION_M = 416.0
+
+#: Timestamps are local standard time, from the BADM metadata. No daylight
+#: saving is applied at any point in the record.
+UTC_OFFSET_HOURS = -6
 
 DATA_PRODUCT_DOI = "10.17190/AMF/1767835"
 DATA_CITATION = "Roman, Kolka, Griffis and Deventer (2022), AmeriFlux BASE US-MBP"
@@ -49,8 +60,8 @@ REFERENCE_CITATION = (
 
 FCH4_UNITS = "nmol m-2 s-1"
 
-#: TGA-100A is the closed-path trace gas analyser; LI-7700 is the open-path
-#: methane analyser. Both operated at this site between 2015 and 2018.
+#: TGA-100A is the closed-path trace gas analyzer; LI-7700 is the open-path
+#: methane analyzer. Both operated at this site between 2015 and 2018.
 ANALYZER_BY_COLUMN = {
     "FCH4": "site_aggregated",
     "FCH4_1_1_1": "TGA-100A",
@@ -60,8 +71,8 @@ TGA_COLUMN = "FCH4_1_1_1"
 LI7700_COLUMN = "FCH4_1_1_2"
 BASE_COLUMN = "FCH4"
 
-#: Column-name slugs for per-analyser columns in derived output. Single source
-#: of truth: every module naming a per-analyser column resolves it through
+#: Column-name slugs for per-analyzer columns in derived output. Single source
+#: of truth: every module naming a per-analyzer column resolves it through
 #: ``analyzer_slug`` rather than embedding a raw label.
 ANALYZER_SLUG = {
     "site_aggregated": "site_aggregated",
@@ -73,16 +84,16 @@ FRACTION_COLUMNS = tuple(f"frac_{slug}" for slug in SLUGS)
 
 
 def analyzer_slug(label: str) -> str:
-    """Slug for an analyser label, raising on any label not in ANALYZER_SLUG.
+    """Slug for an analyzer label, raising on any label not in ANALYZER_SLUG.
 
-    Silently passing an unknown label through would produce a per-analyser
+    Silently passing an unknown label through would produce a per-analyzer
     column set that no longer sums to one while still looking well formed.
     """
     try:
         return ANALYZER_SLUG[label]
     except KeyError:
         known = ", ".join(sorted(ANALYZER_SLUG))
-        raise ValueError(f"unknown analyser label {label!r}; known labels: {known}") from None
+        raise ValueError(f"unknown analyzer label {label!r}; known labels: {known}") from None
 
 #: Flux detection limit, nmol m-2 s-1, from Deventer et al. (2019).
 DETECTION_LIMIT = 3.0
@@ -93,7 +104,7 @@ DETECTION_LIMIT_UNCERTAINTY = 2.0
 MIN_HALFHOURS_PER_DAY = 8
 DAILY_THRESHOLDS = (8, 12, 16)
 
-#: Paired-analyser statistics published by Deventer et al. (2019), for the
+#: Paired-analyzer statistics published by Deventer et al. (2019), for the
 #: difference TGA-100A minus LI-7700. Sigma is the Laplace standard deviation.
 PUBLISHED_PAIRED_STATS = {"median": 0.1, "sigma": 8.5, "iqr": 8.2, "skewness": 0.32}
 

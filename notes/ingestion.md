@@ -1,7 +1,7 @@
 # Ingestion layer — findings and judgment calls
 
 Scope: raw AmeriFlux BASE workbook to a merged, provenance-tracked half-hourly
-series, then to daily and monthly aggregates. No modelling and no gap-filling.
+series, then to daily and monthly aggregates. No modeling and no gap-filling.
 
 ## Site and data product
 
@@ -19,7 +19,7 @@ Pinned in `src/ingest/site.py`.
 **Reference throughout: Deventer, M.J. et al. (2019),
 *Agricultural and Forest Meteorology* **278**, 107638,
 doi:[10.1016/j.agrformet.2019.107638](https://doi.org/10.1016/j.agrformet.2019.107638)**,
-which characterises the instrumentation at this exact site. Cited below as
+which characterizes the instrumentation at this exact site. Cited below as
 *Deventer et al. (2019)*. Every threshold, rule and precedence decision in this
 layer traces to it.
 
@@ -31,7 +31,7 @@ layer traces to it.
 | paths | `src/ingest/paths.py` | resolves repo root by marker directories; all paths relative |
 | read + clean | `src/ingest/raw.py` | `raws` sheet → half-hourly frame, `-9999` → NaN, parquet cache |
 | diagnose | `src/ingest/clean.py` | column coverage and overlap, derived-subset provenance and rule tests |
-| identify + validate | `src/ingest/analyzers.py` | analyser identification, paired differences, distribution fits, regressions |
+| identify + validate | `src/ingest/analyzers.py` | analyzer identification, paired differences, distribution fits, regressions |
 | merge | `src/ingest/merge.py` | precedence merge with provenance column |
 | quality control | `src/ingest/qc.py` | negative-flux diagnostics against the detection limit |
 | aggregate (monthly) | `src/ingest/aggregate.py` | monthly mean, n, sd, se direct from half-hourly |
@@ -64,7 +64,7 @@ In AmeriFlux BASE the `_H_V_R` suffix is a position/replicate qualifier, so the
 unqualified `FCH4` is the site-aggregated variable and `_1_1_1`/`_1_1_2` are
 replicates at position 1.
 
-### Analyser identification
+### Analyzer identification
 
 `FCH4_1_1_1` = **closed-path TGA-100A**, `FCH4_1_1_2` = **open-path LI-7700**.
 Three independent lines of evidence, none of which assumes the answer:
@@ -82,7 +82,10 @@ Three independent lines of evidence, none of which assumes the answer:
    not be recovered in either direction.
 
 The evidence does not point the other way. The workbook still carries no BADM
-metadata, so this rests on Deventer et al. (2019) plus the data, not on the file itself.
+metadata, so this rests on Deventer et al. (2019) plus the data, not on the file
+itself. The BADM metadata of the 2025 product was obtained later and does not
+change that: it carries no instrument group at all, so it is silent on the
+identification rather than confirming it. Recorded in `notes/base_v55.md`.
 
 ## Derived `FCH4 Data.csv` — selection rule not recovered
 
@@ -93,7 +96,7 @@ subset of this workbook. Column provenance is clean and fully recovered:
 - `FCH4_1_1_2` for 2015–2018
 
 (`FCH4_1_1_1` is credited 8 values, all of which are ties where the identical
-value also exists in `FCH4_1_1_2` the same day — matching artefacts, not
+value also exists in `FCH4_1_1_2` the same day — matching artifacts, not
 selections. The greedy multiset match is made deterministic by an explicit sort
 in `clean.to_long`, not by a seed.)
 
@@ -157,7 +160,7 @@ warming by about a month. Differencing `Start_FCH4_(DOY)` and `Start_TS_(DOY)`
 over the 85 site-years holding both gives a mean of **28.1 days**, which
 reproduces that figure. The distribution behind it is skewed: the median is
 **12.5 days** and the interquartile range runs from **4 to 56 days**. The mean
-is therefore not typical of the sites it summarises, and a one-month lag is not
+is therefore not typical of the sites it summarizes, and a one-month lag is not
 a value to carry into a model for this site. Any temperature lag is
 site-specific and has to be fitted.
 
@@ -265,15 +268,18 @@ decisively.** MLE fits over all 9,045 differences:
 | Laplace | −34,313.5 | 68,631.1 | **0.058** |
 | Gaussian | −37,827.7 | 75,659.4 | 0.168 |
 
-ΔAIC = **7,028** in favour of Laplace, with the KS distance cut by a factor of
+ΔAIC = **7,028** in favor of Laplace, with the KS distance cut by a factor of
 three. This is load-bearing for the uncertainty work: a Gaussian error model
 would misstate the tails badly.
 
 ### Regressions — reproduced, with a caveat stated plainly
 
-The quality control applied by Deventer et al. (2019) is not in the BASE product, so these statistics were run under a
-**sweep of nine screens** rather than one, because a single screen chosen to hit
-the published number would be circular.
+The despiking applied by Deventer et al. (2019) is not in the BASE product, so
+these statistics were run under a **sweep of nine screens** rather than one,
+because a single screen chosen to hit the published number would be circular.
+Their wind-sector exclusion, by contrast, is carried in the product: no retained
+flux value of any species comes from 30° to 200°, measured in
+`notes/base_v55.md`.
 
 | Screen | n | GMR slope | GMR intercept | OLS slope (t vs 1) | OLS intercept (t vs 0) |
 |---|---|---|---|---|---|
@@ -311,6 +317,12 @@ does not hold:**
 A ratio of 1.036 — essentially flat. Monthly coverage spans only 24.0% (January)
 to 33.4% (April), with no seasonal shape.
 
+Coverage of roughly 30% is not 30% of an attainable 100%. The footprint rule of
+Deventer et al. (2019) removes 37.6% of all half-hours before any instrument or
+quality consideration applies, and against what it leaves, methane retention is
+60.2%. Measured in `notes/base_v55.md` from the wind direction the 2022 export
+does not carry.
+
 Per raw column, over each instrument's own active period, the picture is more
 interesting and still not the predicted one:
 
@@ -330,7 +342,7 @@ suggestive, not established.
 **Consequence for the annual budgets.** Because coverage is not seasonally skewed at the
 merged level, the pooled observed mean is not systematically biased, and the
 close agreement of the coverage-scaled budgets with published values is not an
-artefact of that mechanism. This was tested directly rather than argued:
+artifact of that mechanism. This was tested directly rather than argued:
 `budgets.budget_method_comparison` recomputes each year by weighting every
 month's mean by its share of the calendar year, so uneven monthly coverage
 cannot tilt the annual mean.
@@ -370,7 +382,7 @@ Rationale for preferring the TGA where both reported:
 - The paired-difference analysis shows the LI-7700 runs ~8% high with a ≈−3 offset. Choosing one system
   consistently keeps that scale difference at the era boundaries instead of
   injecting it as pseudo-variance at every alternation.
-- The TGA starts earlier (2015-01-01 vs 2015-03-17), so preferring it maximises
+- The TGA starts earlier (2015-01-01 vs 2015-03-17), so preferring it maximizes
   continuity across the 2014/2015 handover.
 
 `FCH4` takes top precedence only because it is temporally disjoint from both
@@ -428,6 +440,13 @@ Detail behind the README's account of the analysis this work replaced. Every
 statement was checked against the five notebooks as committed, read out of git
 history at `891f6d3~1`, rather than against their figures or prose.
 
+**That commit, not the tag, is where the original analysis survives.** The
+notebooks, the `assets/` directory and the README that referenced them were
+removed by `891f6d3`, so its parent holds the last copy of all three. The tag
+`pre-squash-ingestion-layer` is a descendant of that removal and contains none of
+them: `assets/` is empty there and the README is the rebuilt one. Anyone reaching
+for the tag will find nothing and conclude the material is gone.
+
 ### The state-space model was fitted but never committed
 
 No committed cell in any of the five notebooks contains `sarimax`, `arima`,
@@ -461,7 +480,7 @@ that appears in the figures belongs to the uncommitted state-space diagnostics.
 ### Leakage in the rescaled target
 
 The Prophet target was rescaled to the unit interval over the whole record. In
-the normalised monthly series the minimum, 0.0, falls at 2010-02 and the
+the normalized monthly series the minimum, 0.0, falls at 2010-02 and the
 maximum, 1.0, falls at **2017-07**. The split assigns every date after 2017-01
 to the test partition, so the maximum lies inside it. That series matches the
 notebook's own stored output exactly: 2009-04 = 0.071228, 2021-08 = 0.285278,
