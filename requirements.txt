@@ -1,0 +1,9 @@
+# Ingestion layer. Pinned exactly; installed into .venv (gitignored).
+#   python -m venv .venv && .venv/bin/pip install -r requirements.txt
+# Requires Python 3.11.
+numpy==1.26.4
+openpyxl==3.1.5      # reads the raws sheet of the AmeriFlux workbook
+pandas==2.2.2
+pyarrow==18.1.0      # parquet cache for the 227,904-row half-hourly frame
+pytest==8.3.4        # test suite; not imported by the ingestion modules
+scipy==1.11.4        # distribution fits, Kolmogorov-Smirnov tests, least squares

@@ -1,0 +1,7 @@
+.venv/
+data/interim/
+__pycache__/
+.pytest_cache/
+*.pyc
+data/processed/halfhourly_merged.csv
+data/processed/halfhourly_merged.parquet
