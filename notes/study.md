@@ -865,18 +865,42 @@ edge is 47.497 rather than the 47.495 first wanted because the quarter-quad
 holding the tower begins there, and a second scene for 220 m would have added a
 seam and a second acquisition to attribute.
 
-**The wind rose is restricted to 2009 to 2019**, the years the model was fitted
-on, rather than the full 2009 to 2024 the product carries, so that it describes
-the wind the fitted model actually saw and matches the rest of the figure set.
-Over those years 44.7% of half-hours carrying a wind direction fall in the
-discarded sector, which is 40.1% of the whole record; over the full product the
-same shares are 41.5% and 37.6%.
+### Why the wind rose stops at 2019
+
+**The rose is restricted to 2009 to 2019**, the months the model was fitted on,
+although the product carries wind direction to 2024 and the sector rule is a
+property of the site's protocol rather than of the study window. The restriction
+is deliberate and rests on two things.
+
+Every other quantity in this study is computed on the fit window. A wind
+climatology running five years past it would be the only panel in the set
+describing a different population, and a reader comparing panels would have no
+way to know that from the figure.
+
+The shares quoted in the subtitle and description were recomputed on the fit
+window for the same reason. Had the rose covered 2009 to 2024 while those
+numbers stood, the panel would have plotted one population and quoted another.
+
+| | 2009 to 2019, plotted | 2009 to 2024, full product |
+|---|---|---|
+| Half-hours | 192,816 | 280,512 |
+| Carrying a wind direction | 172,639 | 254,111 |
+| In the discarded sector | 77,245 | 105,387 |
+| Share of those with a direction | **44.7%** | 41.5% |
+| Share of the whole record | **40.1%** | 37.6% |
+
+The rule does not change between the two periods; its cost does, by about three
+points, because the wind distribution differs. That is a fact about the weather
+of those years and not about the protocol, which is a further reason to quote
+the window the study actually uses rather than a longer one.
 
 **The share is quoted against half-hours that carry a wind direction**, 172,639
-of 192,816 over the study window. That is the population a direction rule can
-act on, and the one whose shares sum to a hundred in the panel. Quoting the
-rule against the whole record is also true and is stated alongside, but it does
-not match what the panel plots.
+of 192,816. That is the population a direction rule can act on, and the one
+whose shares sum to a hundred in the panel. Quoting the rule against the whole
+record is also true and is stated alongside, but it does not match what the
+panel plots. Both figures are written into the figure as text, and a test
+asserts they still agree with the stored shares, so regenerating that file over
+a different period cannot leave the words behind.
 
 **The inventory maps the tower on a polygon of 88.2 acres, 35.7 ha, coded
 `PSS3Dg`.** Read out, that is palustrine, scrub-shrub, broad-leaved evergreen,
