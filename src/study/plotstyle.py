@@ -170,6 +170,9 @@ class FigureText:
     title: str
     subtitle: str
     description: str
+    #: Phrases set bold inside the description, so a reader can find the part
+    #: they want without reading the block linearly.
+    emphasize: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         sentences = [s for s in self.description.replace("\n", " ").split(". ") if s.strip()]
@@ -196,9 +199,23 @@ def _wrap_width(width_px: int) -> int:
     return max(20, int(drawable_points / (_CHAR_WIDTH * DESCRIPTION_SIZE)))
 
 
-def wrap_description(text: str, width_px: int) -> str:
+def emphasize(wrapped: str, terms: tuple[str, ...]) -> str:
+    """Set the given phrases bold within already-wrapped text.
+
+    Applied after wrapping, so the markup cannot affect where lines break. Bold
+    is slightly wider than regular, which `wrap_description` allows for by
+    shortening the line when any term is to be emphasized.
+    """
+    for term in terms:
+        if term in wrapped:
+            wrapped = wrapped.replace(term, r"$\bf{" + term.replace(" ", r"\ ") + "}$")
+    return wrapped
+
+
+def wrap_description(text: str, width_px: int, terms: tuple[str, ...] = ()) -> str:
     """Wrap a description to the canvas width, refusing text that will not fit."""
-    wrapped = textwrap.fill(" ".join(text.split()), width=_wrap_width(width_px))
+    width = _wrap_width(width_px) - (2 if terms else 0)
+    wrapped = textwrap.fill(" ".join(text.split()), width=width)
     lines = wrapped.count("\n") + 1
     line_px = DESCRIPTION_SIZE * 1.45 / 72.0 * DPI
     if lines * line_px > DESCRIPTION_BLOCK_PX:
@@ -207,7 +224,7 @@ def wrap_description(text: str, width_px: int) -> str:
             f"description wraps to {lines} lines at this width; the fixed "
             f"allocation holds {allowed}. Shorten it rather than enlarging the block."
         )
-    return wrapped
+    return emphasize(wrapped, terms)
 
 
 def canvas_area(text: FigureText, size: str = "wide") -> tuple[Figure, tuple[float, float, float, float]]:
@@ -221,7 +238,7 @@ def canvas_area(text: FigureText, size: str = "wide") -> tuple[Figure, tuple[flo
     width_px, height_px = SIZES[size]
     fig = plt.figure(figsize=(width_px / DPI, height_px / DPI), dpi=DPI)
 
-    body = wrap_description(text.description, width_px)
+    body = wrap_description(text.description, width_px, text.emphasize)
 
     left = MARGIN_PX["left"] / width_px
     right = 1 - MARGIN_PX["right"] / width_px

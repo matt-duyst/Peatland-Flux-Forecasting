@@ -52,10 +52,10 @@ TOWER_MARKER = dict(marker="*", markersize=15, markerfacecolor="white",
 
 
 SITEMAP_TEXT = ps.FigureText(
-    title="Marcell Bog Lake Peatland: the site, its network, and the sector it discards",
+    title="Marcell Bog Lake Peatland, Minnesota: setting, network context and wind direction",
     subtitle=(
-        "This site sits alone in its network, and keeps flux from only part of the "
-        "compass because the rest brings upland forest into the measurement"
+        "Flux is discarded from 30 to 200 degrees, where upland forest lies, which "
+        "removes 40% of the record"
     ),
     description=(
         "Panel a is the peatland around the tower, with the wetland polygon the "
@@ -69,6 +69,7 @@ SITEMAP_TEXT = ps.FigureText(
         "and 40% of the whole record, and the published product holds no retained "
         "flux from it at all."
     ),
+    emphasize=("Panel a", "Panel b", "Panel c"),
 )
 
 
@@ -180,8 +181,8 @@ def draw_site(ax, image, wetlands: dict, origin: tuple[float, float]) -> None:
     for spine in ax.spines.values():
         spine.set_edgecolor(ps.BOUNDARY)
 
-    ps.scale_bar(ax, 400, corner=(0.05, 0.055))
-    ps.north_arrow(ax, at=(0.105, 0.145), size=0.055)
+    ps.scale_bar(ax, 400, corner=(0.05, 0.108))
+    ps.north_arrow(ax, at=(0.105, 0.205), size=0.052)
     ps.credit(ax, f"{IMAGE_CREDIT}\n{WETLAND_CREDIT}")
 
     acres = tower_ring["acres"] if tower_ring else 0.0
@@ -195,7 +196,7 @@ def draw_site(ax, image, wetlands: dict, origin: tuple[float, float]) -> None:
     ]
     ps.legend(ax, handles=handles, labels=[h.get_label() for h in handles],
               loc="lower left", fontsize=7.6, borderpad=0.38, labelspacing=0.3,
-              handlelength=1.5, handletextpad=0.5, bbox_to_anchor=(0.03, 0.225))
+              handlelength=1.5, handletextpad=0.5, bbox_to_anchor=(0.03, 0.300))
 
 
 def _coordinate_ticks(ax, origin: tuple[float, float]) -> None:
@@ -240,9 +241,9 @@ def draw_network(ax, states: dict, sites: pd.DataFrame,
     ps.credit(ax, BOUNDARY_CREDIT, xy=(0.985, 0.02), va="bottom", ha="right")
     handles = [
         Line2D([], [], marker="*", color=ps.OUTSIDE, linestyle="none", markersize=12,
-               label="This site, absent from the network"),
+               label=f"{site.SITE_NAME} (not in FLUXNET-CH4)"),
         Line2D([], [], marker="o", color=ps.MUTED, linestyle="none", markersize=4,
-               label=f"FLUXNET-CH4 sites in these states ({len(inside)})"),
+               label=f"FLUXNET-CH4 sites in the lower 48 ({len(inside)})"),
     ]
     ps.legend(ax, handles=handles, labels=[h.get_label() for h in handles],
               loc="lower left", fontsize=8.4, borderpad=0.42, labelspacing=0.34)
@@ -281,8 +282,9 @@ def draw_sector(ax, shares: pd.DataFrame) -> None:
     ax.set_rlabel_position(112)
     ax.tick_params(axis="y", labelsize=7.4, colors=ps.MUTED)
     ax.yaxis.set_major_formatter(lambda v, _: f"{v:g}%")
-    ax.set_ylabel("% of half-hours per 10\u00b0 sector", fontsize=7.6,
-                  color=ps.MUTED, labelpad=22)
+    ax.annotate("bars: % of half-hours per 10\u00b0 sector", xy=(0.5, -0.105),
+                xycoords="axes fraction", ha="center", va="top", fontsize=7.6,
+                color=ps.MUTED)
     ax.grid(color=ps.GRID, linewidth=0.6)
 
     handles = [

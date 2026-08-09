@@ -94,7 +94,10 @@ def test_the_excluded_sector_is_marked_and_keyed():
     assert len(hatched) == 17               # 30 to 200 degrees in ten-degree steps
     keyed = " ".join(t.get_text() for t in rose.get_legend().get_texts())
     assert "Discarded" in keyed and "retained" in keyed
-    assert "%" in rose.get_ylabel()
+    # A polar plot has no y axis, so the bar unit is stated as a line beneath it.
+    assert not rose.get_ylabel()
+    said = " ".join(a.get_text() for a in rose.texts)
+    assert "%" in said and "sector" in said
     ps.plt.close(fig)
 
 
