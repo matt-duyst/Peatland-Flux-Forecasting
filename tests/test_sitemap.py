@@ -126,3 +126,35 @@ def test_the_substantive_layers_are_credited_inside_the_figure():
     assert "NAIP" in said and "National Wetlands Inventory" in said
     assert "Census" not in said
     ps.plt.close(fig)
+
+
+def test_the_stated_shares_match_the_stored_wind_record():
+    """The figure's percentages must agree with the file panel c plots.
+
+    This is the one test here that reads a stored layer rather than a synthetic
+    one, because that is the thing being checked: the shares are written into
+    the title and description as text, so regenerating the file over a different
+    period would otherwise leave the words behind without any failure.
+    """
+    shares = sitemap.wind_shares()
+    counts = shares.attrs
+    column = "pct_of_half_hours_with_wind_direction"
+    assert shares[column].sum() == pytest.approx(100.0, abs=0.01)
+
+    of_directions = shares.loc[shares.excluded, column].sum()
+    of_record = of_directions * counts["with_wind_direction"] / counts["half_hours"]
+
+    said = sitemap.SITEMAP_TEXT.subtitle + " " + sitemap.SITEMAP_TEXT.description
+    assert f"{round(of_directions)}%" in said
+    assert f"{round(of_record)}%" in said
+
+
+def test_the_wind_record_is_restricted_to_the_study_window():
+    """Panel c covers the fitted years, not the full product.
+
+    Every other quantity in the study is computed on the fit window, and the
+    shares quoted in the figure are computed on the same months the rose plots.
+    """
+    counts = sitemap.wind_shares().attrs
+    assert counts["half_hours"] == 192816       # 2009-01 to 2019-12
+    assert counts["with_wind_direction"] == 172639
