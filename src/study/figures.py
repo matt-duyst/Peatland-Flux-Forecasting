@@ -146,28 +146,31 @@ WATER_TABLE_ASSUMPTIONS = {
     "reduced": "Water table term absent altogether",
 }
 
+#: The two years a measurement of this peatland exists for, and the only years
+#: in twenty where this reconstruction could ever be tested against one.
+MEASURED_YEARS = (1991, 1992)
+
 #: The reconstruction runs to 2009-03. A three-month year cannot be plotted
 #: beside twelve-month years, so the panel stops at 2008.
 LAST_PLOTTED_YEAR = 2008
 
 RECONSTRUCTION_TEXT = ps.FigureText(
-    title="Reconstructed methane emission at Marcell Bog Lake Peatland, 1990 to 2008",
+    title="Reconstructed methane emission at Marcell Bog Lake Peatland (1990 to 2008)",
     subtitle=(
-        "Where the water table runs beyond its fitted range, the answer depends on an "
-        "assumption the record cannot test"
+        "Three defensible assumptions about one term give between 10 and 30 g C per "
+        "square meter for the same year"
     ),
     description=(
         "Each marker is one year's emission in grams of carbon per square meter, "
-        "fitted on 2009 to 2019. The three lines are not a likely range: each "
-        "assumes something different about the water table beyond its fitted range, "
-        "and where they diverge the assumption sets the answer. The strip gives the "
-        "share of each year's months outside that range, which separates marginal "
-        "years from unsupported ones. Shurpali et al. (1993) and Shurpali and Verma "
-        "(1998) measured 1991 and 1992, the only independent check; this predicts "
-        "9.29 and 8.49 for May to October, and their values have not been obtained. "
-        "The model should read low by about 14%, stated not applied: correcting "
-        "would extrapolate the correction. 2009 is omitted with three months; 1995 "
-        "keeps eleven."
+        "fitted on 2009 to 2019. The three lines each assume something different "
+        "about the water table beyond its fitted range, and agree only where it "
+        "stays inside. The strip gives the share of each year's months outside that "
+        "range. Shurpali et al. (1993) and Shurpali and Verma (1998) measured 1991 "
+        "and 1992, the only years a measurement exists for; this predicts 9.29 and "
+        "8.49 g C for May to October, and their totals have not been obtained. The "
+        "model should read low by about 14%, stated not applied: correcting would "
+        "extrapolate the correction. 2009 is omitted with three months; 1995 keeps "
+        "eleven."
     ),
     emphasize=(),
 )
@@ -181,7 +184,7 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
     this study exists to refuse: the spread is what the choice of assumption
     buys, not a probability.
     """
-    from matplotlib.ticker import MultipleLocator
+    from matplotlib.ticker import FixedLocator, MultipleLocator
 
     frame = annual[annual["year"] <= LAST_PLOTTED_YEAR].copy()
     years = frame["year"].to_numpy()
@@ -204,14 +207,22 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
     ps.support_scatter(ax, years[~inside], frame["clamped"].to_numpy()[~inside],
                        inside=False, label="Year outside it", markersize=7.0)
 
+    check = frame[frame["year"].isin(MEASURED_YEARS)]
+    ax.plot(check["year"], check["clamped"], linestyle="none", marker="o",
+            markersize=13, markerfacecolor="none", markeredgecolor=ps.INK,
+            markeredgewidth=1.2, zorder=3, label="A measurement exists")
+
     ax.set_ylabel(ps.axis_label("Annual emission", "g C m$^{-2}$ yr$^{-1}$"))
     ax.set_ylim(0, frame[list(WATER_TABLE_ASSUMPTIONS)].to_numpy().max() * 1.18)
-    ax.xaxis.set_major_locator(MultipleLocator(5))
+    ticks = [y for y in range(int(years.min()), int(years.max()) + 1, 5)]
+    if years.max() not in ticks:
+        ticks.append(int(years.max()))
+    ax.xaxis.set_major_locator(FixedLocator(ticks))
     ax.xaxis.set_minor_locator(MultipleLocator(1))
     ax.tick_params(labelbottom=False)
     ps.mirror_ticks(ax)
-    ps.legend(ax, loc="upper left", fontsize=8.4, borderpad=0.45, labelspacing=0.34,
-              handlelength=2.6, ncols=2, columnspacing=1.6)
+    ps.legend(ax, loc="upper left", fontsize=8.2, borderpad=0.42, labelspacing=0.32,
+              handlelength=2.6, ncols=2, columnspacing=1.4)
 
     share = frame["pct_months_outside"].to_numpy()
     # A year wholly inside has a bar of zero height. Marking those years on the
@@ -231,12 +242,13 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
     strip.xaxis.set_minor_locator(MultipleLocator(1))
     ps.mirror_ticks(strip)
 
-    check = frame[frame["year"].isin((1991, 1992))]
-    ps.annotate(
-        ax,
-        "1991 and 1992 carry the only\nindependent check, still pending",
-        xy=(1992, float(check["clamped"].max())),
-        xytext=(1993.4, float(check["clamped"].max()) * 0.66),
-        ha="left", va="center",
+    # Set under the fan rather than led to it: a leader from clear space to the
+    # middle of the spread would cross every line it is describing.
+    fan = frame.loc[(frame["unclamped"] - frame["reduced"]).idxmax(), "year"]
+    ax.annotate(
+        "The three agree where the water table stays inside the fitted range,\n"
+        "and fan apart where it leaves it",
+        xy=(float(fan) + 1.5, ax.get_ylim()[1] * 0.115), ha="center", va="center",
+        fontsize=ps.ANNOTATION_SIZE, style="italic", color=ps.INK, zorder=5,
     )
     return fig

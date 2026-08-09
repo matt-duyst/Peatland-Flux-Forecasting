@@ -693,8 +693,46 @@ Biogeochemistry **40**, 1-15. These measured the 1991 and 1992 growing seasons
 at this site, seventeen years before the flux record used here begins, and are
 the only genuinely independent out-of-sample validation available.
 
-This reconstruction gives, for May to October: **1991, 9.16 g C m⁻² (5.87 to
-15.08); 1992, 8.36 g C m⁻² (5.35 to 13.75).**
+This reconstruction gives, for May to October: **1991, 9.29 g C m⁻² (5.84 to
+14.71); 1992, 8.49 g C m⁻² (5.33 to 13.44)**, computed on the adopted 115-month
+window. On the nominal 117-month window the same figures were 9.16 (5.87 to
+15.08) and 8.36 (5.35 to 13.75).
+
+### The published totals, and a consistency check that is not a validation
+
+The seasonal totals remain unobtained. The abstracts give midday flux: about
+1.5 mg CH₄ m⁻² h⁻¹ in late May of both years, 2.5 to 5.5 through early June to
+early July, a peak of 6.5 in mid-July 1991 and of 8.0 three weeks later in 1992,
+with 1992 the wetter and cooler year and a sustained water table drop from late
+July to late August 1991 that may have reduced emission.
+
+Averaging those crudely at roughly 3.5 mg CH₄ m⁻² h⁻¹ across a May to October
+season of 4,416 hours gives about 15.5 g CH₄ m⁻², or **11.6 g C m⁻²**, against
+predictions of 9.29 and 8.49. That is the model reading low by 20% for 1991 and
+27% for 1992.
+
+**This is a consistency check and must not be recorded as a validation.** It
+takes midday values from an abstract and averages them over a season in which
+flux varies by a factor of five, so the arithmetic is indicative at best. What
+can be said is that the direction matches: the bias bands expect the model to
+read low by roughly 14%, and this crude comparison points the same way at a
+similar order. One point cuts in its favour and is worth stating, since it is
+measured rather than assumed: the diurnal cycle at this site explains 0.97% of
+half-hourly variance, so midday flux is a far better stand-in for a daily mean
+here than it would be at most sites.
+
+**Olson et al. (2013) is now the highest-value paper still to obtain.** Its
+Table 2 compares its own budgets against Shurpali and Verma (1998) and Shurpali
+et al. (1995), so obtaining it would yield Shurpali's figures second-hand with a
+citation trail, and it is newer and more accessible than either 1990s paper.
+That is a better route than continuing to chase the originals.
+
+**Shurpali et al. (1995) reports this site emitted 71 g C m⁻² in 1991 and
+absorbed 32 g C m⁻² in 1992.** That is carbon dioxide, not methane, so it
+validates nothing here. It does confirm the two years differed sharply, which
+bears on how informative the pending methane check will be: two years that
+differ in carbon balance by more than a hundred grams are a stronger test of a
+model than two similar ones would be.
 
 The comparison is prepared and pending. The published values have not been
 supplied to this analysis and are not invented here. What makes the pending

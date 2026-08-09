@@ -38,13 +38,17 @@ OUTSIDE = "#D55E00"
 
 #: Model variants, achromatic so that hue stays reserved for support status.
 #: Each also takes a line style, so lightness alone never has to carry them.
+#: Weight follows how far each assumption can be defended, not how large an
+#: answer it gives. Continuing the water table term beyond its fitted range is
+#: the assumption the stability test rejects, so it is drawn lightest; left
+#: heavier it dominates the panel by amplitude alone.
 VARIANT = {
-    "clamped": {"color": "#1A1A1A", "linestyle": "-", "linewidth": 1.9},
+    "clamped": {"color": "#1A1A1A", "linestyle": "-", "linewidth": 2.4},
     # Dash-dot rather than dashed: the apparatus tone is also a mid gray and is
     # also drawn dashed, and two dashed grays on one panel would be a standing
     # hazard rather than one this figure happens to avoid.
-    "unclamped": {"color": "#767676", "linestyle": (0, (7, 2, 2, 2)), "linewidth": 1.7},
-    "reduced": {"color": "#A9A9A9", "linestyle": (0, (1.4, 2.2)), "linewidth": 2.1},
+    "unclamped": {"color": "#767676", "linestyle": (0, (7, 2, 2, 2)), "linewidth": 1.1},
+    "reduced": {"color": "#A9A9A9", "linestyle": (0, (1.4, 2.2)), "linewidth": 1.7},
 }
 
 #: Range boundaries and other apparatus. Neutral so it reads as annotation rather

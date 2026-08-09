@@ -14,10 +14,10 @@ Reconstruction means estimating methane emissions for years before measurements 
 
 Panel a is the peatland around the tower, with the wetland polygon the National Wetlands Inventory maps there and a circle at the 200 m over which the site reports its surface uniform. Panel b places the site among the FLUXNET-CH4 network: it is not one of them, so no community gap-filled product exists for it. Panel c is how often the wind blew from each direction over 2009 to 2019, the years the model was fitted on. Flux is discarded from 30 to 200 degrees, where the tower and the upland forest lie. That sector holds 45% of the half-hours that carry a wind direction and 40% of the whole record, and the published product holds no retained flux from it at all.
 
-### Reconstructed methane emission at Marcell Bog Lake Peatland, 1990 to 2008
+### Reconstructed methane emission at Marcell Bog Lake Peatland (1990 to 2008)
 
-![Reconstructed methane emission at Marcell Bog Lake Peatland, 1990 to 2008](figures/reconstruction_series.png)
+![Reconstructed methane emission at Marcell Bog Lake Peatland (1990 to 2008)](figures/reconstruction_series.png)
 
-**Where the water table runs beyond its fitted range, the answer depends on an assumption the record cannot test**
+**Three defensible assumptions about one term give between 10 and 30 g C per square meter for the same year**
 
-Each marker is one year's emission in grams of carbon per square meter, fitted on 2009 to 2019. The three lines are not a likely range: each assumes something different about the water table beyond its fitted range, and where they diverge the assumption sets the answer. The strip gives the share of each year's months outside that range, which separates marginal years from unsupported ones. Shurpali et al. (1993) and Shurpali and Verma (1998) measured 1991 and 1992, the only independent check; this predicts 9.29 and 8.49 for May to October, and their values have not been obtained. The model should read low by about 14%, stated not applied: correcting would extrapolate the correction. 2009 is omitted with three months; 1995 keeps eleven.
+Each marker is one year's emission in grams of carbon per square meter, fitted on 2009 to 2019. The three lines each assume something different about the water table beyond its fitted range, and agree only where it stays inside. The strip gives the share of each year's months outside that range. Shurpali et al. (1993) and Shurpali and Verma (1998) measured 1991 and 1992, the only years a measurement exists for; this predicts 9.29 and 8.49 g C for May to October, and their totals have not been obtained. The model should read low by about 14%, stated not applied: correcting would extrapolate the correction. 2009 is omitted with three months; 1995 keeps eleven.
