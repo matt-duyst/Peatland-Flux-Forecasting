@@ -848,6 +848,41 @@ and a naive extension would read the step as a two-meter drawdown.
 The same series carries the two 2019 months described under support, which are
 treated as missing there.
 
+## The geospatial layers, and what the wetland inventory says
+
+Four layers under `geodata/` carry the site figure. All were retrieved on
+2026-08-09 and each is credited inside the panel that uses it.
+
+| Layer | Source | Detail |
+|---|---|---|
+| Aerial imagery | USDA National Agriculture Imagery Program, via Microsoft Planetary Computer | scene `mn_m_4709329_sw_15_060_20210831`, 2021-08-31, 0.6 m |
+| Wetland polygons | US Fish and Wildlife Service, National Wetlands Inventory | 49 polygons over the panel |
+| State outlines | US Census Bureau cartographic boundaries, 2022 | 1:20,000,000, lower states |
+| Wind direction | AmeriFlux BASE version 5-5, this site | 254,111 half-hours, 2009 to 2024 |
+
+The imagery covers 47.497 to 47.515 N and −93.500 to −93.478 W. The southern
+edge is 47.497 rather than the 47.495 first wanted because the quarter-quad
+holding the tower begins there, and a second scene for 220 m would have added a
+seam and a second acquisition to attribute.
+
+**The inventory maps the tower on a polygon of 88.2 acres, 35.7 ha, coded
+`PSS3Dg`.** Read out, that is palustrine, scrub-shrub, broad-leaved evergreen,
+continuously saturated, on organic soil. It confirms peatland from a third
+independent direction: organic soil and a substrate saturated at or near the
+surface throughout the year.
+
+**It does not settle bog against fen, and cannot.** The Cowardin system the
+inventory uses classifies by vegetation structure, water regime and soil, not by
+trophic status, which is the property separating the two. The service's own
+definition of the organic modifier groups them, reading "sometimes used to
+indicate peatlands, fens, and bogs". So the inventory joins the land cover class
+of WET in being consistent with the fen designation while not testing it. The
+designation still rests on the site description supplied with the data product,
+corroborated by the pore water pH of Deventer et al. (2019).
+
+No layer anywhere gives a bog or fen boundary as such. The polygon drawn in the
+figure is the inventory's wetland extent, which is what exists.
+
 ## What the study concludes
 
 The reconstruction is not the result. The result is that a model fitted on 2009

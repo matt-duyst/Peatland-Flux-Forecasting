@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import pandas as pd
 
 from ingest import covariates
-from study import figures, plotstyle, windows
+from study import figures, plotstyle, sitemap, windows
 
 MONTHLY = "data/processed/monthly_fch4_from_daily.csv"
 
@@ -37,6 +37,19 @@ def main() -> None:
     fig = figures.water_table_support(cov["wte_m"], built["fit"], built["reconstruction"])
     path = plotstyle.save(fig, "water_table_support")
     fragments.append(plotstyle.readme_block(figures.WATER_TABLE_TEXT, "water_table_support"))
+    print(f"wrote {path.relative_to(plotstyle.figures_dir().parent)}")
+
+    from PIL import Image
+    image = Image.open(sitemap.geodata_dir() / "naip_us_mbp_2021.jpg")
+    fig = sitemap.site_overview(
+        image,
+        sitemap.load_geojson("nwi_wetlands.geojson"),
+        sitemap.load_geojson("us_states.geojson"),
+        sitemap.load_network_sites(),
+        sitemap.wind_shares(),
+    )
+    path = plotstyle.save(fig, "site_overview")
+    fragments.append(plotstyle.readme_block(sitemap.SITEMAP_TEXT, "site_overview"))
     print(f"wrote {path.relative_to(plotstyle.figures_dir().parent)}")
 
     target = plotstyle.figures_dir() / "README_fragments.md"

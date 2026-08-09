@@ -85,6 +85,7 @@ SIZES = {
     "wide": (1800, 900),
     "standard": (1800, 1200),
     "compact": (1200, 1200),
+    "tall": (1800, 1400),
 }
 
 #: Fixed pixel allocations, so a figure's proportions do not depend on how much
@@ -209,11 +210,12 @@ def wrap_description(text: str, width_px: int) -> str:
     return wrapped
 
 
-def canvas(text: FigureText, size: str = "wide") -> tuple[Figure, plt.Axes]:
-    """A figure with its title block, description block and one drawing area.
+def canvas_area(text: FigureText, size: str = "wide") -> tuple[Figure, tuple[float, float, float, float]]:
+    """A figure carrying its text blocks, and the rectangle left for drawing.
 
-    Both blocks take a fixed number of pixels, so the drawing area is the same
-    shape for every figure of a given size regardless of how much each says.
+    Callers that need one axes use `canvas`; callers laying out several panels
+    take the rectangle and subdivide it, so every figure in the set keeps the
+    same blocks in the same places whatever it draws inside them.
     """
     apply_style()
     width_px, height_px = SIZES[size]
@@ -227,7 +229,6 @@ def canvas(text: FigureText, size: str = "wide") -> tuple[Figure, plt.Axes]:
     axes_bottom = (
         MARGIN_PX["bottom"] + DESCRIPTION_BLOCK_PX + XAXIS_BLOCK_PX
     ) / height_px
-    ax = fig.add_axes((left, axes_bottom, right - left, axes_top - axes_bottom))
 
     middle = (left + right) / 2
     fig.text(middle, 1 - MARGIN_PX["top"] / height_px, text.title,
@@ -237,7 +238,13 @@ def canvas(text: FigureText, size: str = "wide") -> tuple[Figure, plt.Axes]:
     fig.text(left, (MARGIN_PX["bottom"] + DESCRIPTION_BLOCK_PX) / height_px,
              body, ha="left", va="top", fontsize=DESCRIPTION_SIZE, color=MUTED,
              linespacing=1.45)
-    return fig, ax
+    return fig, (left, axes_bottom, right - left, axes_top - axes_bottom)
+
+
+def canvas(text: FigureText, size: str = "wide") -> tuple[Figure, plt.Axes]:
+    """A figure with its text blocks and a single drawing area."""
+    fig, rect = canvas_area(text, size)
+    return fig, fig.add_axes(rect)
 
 
 # --------------------------------------------------------------------------
@@ -377,6 +384,52 @@ def annotate(ax: plt.Axes, text: str, xy, xytext, **kwargs):
 # --------------------------------------------------------------------------
 # Output
 # --------------------------------------------------------------------------
+
+
+def scale_bar(ax: plt.Axes, length_m: float, label: str | None = None,
+              corner: tuple[float, float] = (0.06, 0.06)) -> None:
+    """A bar of known ground length, for a panel drawn in meters.
+
+    Every map panel carries one. It replaces a stated scale, which is wrong as
+    soon as the figure is resized, and it needs no projection assumption because
+    the panel is already drawn on a local metric grid.
+    """
+    x0, y0 = ax.get_xlim()[0], ax.get_ylim()[0]
+    w = ax.get_xlim()[1] - x0
+    h = ax.get_ylim()[1] - y0
+    x, y = x0 + corner[0] * w, y0 + corner[1] * h
+    ax.plot([x, x + length_m], [y, y], color="white", linewidth=4.4, zorder=6,
+            solid_capstyle="butt")
+    ax.plot([x, x + length_m], [y, y], color=INK, linewidth=2.0, zorder=7,
+            solid_capstyle="butt")
+    ax.annotate(label or f"{length_m:g} m", xy=(x + length_m / 2, y + 0.018 * h),
+                ha="center", va="bottom", fontsize=ANNOTATION_SIZE, color=INK,
+                zorder=7,
+                path_effects=[_outline()])
+
+
+def _outline():
+    """A thin light halo, so small text stays legible over imagery."""
+    from matplotlib import patheffects
+    return patheffects.withStroke(linewidth=2.4, foreground="white")
+
+
+def credit(ax: plt.Axes, text: str, xy: tuple[float, float] = (0.5, 0.012),
+           va: str = "bottom") -> None:
+    """In-panel attribution for imagery or a published layer.
+
+    Anything drawn from someone else's data says so inside the panel, because a
+    figure separated from its caption still has to carry its sources.
+    """
+    ax.annotate(text, xy=xy, xycoords="axes fraction", ha="center", va=va,
+                fontsize=7.6, color=INK, zorder=7, path_effects=[_outline()])
+
+
+def panel_letter(ax: plt.Axes, letter: str) -> None:
+    """Mark a panel so the description can refer to it without naming positions."""
+    ax.annotate(f"({letter})", xy=(0.014, 0.986), xycoords="axes fraction",
+                ha="left", va="top", fontsize=LEGEND_SIZE, fontweight="bold",
+                color=INK, zorder=8, path_effects=[_outline()])
 
 
 def figures_dir() -> Path:
