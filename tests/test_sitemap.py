@@ -86,12 +86,22 @@ def test_only_sites_in_the_mapped_states_are_plotted():
     assert all(n <= 1 for n in drawn)       # US-Los only; SE-Deg dropped
 
 
-def test_the_excluded_sector_is_marked_and_its_share_reported():
+def test_the_excluded_sector_is_marked_and_keyed():
+    """The panels carry no titles, so the sector needs a key of its own."""
     fig = sitemap.site_overview(image(), wetlands(), states(), sites(), shares())
     rose = fig.axes[2]
     hatched = [b for b in rose.patches if b.get_hatch()]
     assert len(hatched) == 17               # 30 to 200 degrees in ten-degree steps
-    assert "%" in rose.get_title()
+    keyed = " ".join(t.get_text() for t in rose.get_legend().get_texts())
+    assert "Discarded" in keyed and "retained" in keyed
+    assert "%" in rose.get_ylabel()
+    ps.plt.close(fig)
+
+
+def test_no_panel_carries_a_title():
+    """Titles on one panel and not the others read as unbalanced."""
+    fig = sitemap.site_overview(image(), wetlands(), states(), sites(), shares())
+    assert not any(ax.get_title() for ax in fig.axes[:3])
     ps.plt.close(fig)
 
 

@@ -30,7 +30,8 @@ from study import plotstyle as ps
 #: Extent of the imagery crop, degrees, matching the file stored under geodata/.
 IMAGE_BOUNDS = (-93.500, 47.497, -93.478, 47.515)
 
-#: Imagery provenance, stated inside the panel that uses it.
+#: Imagery provenance. The scene identifier is not drawn, but it is what makes
+#: the stored crop reproducible, so it is recorded beside the credit that is.
 IMAGE_SCENE = "mn_m_4709329_sw_15_060_20210831"
 IMAGE_DATE = "2021-08-31"
 IMAGE_CREDIT = "Imagery USDA NAIP 2021-08-31, 0.6 m, via Microsoft Planetary Computer"
@@ -44,11 +45,11 @@ SURFACE_HOMOGENEITY_M = 200.0
 EXCLUDED_SECTOR = (30.0, 200.0)
 
 #: The tower, drawn the same way on the map and in the legend.
-TOWER_MARKER = dict(marker="*", markersize=16, markerfacecolor=ps.INK,
-                    markeredgecolor="white", markeredgewidth=0.9, linestyle="none")
+#: White fill with a dark edge, so the tower reads the same over dark forest,
+#: over light peat, and on the legend's white ground.
+TOWER_MARKER = dict(marker="*", markersize=15, markerfacecolor="white",
+                    markeredgecolor=ps.INK, markeredgewidth=1.1, linestyle="none")
 
-#: The nearest network site of the same wetland class, named in the notes.
-NEAREST_FEN = "US-Los"
 
 SITEMAP_TEXT = ps.FigureText(
     title="Marcell Bog Lake Peatland: the site, its network, and the sector it discards",
@@ -61,11 +62,12 @@ SITEMAP_TEXT = ps.FigureText(
         "National Wetlands Inventory maps there and a circle at the 200 m over which "
         "the site reports its surface uniform. Panel b places the site among the "
         "FLUXNET-CH4 network: it is not one of them, so no community gap-filled "
-        "product exists for it, and the nearest fen in the network is 308 km away. "
-        "Panel c is how often the wind blew from each direction over 2009 to 2019, "
-        "the years the model was fitted on. Flux is discarded from 30 to 200 "
-        "degrees, where the tower and the upland forest lie, and the published "
-        "product holds no retained flux from that sector at all."
+        "product exists for it. Panel c is how often the wind blew from each "
+        "direction over 2009 to 2019, the years the model was fitted on. Flux is "
+        "discarded from 30 to 200 degrees, where the tower and the upland forest "
+        "lie. That sector holds 45% of the half-hours that carry a wind direction "
+        "and 40% of the whole record, and the published product holds no retained "
+        "flux from it at all."
     ),
 )
 
@@ -178,8 +180,8 @@ def draw_site(ax, image, wetlands: dict, origin: tuple[float, float]) -> None:
     for spine in ax.spines.values():
         spine.set_edgecolor(ps.BOUNDARY)
 
-    ps.scale_bar(ax, 400)
-    ps.north_arrow(ax)
+    ps.scale_bar(ax, 400, corner=(0.05, 0.055))
+    ps.north_arrow(ax, at=(0.105, 0.145), size=0.055)
     ps.credit(ax, f"{IMAGE_CREDIT}\n{WETLAND_CREDIT}")
 
     acres = tower_ring["acres"] if tower_ring else 0.0
@@ -187,13 +189,13 @@ def draw_site(ax, image, wetlands: dict, origin: tuple[float, float]) -> None:
         Line2D([], [], label="Flux tower",
                **{**TOWER_MARKER, "markersize": 12}),
         Line2D([], [], color=ps.INSIDE, linestyle=(0, (6, 3)), linewidth=1.6,
-               label=f"{SURFACE_HOMOGENEITY_M:.0f} m, reported uniform surface"),
+               label=f"{SURFACE_HOMOGENEITY_M:.0f} m uniform surface"),
         Patch(facecolor="none", edgecolor=ps.OUTSIDE, linewidth=1.8,
               label=f"Mapped wetland, {acres * 0.4047:.0f} ha"),
     ]
     ps.legend(ax, handles=handles, labels=[h.get_label() for h in handles],
-              loc="upper left", fontsize=8.4, borderpad=0.42, labelspacing=0.34,
-              bbox_to_anchor=(0.045, 0.985))
+              loc="lower left", fontsize=7.6, borderpad=0.38, labelspacing=0.3,
+              handlelength=1.5, handletextpad=0.5, bbox_to_anchor=(0.03, 0.225))
 
 
 def _coordinate_ticks(ax, origin: tuple[float, float]) -> None:
@@ -223,19 +225,10 @@ def draw_network(ax, states: dict, sites: pd.DataFrame,
                                  edgecolor=ps.GRID, linewidth=0.5, zorder=0))
 
     inside = sites[sites.LON.between(-128, -65) & sites.LAT.between(24, 50)]
-    nearest = inside[inside.SITE_ID == NEAREST_FEN]
-    others = inside[inside.SITE_ID != NEAREST_FEN]
-    ax.plot(others.LON, others.LAT, linestyle="none", marker="o", markersize=4.0,
+    ax.plot(inside.LON, inside.LAT, linestyle="none", marker="o", markersize=4.0,
             color=ps.MUTED, markeredgecolor="white", markeredgewidth=0.4, zorder=3)
-    ax.plot(nearest.LON, nearest.LAT, linestyle="none", marker="s", markersize=5.6,
-            color=ps.INSIDE, markeredgecolor="white", markeredgewidth=0.6, zorder=4)
     ax.plot(here[0], here[1], marker="*", markersize=15, color=ps.OUTSIDE,
             markeredgecolor="white", markeredgewidth=1.2, zorder=5)
-    if len(nearest):
-        ax.annotate(f"{NEAREST_FEN}, 308 km", xy=(float(nearest.LON.iloc[0]),
-                                                  float(nearest.LAT.iloc[0])),
-                    xytext=(7, -9), textcoords="offset points", ha="left",
-                    fontsize=7.8, color=ps.INK, zorder=6)
 
     ax.set_xlim(-127, -66); ax.set_ylim(23.5, 50.5)
     ax.set_aspect(1 / math.cos(math.radians(38)))
@@ -248,10 +241,8 @@ def draw_network(ax, states: dict, sites: pd.DataFrame,
     handles = [
         Line2D([], [], marker="*", color=ps.OUTSIDE, linestyle="none", markersize=12,
                label="This site, absent from the network"),
-        Line2D([], [], marker="s", color=ps.INSIDE, linestyle="none", markersize=5.6,
-               label="Nearest network fen"),
         Line2D([], [], marker="o", color=ps.MUTED, linestyle="none", markersize=4,
-               label=f"Other FLUXNET-CH4 sites here ({len(others)})"),
+               label=f"FLUXNET-CH4 sites in these states ({len(inside)})"),
     ]
     ps.legend(ax, handles=handles, labels=[h.get_label() for h in handles],
               loc="lower left", fontsize=8.4, borderpad=0.42, labelspacing=0.34)
@@ -280,26 +271,29 @@ def draw_sector(ax, shares: pd.DataFrame) -> None:
     ax.set_theta_direction(-1)
     ax.set_thetagrids(range(0, 360, 45), ["N", "NE", "E", "SE", "S", "SW", "W", "NW"],
                       fontsize=8.4)
+
+    # Rings stop short of the outer edge, so no radial label sits on the frame.
+    top = float(values.max())
+    step = 3.0 if top <= 13 else 5.0
+    rings = [r for r in np.arange(step, top + step, step) if r < top]
+    ax.set_ylim(0, top * 1.20)
+    ax.set_yticks(rings)
     ax.set_rlabel_position(112)
-    ax.tick_params(axis="y", labelsize=7.6, colors=ps.MUTED)
-    ax.grid(color=ps.GRID, linewidth=0.6)
-    ax.set_rlabel_position(112)
-    ax.tick_params(axis="y", labelsize=7.6, colors=ps.MUTED)
+    ax.tick_params(axis="y", labelsize=7.4, colors=ps.MUTED)
     ax.yaxis.set_major_formatter(lambda v, _: f"{v:g}%")
-    removed = float(values[excluded].sum())
-    recorded = shares.attrs.get("with_wind_direction")
-    total = shares.attrs.get("half_hours")
-    caption = f"{removed:.0f}% of half-hours with a wind direction, 30 to 200 degrees"
-    if recorded and total:
-        caption += f"\n{removed * recorded / total:.0f}% of the whole record"
-    caption += "\nbars are % of half-hours per 10\u00b0 sector"
-    ax.set_title(caption, fontsize=ps.LEGEND_SIZE, fontweight="bold",
-                 color=ps.BOUNDARY, pad=16)
+    ax.set_ylabel("% of half-hours per 10\u00b0 sector", fontsize=7.6,
+                  color=ps.MUTED, labelpad=22)
+    ax.grid(color=ps.GRID, linewidth=0.6)
 
-
-# --------------------------------------------------------------------------
-# The figure
-# --------------------------------------------------------------------------
+    handles = [
+        Patch(facecolor=ps.INSIDE, edgecolor="white", label="Flux retained"),
+        Patch(facecolor=ps.OUTSIDE, edgecolor="white", hatch=ps.OUTSIDE_HATCH,
+              label="Discarded, 30 to 200\u00b0"),
+    ]
+    ps.legend(ax, handles=handles, labels=[h.get_label() for h in handles],
+              loc="lower center", fontsize=7.8, borderpad=0.38, labelspacing=0.3,
+              handlelength=1.4, handletextpad=0.5, columnspacing=1.4, ncols=2,
+              bbox_to_anchor=(0.5, 1.005))
 
 
 def site_overview(image, wetlands: dict, states: dict, sites: pd.DataFrame,
@@ -312,7 +306,7 @@ def site_overview(image, wetlands: dict, states: dict, sites: pd.DataFrame,
     left_w = 0.46 * width
     right_w = width - left_w - gap
     right_x = left + left_w + gap
-    row_gap = 0.17 * height
+    row_gap = 0.075 * height
     row_h = (height - row_gap) / 2
 
     ax_site = fig.add_axes((left, bottom, left_w, height))
