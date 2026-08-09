@@ -42,9 +42,13 @@ covariate set. The reconstruction window is every complete-covariate month
 before the flux record begins. Both are built by `src/study/windows.py` and
 reported by `scripts/prepare_study.py`.
 
+**The fit window is 115 months.** Two months of 2019 are excluded as instrument
+artifacts, for the reasons set out under support below; the study was first run
+on all 117 and both configurations are reported where they differ.
+
 | Window | Months | Span | Absent from span |
 |---|---|---|---|
-| Fit | **117** | 2009-04 to 2019-12 (129) | 12 |
+| Fit | **115** | 2009-04 to 2019-12 (129) | 12, plus 2 excluded |
 | Reconstruction | **230** | 1990-01 to 2009-03 (231) | 1 |
 
 Covariate coverage over the full record:
@@ -91,8 +95,8 @@ The water table excursions are not scattered. They form long consecutive runs:
 0.95 m wide.
 
 The joint picture identifies a partly different set than the univariate one.
-In covariate space standardised on the fit window, fit months sit a median 0.409
-from their nearest neighbour with a 95th percentile of 0.791. Reconstruction
+In covariate space standardized on the fit window, fit months sit a median 0.409
+from their nearest neighbor with a 95th percentile of 0.791. Reconstruction
 months sit a median 0.714 from the nearest fit month, and **110 of 230 lie
 beyond that 95th percentile**, reaching 2.874. Roughly the same fraction fails
 on both measures, but not the same months: falling inside every covariate's
@@ -101,9 +105,9 @@ actually occupies.
 
 Water table also differs between the periods in distribution, not only in range.
 Tested in `src/study/stationarity.py`, the reconstruction period is wetter by
-0.140 m, a standardised difference of 0.902 with Cliff's delta 0.471 and
+0.140 m, a standardized difference of 0.902 with Cliff's delta 0.471 and
 Mann-Whitney p below 0.0001, and the result holds on anomalies from the
-month-of-year mean, so it is not an artefact of month composition. Air
+month-of-year mean, so it is not an artifact of month composition. Air
 temperature shows no raw difference but is 1.59 °F cooler once deseasonalised
 (p = 0.0009). Soil temperature and precipitation show no difference either way.
 
@@ -114,6 +118,79 @@ hydrological state that prevailed through most of the period it is asked to
 reconstruct. Restricting to the contrast Olson et al. (2013) drew, 1991-1999
 against 2007-2011, water table falls 0.275 m with p below 0.0001, while soil
 temperature, air temperature and precipitation show no significant difference.
+
+### The fitted range is far narrower than its bounds suggest
+
+The fitted water table range of 412.51 to 413.46 m is 0.95 m wide, but **115 of
+the 117 months then in the window occupy only 0.33 m**, from 413.13 to 413.46. The whole
+lower half of the nominal range rests on two months, 2019-06 and 2019-09.
+
+**Those two months are not credible as water table.** The evidence, from
+`covariates.load_all` and the monthly record:
+
+| | |
+|---|---|
+| Size of the excursions | −0.83 m in 2019-06 and −0.84 m in 2019-09 |
+| Rank among 358 monthly changes to 2019-12 | the four largest are these two drops and their two recoveries |
+| In standard deviations of monthly change | ±8.3 to ±8.6 |
+| Recovery | +0.82 m the following month, then +0.85 m the following month, each returning to within 0.01 m of the prior level |
+| Against the same calendar month, 1990 to 2019 | 2019-06 is the lowest June by 0.58 m; 2019-09 is the lowest September by 0.58 m |
+| Precipitation in those months | 2019-06 at the 13th percentile for June, **2019-09 at the 83rd percentile for September** |
+
+A peatland water table does not fall 0.84 m in a month and return within the next
+one, twice in a season, by nearly identical amounts. The second excursion falls
+in a wetter-than-usual September, where a drawdown of that size has no driver at
+all. Both are more consistent with an instrument or transcription fault than with
+hydrology. Adding exactly 1.00 m to each turns both into ordinary months, which
+suggests the specific fault, but that is a hypothesis and is not adopted: it
+would raise the fitted maximum to 413.58 and cut the months outside support from
+111 to 59, which is the direction that flatters the model. **The two months are
+treated as missing rather than corrected**, which assumes nothing.
+
+**Recomputing support on the effective range tightens the finding.** Dropping the
+two months moves no other covariate's range:
+
+| | Nominal | Effective |
+|---|---|---|
+| Fitted water table range | 412.51 to 413.46 | **413.13 to 413.46** |
+| Reconstruction months above the maximum | 107 | **107** |
+| Reconstruction months below the minimum | 0 | **6** |
+| Months outside on any covariate | 111 of 230, 48.3% | **117 of 230, 50.9%** |
+| Years wholly inside support | 6 of 20 | **4 of 20** |
+
+The upper bound does not move, so the headline excursion is untouched: 107
+months, reaching 0.29 m past anything fitted. Six months of 2007 to 2009 fall
+below the narrowed minimum, all by 0.06 m or less, and they carry **2008 and
+2009 from inside support to outside**. Those two verdicts turn on margins of 0.01
+to 0.06 m and should be read as marginal rather than as a change of kind.
+
+**The study was refitted on the 115 months and the effective window adopted.**
+Fitting on values established as instrument error is fitting on instrument error,
+and the two months carried 22.3% of the design's leverage in the water table
+dimension on 1.7% of the rows. Both configurations are set out below, because two
+claims the study previously made turn out to have depended on the artifacts.
+
+| | Nominal, 117 | Effective, 115 |
+|---|---|---|
+| Soil temperature slope, unweighted | 0.09781 | 0.09418 |
+| Soil temperature slope, weighted | 0.08883 | 0.08806 |
+| **Q10, unweighted** | **2.66** | **2.57** |
+| **Q10, weighted** | **2.43** | **2.41** |
+| Water table coefficient, unweighted | 1.826 | **2.385**, +30.6% |
+| Water table coefficient, weighted | 2.564 | **2.704**, +5.5% |
+| Clamp bounds | 412.51 to 413.46 | **413.13 to 413.46** |
+
+Every Q10 stays inside the published interval of 1.9 to 4.3, under both
+estimators and across all sixteen holdout fits, whose range is 2.33 to 2.72. The
+water table coefficient steepens, and it steepens six times more without
+weighting than with it, because inverse-variance weighting had already discounted
+the two months to 0.28% of total weight against a 1.71% equal share.
+
+**The reconstruction does not move materially.** Every year rises by 1.2 to 4.1%,
+the largest absolute change being 0.69 g C m⁻² yr⁻¹, and the mean over twenty
+years goes from 13.78 to 14.24. All of that sits far inside the sensitivity
+spans, whose median is 44%. The years carrying the pending independent check,
+1991 and 1992, remain inside support under both windows.
 
 ## Model form
 
@@ -128,14 +205,56 @@ budgets derived from a long-term comparison of open- and closed-path eddy
 covariance systems*, Agricultural and Forest Meteorology **278**, 107638,
 doi:[10.1016/j.agrformet.2019.107638](https://doi.org/10.1016/j.agrformet.2019.107638),
 who fitted a first-order exponential of daily flux to soil temperature at 10 cm
-at this site and reported a Q10 of 2.9 with a 95% interval of 1.9 to 4.3, an R²
-of 0.88 and a root mean square error of 9.5 nmol m⁻² s⁻¹. Choosing a measured
-form rather than a flexible one matters because extrapolation behaviour, not
-in-sample fit, is what this study tests.
+at this site. Choosing a measured form rather than a flexible one matters
+because extrapolation behavior, not in-sample fit, is what this study tests.
 
-Fitted here on all 117 months, the Q10 is **2.66** by least absolute deviations
-and 2.91 by least squares, and ranges 2.33 to 3.10 across the holdout fits. All
-lie inside the published interval.
+That paper states the response function and its estimator in section 2.5, page
+5, as F(Tsoil) = a·exp(b·Tsoil) with Q10 = exp(10b), the coefficients obtained
+by least absolute residual optimisation.
+
+**The estimator used here is the published one.** Least absolute deviations was
+chosen from that paper's finding that flux errors at this site are Laplace, of
+which it is the maximum likelihood estimator, and not from any knowledge of how
+the paper fitted its own curve, which was established only when the figures were
+examined. Arriving independently at both the response function and the
+estimator that the only published fit at this site used is the strongest
+independent check the model form has. It is a check on form, not on values: the
+same estimator applied to a different aggregation of the same site can still
+disagree, and the Q10 comparison below is what tests that.
+
+The paper reports three Q10 figures that do not at first agree, and it is worth
+recording where each comes from because the model form here is checked against
+them.
+
+| Value | Location | Basis |
+|---|---|---|
+| 2.9, 95% interval 1.9 to 4.3 | section 3.4.1, page 9 | stated with R² 0.88 and RMSE 9.5 |
+| 3.00, bounds 2.72 to 3.00 | figure 9 caption, page 10 | exponent b = 0.11 with 90% prediction bounds [0.10, 0.11] |
+| 2.3 to about 3.1 | page 10 | per-year values, 2015 lowest |
+
+The three are reconcilable. The figure prints b to two decimal places, and
+b = 0.106, which is ln(2.9)/10, rounds to 0.11; its bounds are the parameter
+bounds of a single pooled fit and are correspondingly tight. The wider interval
+of 1.9 to 4.3 is quoted for the same fit statistics but is far too wide to be
+that fit's parameter uncertainty, and section 2.5 describes total uncertainty
+for this approach as the range across fifty separate extrapolations, each with
+its own soil temperature regression. The wider interval is therefore consistent
+with variation across those replicates and across years rather than with the
+standard error of one fit, though the paper does not say so explicitly and this
+reconciliation is inference rather than something stated.
+
+**The value used for comparison here is 2.9 with an interval of 1.9 to 4.3**,
+as the paper's headline figure. Fitted on the 115 months, the Q10 is **2.57**
+unweighted and 2.41 weighted, and it ranges **2.33 to 2.72** across the sixteen
+holdout fits. On the nominal 117 it was 2.66 unweighted and 2.43 weighted.
+
+**Every one of those values falls inside the published interval of 1.9 to 4.3**,
+under both estimators and across all four holdouts, and the whole holdout range
+also sits inside the 2.3 to 3.1 the paper reports across its own years. The
+agreement therefore does not depend on which estimator is used or on which block
+of the record is withheld. Q10 is the one coefficient in this model that behaves
+as a property of the site rather than of the sample, which is the contrast the
+water table result below draws.
 
 Water table enters clamped to the range seen in training: beyond that range the
 term holds at its edge value. Deventer et al. (2019) report that the water table
@@ -147,14 +266,19 @@ assumption legibly.
 
 The estimator is least absolute deviations, which is maximum likelihood under
 Laplace errors. Deventer et al. (2019) established that flux errors at this site
-follow a Laplace rather than a Gaussian distribution, reporting a median
-difference of 0.1, an interquartile range of 8.2 and a standard deviation of
-8.5; that standard deviation is read as the Laplace value implied by the
-interquartile range rather than as a raw second moment, an interpretation
-supplied by the project owner and consistent with the two published figures,
-since a Laplace distribution of standard deviation 8.5 implies an interquartile
-range of 8.33. The ingestion layer reproduced the distributional finding with a
-difference in the Akaike information criterion of 7,028 in favour of Laplace.
+follow a Laplace rather than a Gaussian distribution. Their figure 4, page 8,
+separates the two kinds of quantity across its two panels. Panel a annotates the
+sample statistics of the paired differences, median 0.1, kurtosis 7.8 and
+skewness 0.32, over a histogram with a fitted Laplace density overlaid. Panel b
+gives the cumulative form, and its legend reads Laplace with mu = 0.05 and
+sigma = 8.5, against a normal distribution drawn for comparison. **The 8.5 is
+therefore a parameter of the fitted Laplace distribution and not the sample
+standard deviation of the differences**, which the figure states rather than
+leaves to be inferred from the text. The caption of the following figure names
+sigma the standard deviation of the fitted Laplace, which is how the constant is
+described in the ingestion layer. That layer reproduced the distributional
+finding independently, with a difference in the Akaike information criterion of
+7,028 in favor of Laplace.
 Intervals are the empirical quantiles of the training residuals, which assume no
 distributional form at all, with a Laplace variant widened by each month's own
 standard error.
@@ -166,7 +290,7 @@ results.
 
 Weighting is by inverse variance, using the standard errors the ingestion layer
 carries on each monthly mean. It is not a neutral choice: it reduces effective
-sample size from 117 to 42.3 and gives July and August 1.8% and 1.3% of total
+sample size from 115 to 42.3 and gives July and August 1.8% and 1.3% of total
 weight against an equal share of 8.5%, because high-flux months are variable
 months. It was adopted because it was the most consistent configuration across
 all four holdout experiments, not on principle.
@@ -184,10 +308,11 @@ nominal intervals:
 | Earliest three years | 0.232 | 31.5% | 0.844 |
 | Latest three years | 0.174 | 20.5% | 0.889 |
 
-Unweighted, backward transfer is markedly worse: 50.2% MAPE at **62.5%
-coverage** against a nominal 90%, with intervals that miss more than a third of
-held-out months. Weighting repairs most of that, which was not the expected
-direction given what it does to the seasonal balance of influence.
+Unweighted backward transfer was reported as 50.2% MAPE at 62.5% coverage on the
+nominal window, and that number was **substantially an artifact of the two
+excluded months**. On the 115-month window the same experiment gives **30.1% MAPE
+at 87.5% coverage**, which is not a failure. The striking figure did not survive
+the check, and establishing that here is what the check existed for.
 
 The wettest-decile test is the closest available analogue of the reconstruction
 problem and the model passes it. That result is weaker than it sounds. A holdout
@@ -195,6 +320,38 @@ drawn from inside the record can only reach the record's edge: the wettest
 decile extrapolates 0.05 m past its training range, against the 0.29 m the
 reconstruction demands, so it covers **17% of the required extrapolation**.
 Passing it rules out the cheapest failure mode and nothing more.
+
+### The wettest-decile holdout is unstable under ties
+
+Moving to the 115-month window appeared to worsen the wettest-decile holdout,
+weighted mean absolute percentage error rising 20.2 to 24.6 and coverage falling
+0.833 to 0.750. **That is neither a harder test nor a loss of skill. It is a
+different set of months.**
+
+Ten fit months share a water table of exactly 413.41 m. The decile takes twelve
+months, and the twelfth and thirteenth wettest are both 413.41, so the cut falls
+inside the tie and which months enter the holdout is settled by sort order rather
+than by water table. Removing two months from the frame changes that order:
+the nominal window holds out 2014-09 and 2019-05, the effective window holds out
+2016-05 and 2017-08, and all four sit at 413.41.
+
+Nothing about the model differs. The water table coefficient is 2.721 in both,
+the clamp is 413.41 in both, the reach beyond the training maximum is 0.050 m in
+both, and the ten shared months receive predictions identical to the cent. The
+whole difference comes from the swapped pair: the two months unique to the
+nominal window err by 11.8% and 33.5%, the two unique to the effective window by
+74.9% and 22.7%.
+
+The training range does narrow at the dry end, 0.900 m to 0.280 m, which lifts
+that same 0.050 m reach from 5.6% to 17.9% of the range. It had no effect on the
+predictions, because the clamp ceiling and the coefficient are unchanged and no
+held-out month lies near the lower bound.
+
+**The consequence is that the wettest-decile figures are not determinate.** They
+depend on an arbitrary tie-break, and the same is true of any decile cut landing
+inside a tie in this record. `holdout.wettest_decile` has not been changed, since
+altering the selection rule would move published numbers again; the instability
+is recorded here so the figures are read as approximate.
 
 ## Coefficient stability
 
@@ -213,12 +370,19 @@ Water table coefficient, 500 bootstrap resamples per step, seed 20110801:
 | 30% | 1.833 | −0.223 to 3.289 | 3.303 | 2.504 to 5.461 |
 | 40% | 0.867 | −0.363 to 3.742 | **4.077** | 2.462 to 6.716 |
 
-Both configurations fail, for different reasons. Unweighted, the coefficient is
-not distinguishable from zero at any step and drifts 62%. Weighted, it is
-comfortably non-zero but **climbs monotonically from 2.564 to 4.077**, a 59%
-increase with a rank correlation against the share removed of +1.00 at p below
-0.0001. The Q10 stays stable across both paths, so the instability is specific
-to water table rather than general.
+Both configurations fail, and they failed on the nominal window for different
+reasons. Unweighted, the coefficient was not distinguishable from zero at any
+step and drifted 62% downward; **that too was partly an artifact**. On the
+115-month window the unweighted path never spans zero at any step and climbs
+2.385 to 3.299, a 38% rise, so the second of the two claims does not survive
+either. Weighted, the coefficient climbs 2.704 to 4.077 on the effective window
+against 2.564 to 4.077 on the nominal, a 51% rise with a rank correlation against
+the share removed of +1.00 at p below 0.0001.
+
+**The verdict is unchanged on both windows and under both weightings**: the
+coefficient drifts by more than a quarter of its full-range value and trends
+monotonically as the range narrows. The Q10 stays stable across every path, so
+the instability remains specific to water table.
 
 A criterion requiring only that each step stay inside the full-range interval
 and keep its sign does not discriminate here. That interval spans 2.064 to 4.245
@@ -304,10 +468,10 @@ The model misses 2011 by 10 to 11 g C in every configuration. Two independent
 lines converge on the reason, and it is not the one the covariates suggest.
 
 **2011 is not covariate-anomalous in this record.** Against the rest of the fit
-window, standardised differences are +0.15 for soil temperature, +0.07 for air
+window, standardized differences are +0.15 for soil temperature, +0.07 for air
 temperature, −0.10 for precipitation and +0.23 for water table. Its water table
 maximum of 413.410 is below the fitted maximum of 413.460. Olson et al. (2013)
-characterise 2011 as 1.3 °C warmer and 40 mm wetter than the 30-year average
+characterize 2011 as 1.3 °C warmer and 40 mm wetter than the 30-year average
 with the greatest radiative forcing of their three study years, but relative to
 the 2009-2019 fit window it is unremarkable, because that window is itself a
 warm, wet decade against a longer baseline.
@@ -349,7 +513,7 @@ component is invisible to the covariates, so its frequency before 2009 is
 unobservable and unconstrained by anything in this data. If episodes like
 August and September 2011 occurred in the 1990s, the reconstruction
 under-predicts by an amount nothing here can bound, and that failure does not
-shrink with better covariate modelling.
+shrink with better covariate modeling.
 
 ## The discrepancy against Olson et al.
 
@@ -371,7 +535,7 @@ The same pipeline agrees with one published source to within 0.8 to 6.4% and
 falls 16 to 24% short of the other, at the same site.
 
 What can be established. It is **not a uniform scaling**: the ratios differ by
-0.084 and decline monotonically. It is **not a coverage artefact**: half-hourly
+0.084 and decline monotonically. It is **not a coverage artifact**: half-hourly
 coverage is comparable across both eras at 25.5%, 36.3% and 34.9% for 2009-2011
 against 25.2%, 28.8% and 37.8% for 2015-2017, which sits inside the 25 to 40%
 typical of methane records after filtering reported by Irvin et al. (2021).
@@ -392,15 +556,22 @@ The discrepancy is largest in the most episodic year, which is consistent with a
 gap-filling difference rather than a data difference, since Olson et al.
 gap-filled and this pipeline integrates observed months only.
 
-**What cannot be resolved here.** Whether the base methane column was
-reprocessed between Olson's access and the export used here. The workbook is a
-2022 export carrying no data-product version stamp, and the current release is
-Roman, T., Hill, A. C., Kolka, R., Griffis, T., and Deventer, J. (2025),
-*AmeriFlux BASE US-MBP Marcell Bog Lake Peatland, Version 5-5*,
-doi:[10.17190/AMF/1767835](https://doi.org/10.17190/AMF/1767835). Settling the
-question requires either that product or Olson's original extraction, and
-neither is in this repository. Olson et al. should therefore be treated as a
-weak comparison rather than a benchmark.
+**What the 2025 product settles, and what it does not.** The open question was
+whether the base methane column was reprocessed between Olson's access and the
+2022 export used here. That product has since been obtained and held alongside
+the export rather than substituted for it, and **every methane value in the two
+is identical**: 44,427 site-aggregated and 31,564 replicate half-hours, with no
+value differing and none present in one and absent from the other. Recorded in
+`notes/base_v55.md`.
+
+So the export is not a stale or unusual snapshot, and no reprocessing occurred
+between 2022 and 2025. What that cannot rule out is reprocessing between about
+2012, when Olson et al. would have drawn their data, and 2022; only their
+original extraction could close that, and it is not available. The remaining
+explanation is the one already preferred, that Olson et al. gap-filled where
+this pipeline integrates observed months only, and it is now the stronger of the
+two because the alternative has been narrowed rather than merely doubted. Olson
+et al. should still be treated as a weak comparison rather than a benchmark.
 
 ## The hysteresis null
 
@@ -413,7 +584,7 @@ hysteresis in the methane response to soil temperature at this site: the
 response differs between the warming and cooling limbs of the annual cycle,
 delineated by t_rise, the early-spring day when soil temperature sharply rises
 at the inflection where the second derivative turns positive, and t_mid, the
-midsummer day when soil temperature is maximised after 30-day smoothing. The
+midsummer day when soil temperature is maximized after 30-day smoothing. The
 same work concludes that shifting seasonal water availability from winter to
 summer increases annual emissions even under identical soil temperature
 trajectories.
@@ -476,7 +647,9 @@ full model primary. Every year carries its support verdict, its sensitivity
 range and its directional bias expectation in the same row as its estimate.
 
 **Six of twenty years lie inside the fitted support.** Fourteen require
-extrapolation, almost always on water table. Representative rows, g C m⁻² yr⁻¹:
+extrapolation, almost always on water table. On the effective range described
+under support, four years lie inside rather than six; the table below is on the
+nominal range, as the reconstruction itself was. Representative rows, g C m⁻² yr⁻¹:
 
 | Year | Support | Months outside | Estimate | Interval | Sensitivity span |
 |---|---|---|---|---|---|
@@ -494,8 +667,9 @@ to 17%. The span tracks support closely, which is the demonstration working:
 where the model has evidence it is nearly indifferent to the assumption, and
 where it does not the assumption determines the answer.
 
-Empirical coverage against a 90% nominal level is 89.7% in sample over the 117
-fit months, 84.4% on weighted held-out backward transfer and 62.5% unweighted.
+Empirical coverage against a 90% nominal level is 89.7% in sample over the fit
+months, 84.4% on weighted held-out backward transfer and 87.5% unweighted on the
+115-month window, against 62.5% on the nominal window.
 **No empirical coverage can be computed over the reconstruction period**,
 because nothing was observed there. The held-out figures are the only evidence
 about how these intervals behave away from the fit window. Irvin et al. (2021)
@@ -531,7 +705,7 @@ few the model is well placed to answer for.
 
 ## A defect in the joint-distance measure
 
-The joint-distance measure standardises each covariate by its standard deviation
+The joint-distance measure standardizes each covariate by its standard deviation
 over the fit window. A covariate that does not vary there gives a standard
 deviation of zero, and dividing by it produced undefined distances. Because a
 comparison against a threshold is false when either side is undefined, the
@@ -543,6 +717,137 @@ about: a diagnostic failing quietly toward the reassuring answer. Both
 `support.joint_support` and `reconstruct._joint_distance_by_month` now drop
 non-varying dimensions and raise if none remain, and tests cover both paths.
 
+## What the source figures establish
+
+Statements here come from the figures themselves, retrieved and viewed, rather
+than from captions read in isolation. Deventer et al. (2019) was retrieved from
+the USDA Northern Research Station copy at
+`fs.usda.gov/nrs/pubs/jrnl/2019/nrs_2019_deventer_001.pdf`. Irvin et al. (2021)
+was retrieved from the NSF Public Access Repository at
+`par.nsf.gov/servlets/purl/10293991`. Feng et al. (2020) was not retrievable
+from the publisher, but its seasonal-responses figure is reproduced, credited to
+that paper, in a Department of Energy final report at
+`osti.gov/servlets/purl/2047108`.
+
+**Deventer figure 8 is a three-dimensional surface, not a contour plot.** Its
+panels a and b plot mean flux against half hour of the day and month of the
+year as a surface, with contours projected onto the base plane beneath it.
+Panels c and d are separate two-dimensional contour plots of the coefficient of
+variation over the same two axes. A description of it as a binned contour with a
+coefficient-of-variation panel conflates the two halves. The version produced
+here is a two-dimensional contour in all cases, because a surface obscures the
+values it plots, but the source should not be misdescribed on that account.
+
+**Deventer figure 9 uses 90% prediction bounds** on its soil temperature fit,
+which is the same nominal level chosen independently for the intervals here.
+
+**Deventer figure 10 shows uncertainty around a series as a band around the
+line it belongs to**, with the range across gap-filling approaches drawn that
+way and an inset carrying annual totals with error bars. That is the convention
+followed for the reconstruction figure here.
+
+**Irvin figure 9 pairs coverage with sharpness**, plots both against a dashed
+line at the nominal level, and separates model identity from calibration state
+by giving each its own visual channel and its own legend. That is the form the
+calibration figure here follows. The same paper reports coverage of 56.6% and
+28.4% against a nominal 95% before calibration, which is the same class of
+failure as the 62.5% against a nominal 90% that this study found on its nominal
+window, before that number proved to rest on two months of instrument error.
+
+**Olson et al. (2013) could not be retrieved by any route attempted**: the
+publisher returned 403 for both the full-text and direct-PDF paths, the USDA
+Northern Research Station has no copy at the expected path, the Office of
+Scientific and Technical Information returned 404, and ResearchGate returned
+403. Its figures have therefore not been seen. Because it is the methodological
+precedent, the figure it would most have informed is the reconstruction with its
+uncertainty, and that figure instead follows the convention used elsewhere at
+this site, in Deventer figure 10. This is a record of what was available, not a
+qualification of the result.
+
+## The figure set: sizing and separation, measured
+
+Drawing decisions live in `src/study/plotstyle.py` and are shared by every
+figure. Two of them were verified rather than assumed, and the verification is
+reproducible through `scripts/verify_palette.py`.
+
+### Separation
+
+Hue carries exactly one distinction across the whole set: whether a month falls
+inside the range the model was fitted on. Every other distinction is carried by
+line style, marker shape, hatching or lightness, so no figure depends on hue
+being seen at all.
+
+Separation was measured, not asserted. Each pair was converted to sRGB, simulated
+under the three dichromacies by the method of Viénot, Brettel and Mollon (1999),
+and compared in CIE L\*a\*b\* as a Euclidean distance, which is the CIE 1976
+color difference. A difference of about 2.3 is the threshold of noticeability.
+
+| Pair | Normal | Deuteranopia | Protanopia | Tritanopia | Grayscale luminance gap |
+|---|---|---|---|---|---|
+| inside against outside | 114.6 | 111.7 | **93.3** | 166.9 | 0.069 |
+| clamped against unclamped | 40.4 | 40.4 | 40.4 | 40.4 | 0.171 |
+| clamped against reduced | 62.6 | 62.6 | 62.6 | 62.6 | 0.424 |
+| unclamped against reduced | 22.2 | 22.2 | 22.2 | 22.2 | 0.253 |
+
+The support pair stays above 93 under every deficiency. The variant values do not
+change across the three columns because those marks are achromatic, which is the
+point of making them so.
+
+**Two assignments were rejected on these measurements.** Assigning the support
+inside hue to the clamped variant as well would have given one hue two meanings
+on the one figure that carries both, the reconstruction. Separately, the support
+outside hue and one of the variant hues first proposed measured a difference of
+**0.9** under deuteranopia, which is indistinguishable, and those two also
+co-occur on that figure. Every three-hue variant set tried measured worse than
+achromatic: the best reached 12.5 against 22.2, and all separated less well in
+grayscale. Reserving hue for support status resolved both problems at once.
+
+Text contrast against white is 17.4 to 1 for the main ink and 7.0 to 1 for the
+muted ink used in descriptions, against a 4.5 to 1 threshold for body text.
+
+Sequential quantities use cividis. It is perceptually uniform, monotonic in
+lightness so it survives grayscale, and ships with matplotlib. The alternative
+considered, batlow, is comparable on all three counts but arrives through a
+further package, and at most one or two figures in the set encode a continuous
+quantity by color. The dependency was not worth the difference.
+
+### Sizing
+
+Figures are written as portable network graphics at 1800 pixels wide, or 1200 for
+square panels. A GitHub README renders its content column at roughly 900 pixels,
+so the figures are drawn at about twice display size and stay sharp on
+high-density screens and when opened alone.
+
+Pixel dimensions are the quantity that matters here, and dots per inch only
+converts between pixels and the inch-and-point units the drawing library works
+in. Nominal resolution is set to 150 so that ordinary point sizes for type land
+at comfortable on-screen sizes. Any other pairing of resolution and canvas size
+that multiplies to the same pixel count produces a byte-identical image, so the
+figure quoted for resolution carries no information on its own.
+
+Vector output is not produced. These are read in a README, which will not display
+one, and every figure is regenerable from its function if a document ever needs
+one.
+
+## Data caveats beyond the study windows
+
+**The water table series steps by about 2 m at 2020-01 and never returns.** Every
+month from 1990 to 2019-12 sits between 413.07 and 413.75; every month from
+2020-01 to the end of the record in 2021-01 sits between 411.08 and 411.22. The
+transition is a single step of −2.25 m between 2019-12 and 2020-01, with no
+intervening values, and the series afterwards is as smooth as it was before.
+That is the signature of a change of datum or of gauge, not of hydrology.
+
+Nothing in this study touches it. The fit window ends 2019-12 and the
+reconstruction ends 2009-03, so no fitted coefficient, holdout or reconstructed
+year draws on a post-2019 value. It is recorded because it falls just outside
+both windows and will be the first thing anyone extending this study meets: the
+2020 and 2021 methane months cannot be added without resolving the datum first,
+and a naive extension would read the step as a two-meter drawdown.
+
+The same series carries the two 2019 months described under support, which are
+treated as missing there.
+
 ## What the study concludes
 
 The reconstruction is not the result. The result is that a model fitted on 2009
@@ -550,10 +855,20 @@ to 2019 cannot answer for the 1990s at this site, quantified along three
 independent axes.
 
 **The water table coefficient is a property of the sample rather than of the
-system.** It drifts 59% monotonically as its supporting range narrows under
-weighting, and is never distinguishable from zero without it. It cannot be
-projected 0.29 m beyond the range it was fitted on, and 46.5% of the
-reconstruction period lies there.
+system.** It drifts 51% monotonically as its supporting range narrows under
+weighting and 38% without it, failing the stability criterion on both windows and
+under both estimators. It cannot be projected 0.29 m beyond the range it was
+fitted on, and 46.5% of the reconstruction period lies there.
+
+Two of the sharper numbers this study once reported did not survive its own
+check. Backward-transfer coverage of 62.5% and a water table coefficient never
+distinguishable from zero were both substantially artifacts of two months of
+instrument error, and both dissolve on the 115-month window. **The conclusion
+does not depend on either.** Q10 is stable and inside the published interval on
+every window, weighting and holdout; the water table coefficient is unstable and
+monotone on every one; the reconstruction moves by at most 4.1% between windows;
+and roughly half the reconstruction period lies outside the fitted range either
+way. What changed is the strength of two supporting claims, not the finding.
 
 **The direction of error is known and points the wrong way.** The band matching
 the reconstruction's hydrological state indicates under-prediction of roughly
