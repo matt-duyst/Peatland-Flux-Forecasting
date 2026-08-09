@@ -182,7 +182,7 @@ def draw_site(ax, image, wetlands: dict, origin: tuple[float, float]) -> None:
         spine.set_edgecolor(ps.BOUNDARY)
 
     ps.scale_bar(ax, 400, corner=(0.05, 0.108))
-    ps.north_arrow(ax, at=(0.105, 0.205), size=0.052)
+    ps.north_arrow(ax, at=(0.05, 0.205), size=0.052)
     ps.credit(ax, f"{IMAGE_CREDIT}\n{WETLAND_CREDIT}")
 
     acres = tower_ring["acres"] if tower_ring else 0.0
@@ -283,7 +283,7 @@ def draw_sector(ax, shares: pd.DataFrame) -> None:
     ax.set_rlabel_position(112)
     ax.tick_params(axis="y", labelsize=7.4, colors=ps.MUTED)
     ax.yaxis.set_major_formatter(lambda v, _: f"{v:g}%")
-    ax.annotate("bars: % of half-hours per 10\u00b0 sector", xy=(0.5, -0.105),
+    ax.annotate("rings: % of half-hours per 10\u00b0 sector", xy=(0.5, -0.105),
                 xycoords="axes fraction", ha="center", va="top", fontsize=7.6,
                 color=ps.MUTED)
     ax.grid(color=ps.GRID, linewidth=0.6)
@@ -308,7 +308,7 @@ def draw_sector(ax, shares: pd.DataFrame) -> None:
     ps.legend(ax, handles=handles, labels=[h.get_label() for h in handles],
               loc="lower center", fontsize=7.8, borderpad=0.38, labelspacing=0.3,
               handlelength=1.4, handletextpad=0.5, columnspacing=1.4, ncols=2,
-              bbox_to_anchor=(0.5, 1.10))
+              bbox_to_anchor=(0.5, 1.09))
 
 
 def site_overview(image, wetlands: dict, states: dict, sites: pd.DataFrame,
@@ -321,7 +321,7 @@ def site_overview(image, wetlands: dict, states: dict, sites: pd.DataFrame,
     left_w = 0.46 * width
     right_w = width - left_w - gap
     right_x = left + left_w + gap
-    row_gap = 0.075 * height
+    row_gap = 0.11 * height
     row_h = (height - row_gap) / 2
 
     ax_site = fig.add_axes((left, bottom, left_w, height))
