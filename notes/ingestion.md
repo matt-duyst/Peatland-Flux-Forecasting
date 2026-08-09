@@ -318,7 +318,8 @@ A ratio of 1.036 — essentially flat. Monthly coverage spans only 24.0% (Januar
 to 33.4% (April), with no seasonal shape.
 
 Coverage of roughly 30% is not 30% of an attainable 100%. The footprint rule of
-Deventer et al. (2019) removes 37.6% of all half-hours before any instrument or
+Deventer et al. (2019) removes 37.6% of all half-hours, and 41.5% of those
+carrying a wind direction, before any instrument or
 quality consideration applies, and against what it leaves, methane retention is
 60.2%. Measured in `notes/base_v55.md` from the wind direction the 2022 export
 does not carry.

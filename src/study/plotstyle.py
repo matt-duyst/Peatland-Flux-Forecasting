@@ -386,25 +386,55 @@ def annotate(ax: plt.Axes, text: str, xy, xytext, **kwargs):
 # --------------------------------------------------------------------------
 
 
-def scale_bar(ax: plt.Axes, length_m: float, label: str | None = None,
-              corner: tuple[float, float] = (0.06, 0.06)) -> None:
-    """A bar of known ground length, for a panel drawn in meters.
+def scale_bar(ax: plt.Axes, length_m: float, divisions: int = 4,
+              corner: tuple[float, float] = (0.05, 0.10)) -> None:
+    """A divided bar of known ground length, on a panel drawn in meters.
 
-    Every map panel carries one. It replaces a stated scale, which is wrong as
-    soon as the figure is resized, and it needs no projection assumption because
-    the panel is already drawn on a local metric grid.
+    Divisions let a reader measure a fraction of the bar rather than only its
+    whole, and the backing keeps it legible over dark imagery. It replaces a
+    stated scale, which is wrong as soon as the figure is resized.
     """
-    x0, y0 = ax.get_xlim()[0], ax.get_ylim()[0]
-    w = ax.get_xlim()[1] - x0
-    h = ax.get_ylim()[1] - y0
+    from matplotlib.patches import FancyBboxPatch, Rectangle
+
+    x0, x1 = ax.get_xlim()
+    y0, y1 = ax.get_ylim()
+    w, h = x1 - x0, y1 - y0
     x, y = x0 + corner[0] * w, y0 + corner[1] * h
-    ax.plot([x, x + length_m], [y, y], color="white", linewidth=4.4, zorder=6,
-            solid_capstyle="butt")
-    ax.plot([x, x + length_m], [y, y], color=INK, linewidth=2.0, zorder=7,
-            solid_capstyle="butt")
-    ax.annotate(label or f"{length_m:g} m", xy=(x + length_m / 2, y + 0.018 * h),
-                ha="center", va="bottom", fontsize=ANNOTATION_SIZE, color=INK,
-                zorder=7,
+    bar_h = 0.011 * h
+    step = length_m / divisions
+
+    ax.add_patch(FancyBboxPatch(
+        (x - 0.035 * w, y - 0.028 * h), length_m + 0.07 * w, 0.085 * h,
+        boxstyle="round,pad=0.002", facecolor="white", alpha=0.78,
+        edgecolor="none", zorder=6, transform=ax.transData))
+    for i in range(divisions):
+        ax.add_patch(Rectangle((x + i * step, y), step, bar_h,
+                               facecolor=INK if i % 2 == 0 else "white",
+                               edgecolor=INK, linewidth=0.7, zorder=7))
+    for value in (0, length_m):
+        ax.annotate(f"{value:g}" if value else "0",
+                    xy=(x + value, y + bar_h * 1.5), ha="center", va="bottom",
+                    fontsize=7.4, color=INK, zorder=8)
+    ax.annotate("m", xy=(x + length_m + 0.012 * w, y + bar_h * 0.4), ha="left",
+                va="center", fontsize=7.4, color=INK, zorder=8)
+
+
+def north_arrow(ax: plt.Axes, at: tuple[float, float] = (0.94, 0.13),
+                size: float = 0.075) -> None:
+    """A north arrow, for a panel that carries nothing else to orient by.
+
+    Only warranted where orientation is otherwise unstated. A panel with a
+    coastline, a state outline or a compass already says which way is up.
+    """
+    x, y = at
+    ax.annotate("", xy=(x, y + size), xytext=(x, y - size * 0.35),
+                xycoords="axes fraction", textcoords="axes fraction", zorder=8,
+                arrowprops=dict(arrowstyle="-|>", color=INK, linewidth=1.5,
+                                mutation_scale=15,
+                                path_effects=[_outline()]))
+    ax.annotate("N", xy=(x, y + size * 1.12), xycoords="axes fraction",
+                ha="center", va="bottom", fontsize=ANNOTATION_SIZE,
+                fontweight="bold", color=INK, zorder=8,
                 path_effects=[_outline()])
 
 
@@ -415,13 +445,13 @@ def _outline():
 
 
 def credit(ax: plt.Axes, text: str, xy: tuple[float, float] = (0.5, 0.012),
-           va: str = "bottom") -> None:
+           va: str = "bottom", ha: str = "center") -> None:
     """In-panel attribution for imagery or a published layer.
 
     Anything drawn from someone else's data says so inside the panel, because a
     figure separated from its caption still has to carry its sources.
     """
-    ax.annotate(text, xy=xy, xycoords="axes fraction", ha="center", va=va,
+    ax.annotate(text, xy=xy, xycoords="axes fraction", ha=ha, va=va,
                 fontsize=7.6, color=INK, zorder=7, path_effects=[_outline()])
 
 

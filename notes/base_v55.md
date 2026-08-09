@@ -238,6 +238,11 @@ with a wind direction recorded, the share lying in 30° to 200° is:
 | `FC` | 97,985 | **0.00%** |
 | all half-hours | 254,111 | **41.47%** |
 
+Two denominators are in play and both appear here. Of half-hours **carrying a
+wind direction**, 41.5% fall in the sector; of **all** half-hours, 37.6% do. The
+first is the rule's effect on the population it can act on, and is what the site
+figure plots; the second is its cost to the record.
+
 Not one retained flux observation, of any species, comes from the excluded
 sector, while 41.5% of the site's wind does. The exclusion is applied upstream of
 publication, so it is a property of the data the pipeline already reads rather
@@ -254,7 +259,7 @@ methane is ever considered.
 |---|---|---|
 | All | 280,512 | 100% |
 | Wind direction recorded | 254,111 | 90.6% |
-| Removed by the 30° to 200° sector | **105,387** | 37.6% |
+| Removed by the 30° to 200° sector | **105,387** | 37.6% of all, 41.5% of those with a direction |
 | Outside the sector, wind direction present | 148,724 | 53.0% |
 | Methane retained | 89,517 | 31.9% of all, **60.2% of what the sector filter leaves** |
 

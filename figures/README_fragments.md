@@ -10,6 +10,6 @@ Reconstruction means estimating methane emissions for years before measurements 
 
 ![Marcell Bog Lake Peatland: the site, its network, and the sector it discards](figures/site_overview.png)
 
-**The tower stands on 36 hectares of saturated peatland, and its own protocol discards 41% of the wind before any flux is kept**
+**This site sits alone in its network, and keeps flux from only part of the compass because the rest brings upland forest into the measurement**
 
-Panel a is the peatland around the tower, with the wetland polygon the National Wetlands Inventory maps there and a circle at the 200 m over which the site reports its surface uniform. Panel b places the site among the FLUXNET-CH4 network: it is not one of them, so no community gap-filled product exists for it, and the nearest fen in the network is 308 km away. Panel c is how often the wind blew from each direction over 2009 to 2024. The site discards flux from 30 to 200 degrees, where the tower and the upland forest lie, and the published product holds no retained flux from that sector at all.
+Panel a is the peatland around the tower, with the wetland polygon the National Wetlands Inventory maps there and a circle at the 200 m over which the site reports its surface uniform. Panel b places the site among the FLUXNET-CH4 network: it is not one of them, so no community gap-filled product exists for it, and the nearest fen in the network is 308 km away. Panel c is how often the wind blew from each direction over 2009 to 2019, the years the model was fitted on. Flux is discarded from 30 to 200 degrees, where the tower and the upland forest lie, and the published product holds no retained flux from that sector at all.

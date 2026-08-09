@@ -858,12 +858,25 @@ Four layers under `geodata/` carry the site figure. All were retrieved on
 | Aerial imagery | USDA National Agriculture Imagery Program, via Microsoft Planetary Computer | scene `mn_m_4709329_sw_15_060_20210831`, 2021-08-31, 0.6 m |
 | Wetland polygons | US Fish and Wildlife Service, National Wetlands Inventory | 49 polygons over the panel |
 | State outlines | US Census Bureau cartographic boundaries, 2022 | 1:20,000,000, lower states |
-| Wind direction | AmeriFlux BASE version 5-5, this site | 254,111 half-hours, 2009 to 2024 |
+| Wind direction | AmeriFlux BASE version 5-5, this site | 172,639 half-hours carrying a direction, 2009 to 2019 |
 
 The imagery covers 47.497 to 47.515 N and −93.500 to −93.478 W. The southern
 edge is 47.497 rather than the 47.495 first wanted because the quarter-quad
 holding the tower begins there, and a second scene for 220 m would have added a
 seam and a second acquisition to attribute.
+
+**The wind rose is restricted to 2009 to 2019**, the years the model was fitted
+on, rather than the full 2009 to 2024 the product carries, so that it describes
+the wind the fitted model actually saw and matches the rest of the figure set.
+Over those years 44.7% of half-hours carrying a wind direction fall in the
+discarded sector, which is 40.1% of the whole record; over the full product the
+same shares are 41.5% and 37.6%.
+
+**The share is quoted against half-hours that carry a wind direction**, 172,639
+of 192,816 over the study window. That is the population a direction rule can
+act on, and the one whose shares sum to a hundred in the panel. Quoting the
+rule against the whole record is also true and is stated alongside, but it does
+not match what the panel plots.
 
 **The inventory maps the tower on a polygon of 88.2 acres, 35.7 ha, coded
 `PSS3Dg`.** Read out, that is palustrine, scrub-shrub, broad-leaved evergreen,

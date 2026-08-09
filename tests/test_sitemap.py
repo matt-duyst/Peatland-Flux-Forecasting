@@ -39,7 +39,7 @@ def sites():
 def shares():
     start = np.arange(0, 360, 10)
     return pd.DataFrame({"sector_start": start,
-                         "pct_of_half_hours": np.full(36, 100 / 36),
+                         "pct_of_half_hours_with_wind_direction": np.full(36, 100 / 36),
                          "excluded": (start >= 30) & (start < 200)})
 
 
