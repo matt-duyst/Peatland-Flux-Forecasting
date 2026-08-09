@@ -40,8 +40,11 @@ OUTSIDE = "#D55E00"
 #: Each also takes a line style, so lightness alone never has to carry them.
 VARIANT = {
     "clamped": {"color": "#1A1A1A", "linestyle": "-", "linewidth": 1.9},
-    "unclamped": {"color": "#767676", "linestyle": "--", "linewidth": 1.7},
-    "reduced": {"color": "#A9A9A9", "linestyle": ":", "linewidth": 1.7},
+    # Dash-dot rather than dashed: the apparatus tone is also a mid gray and is
+    # also drawn dashed, and two dashed grays on one panel would be a standing
+    # hazard rather than one this figure happens to avoid.
+    "unclamped": {"color": "#767676", "linestyle": (0, (7, 2, 2, 2)), "linewidth": 1.7},
+    "reduced": {"color": "#A9A9A9", "linestyle": (0, (1.4, 2.2)), "linewidth": 2.1},
 }
 
 #: Range boundaries and other apparatus. Neutral so it reads as annotation rather

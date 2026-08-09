@@ -136,3 +136,107 @@ def _run_length(flags: np.ndarray, index: int) -> int:
     while end + 1 < len(flags) and flags[end + 1]:
         end += 1
     return end - start + 1
+
+#: The three lines are three assumptions about one term, not three models, so
+#: they are named on the panel by what each assumes rather than by the internal
+#: variant names.
+WATER_TABLE_ASSUMPTIONS = {
+    "clamped": "Water table held flat beyond the fitted range",
+    "unclamped": "Water table continued linearly",
+    "reduced": "Water table term absent altogether",
+}
+
+#: The reconstruction runs to 2009-03. A three-month year cannot be plotted
+#: beside twelve-month years, so the panel stops at 2008.
+LAST_PLOTTED_YEAR = 2008
+
+RECONSTRUCTION_TEXT = ps.FigureText(
+    title="Reconstructed methane emission at Marcell Bog Lake Peatland, 1990 to 2008",
+    subtitle=(
+        "Where the water table runs beyond its fitted range, the answer depends on an "
+        "assumption the record cannot test"
+    ),
+    description=(
+        "Each marker is one year's emission in grams of carbon per square meter, "
+        "fitted on 2009 to 2019. The three lines are not a likely range: each "
+        "assumes something different about the water table beyond its fitted range, "
+        "and where they diverge the assumption sets the answer. The strip gives the "
+        "share of each year's months outside that range, which separates marginal "
+        "years from unsupported ones. Shurpali et al. (1993) and Shurpali and Verma "
+        "(1998) measured 1991 and 1992, the only independent check; this predicts "
+        "9.29 and 8.49 for May to October, and their values have not been obtained. "
+        "The model should read low by about 14%, stated not applied: correcting "
+        "would extrapolate the correction. 2009 is omitted with three months; 1995 "
+        "keeps eleven."
+    ),
+    emphasize=(),
+)
+
+
+def reconstruction_series(annual: pd.DataFrame) -> Figure:
+    """Annual reconstruction, its support, and the assumption it rests on.
+
+    The three assumptions are drawn as three named lines rather than as a band.
+    A band would say the answer lies somewhere inside it, which is the reading
+    this study exists to refuse: the spread is what the choice of assumption
+    buys, not a probability.
+    """
+    from matplotlib.ticker import MultipleLocator
+
+    frame = annual[annual["year"] <= LAST_PLOTTED_YEAR].copy()
+    years = frame["year"].to_numpy()
+
+    fig, rect = ps.canvas_area(RECONSTRUCTION_TEXT, size="standard")
+    left, bottom, width, height = rect
+    gap = 0.055 * height
+    strip_h = 0.17 * height
+    main_h = height - strip_h - gap
+    ax = fig.add_axes((left, bottom + strip_h + gap, width, main_h))
+    strip = fig.add_axes((left, bottom, width, strip_h), sharex=ax)
+
+    for variant, label in WATER_TABLE_ASSUMPTIONS.items():
+        ps.variant_line(ax, years, frame[variant].to_numpy(), variant, label=label)
+
+    inside = frame["support"].to_numpy() == "inside"
+    ps.support_scatter(ax, years[inside], frame["clamped"].to_numpy()[inside],
+                       inside=True, label="Year inside the fitted range",
+                       markersize=6.5)
+    ps.support_scatter(ax, years[~inside], frame["clamped"].to_numpy()[~inside],
+                       inside=False, label="Year outside it", markersize=7.0)
+
+    ax.set_ylabel(ps.axis_label("Annual emission", "g C m$^{-2}$ yr$^{-1}$"))
+    ax.set_ylim(0, frame[list(WATER_TABLE_ASSUMPTIONS)].to_numpy().max() * 1.18)
+    ax.xaxis.set_major_locator(MultipleLocator(5))
+    ax.xaxis.set_minor_locator(MultipleLocator(1))
+    ax.tick_params(labelbottom=False)
+    ps.mirror_ticks(ax)
+    ps.legend(ax, loc="upper left", fontsize=8.4, borderpad=0.45, labelspacing=0.34,
+              handlelength=2.6, ncols=2, columnspacing=1.6)
+
+    share = frame["pct_months_outside"].to_numpy()
+    # A year wholly inside has a bar of zero height. Marking those years on the
+    # baseline distinguishes a measured zero from a year with nothing plotted.
+    strip.bar(years[inside], share[inside], width=0.7, color=ps.INSIDE,
+              edgecolor="white", linewidth=0.4)
+    strip.plot(years[inside], np.zeros(inside.sum()), linestyle="none",
+               marker=ps.INSIDE_MARKER, markersize=4.6, color=ps.INSIDE,
+               markeredgecolor="white", markeredgewidth=0.5, clip_on=False, zorder=4)
+    strip.bar(years[~inside], share[~inside], width=0.7, color=ps.OUTSIDE,
+              edgecolor="white", linewidth=0.4, hatch=ps.OUTSIDE_HATCH)
+    strip.set_ylim(0, 108)
+    strip.set_yticks([0, 50, 100])
+    strip.set_ylabel(ps.axis_label("Months outside", "%"))
+    strip.set_xlabel(ps.axis_label("Year"))
+    strip.set_xlim(years.min() - 0.8, years.max() + 0.8)
+    strip.xaxis.set_minor_locator(MultipleLocator(1))
+    ps.mirror_ticks(strip)
+
+    check = frame[frame["year"].isin((1991, 1992))]
+    ps.annotate(
+        ax,
+        "1991 and 1992 carry the only\nindependent check, still pending",
+        xy=(1992, float(check["clamped"].max())),
+        xytext=(1993.4, float(check["clamped"].max()) * 0.66),
+        ha="left", va="center",
+    )
+    return fig
