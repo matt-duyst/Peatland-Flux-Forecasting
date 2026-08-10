@@ -121,6 +121,23 @@ def score(frame: pd.DataFrame) -> pd.DataFrame:
     return out.reset_index()
 
 
+def relative_to(frame: pd.DataFrame, reference: str = "seasonal naive") -> pd.DataFrame:
+    """Each method's error as a ratio to one benchmark, over the same target months.
+
+    The scaled error divides by a benchmark computed on the *training* window,
+    which makes it comparable across methods within a series but not across
+    series: a gas whose training period is harder than its test period carries a
+    deflated scaled error. This ratio uses the benchmark measured on the same
+    months being scored, so it is comparable across gases.
+    """
+    usable = frame.dropna(subset=["actual", "forecast"])
+    mae = usable.assign(absolute=usable["error"].abs()).groupby(
+        ["method", "horizon"])["absolute"].mean().unstack(0)
+    out = mae.div(mae[reference], axis=0)
+    out.columns.name = None
+    return out.reset_index()
+
+
 def origin_summary(frame: pd.DataFrame) -> dict[str, int]:
     """What the scores actually rest on, as against how many rows there are."""
     usable = frame.dropna(subset=["actual", "forecast", "mase_scale"])
