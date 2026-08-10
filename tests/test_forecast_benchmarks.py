@@ -77,8 +77,10 @@ def test_no_forecast_is_made_from_a_window_reaching_its_own_target():
 def test_origins_respect_the_minimum_training_window():
     s = seasonal()
     got = evaluation.origins(s, min_train=60, horizons=(1,))
-    assert min(evaluation.rolling_forecasts(s, benchmarks.BENCHMARKS)["train_n"]) >= 60
     assert len(got) == len(s) - 60          # every later month, save those without a target
+    # The default is a separate question from whether the argument is honored.
+    default = evaluation.rolling_forecasts(s, benchmarks.BENCHMARKS)
+    assert min(default["train_n"]) >= evaluation.MIN_TRAIN
 
 
 def test_a_target_never_observed_is_dropped_rather_than_scored():

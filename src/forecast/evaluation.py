@@ -18,7 +18,12 @@ import numpy as np
 import pandas as pd
 
 HORIZONS = (1, 3, 6, 12)
-MIN_TRAIN = 60
+
+#: Months of observation an origin needs before it may be forecast from. Chosen
+#: at forty-eight because it is the shortest window that gives every month of the
+#: year four observations, which is what a seasonal method needs to be estimated
+#: at all, rather than because it produced the most favorable scores.
+MIN_TRAIN = 48
 PERIOD = 12
 
 
