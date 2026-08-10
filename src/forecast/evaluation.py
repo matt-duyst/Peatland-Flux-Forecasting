@@ -158,3 +158,33 @@ def per_origin(frame: pd.DataFrame, horizon: int) -> pd.DataFrame:
     """Scaled error by origin for one horizon, for showing the spread."""
     usable = frame[(frame["horizon"] == horizon)].dropna(subset=["scaled"])
     return usable.pivot_table(index="origin", columns="method", values="scaled")
+
+
+def fully_scored(frame: pd.DataFrame) -> set[tuple[int, pd.Period]]:
+    """Horizon and target pairs every method in this frame managed to score.
+
+    A method that skipped a month, because a covariate was missing or a lag ran
+    off the start of the record, must not be credited with a score on it.
+    """
+    usable = frame.dropna(subset=["actual", "forecast", "mase_scale"])
+    if usable.empty:
+        return set()
+    counts = usable.groupby(["horizon", "target"])["method"].nunique()
+    return set(counts[counts == usable["method"].nunique()].index)
+
+
+def shared_targets(frames: Sequence[pd.DataFrame]) -> set[tuple[int, pd.Period]]:
+    """Horizon and target pairs every method in every frame scored."""
+    sets = [fully_scored(frame) for frame in frames]
+    return set.intersection(*sets) if sets else set()
+
+
+def restrict(frame: pd.DataFrame, keys: set[tuple[int, pd.Period]]) -> pd.DataFrame:
+    """Rows whose horizon and target are in `keys`.
+
+    Scores from different methods are only comparable when they were computed on
+    the same months. Families here reach different distances into the record, so
+    a comparison that skips this step measures the record rather than the method.
+    """
+    pairs = list(zip(frame["horizon"], frame["target"]))
+    return frame[[pair in keys for pair in pairs]].copy()

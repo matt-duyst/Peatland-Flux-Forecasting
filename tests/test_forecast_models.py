@@ -264,3 +264,35 @@ def test_an_exogenous_run_uses_covariates_and_an_autoregressive_one_does_not():
                                  screen=False, methods={"ridge": models.MODELS["ridge"]})
     assert not any("driver" in p for p in plain["predictors"])
     assert all("driver_lag1" in p for p in with_driver["predictors"])
+
+
+# --- comparability ----------------------------------------------------------
+
+
+def test_a_month_one_method_could_not_score_is_not_in_the_shared_set():
+    frame = pd.DataFrame(
+        {
+            "horizon": [1, 1, 1, 1],
+            "target": list(months(2)) * 2,
+            "method": ["a", "a", "b", "b"],
+            "actual": [1.0, 2.0, 1.0, 2.0],
+            "forecast": [1.0, 2.0, 1.0, np.nan],
+            "mase_scale": [1.0] * 4,
+        }
+    )
+    shared = evaluation.fully_scored(frame)
+    assert (1, months(2)[0]) in shared
+    assert (1, months(2)[1]) not in shared
+
+
+def test_restricting_to_shared_months_puts_every_family_on_one_footing():
+    index = months(4)
+    def frame(targets):
+        return pd.DataFrame(
+            {"horizon": 1, "target": targets, "method": "m",
+             "actual": 1.0, "forecast": 1.0, "mase_scale": 1.0}
+        )
+    left, right = frame(list(index[:4])), frame(list(index[1:4]))
+    keys = evaluation.shared_targets([left, right])
+    assert len(keys) == 3
+    assert len(evaluation.restrict(left, keys)) == len(evaluation.restrict(right, keys)) == 3

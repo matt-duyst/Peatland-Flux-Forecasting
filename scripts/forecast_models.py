@@ -72,6 +72,7 @@ def main() -> None:
     pd.set_option("display.width", 220)
     for name in SERIES:
         series = load(name)
+        stem = name.replace(" ", "_")
         heading(f"{name.upper()}  ({SERIES[name][2]})")
         print(f"  {series.notna().sum()} observed months of {len(series)}, "
               f"{series.index.min()} to {series.index.max()}, "
@@ -81,16 +82,24 @@ def main() -> None:
         autoregressive = experiment.run(series)
         exogenous = experiment.run(series, exogenous=load_covariates(series.index))
 
-        bench_table = report(f"{name}: benchmarks", bench, list(benchmarks.BENCHMARKS))
-        auto_table = report(f"{name}: autoregressive family", autoregressive, list(models.MODELS))
-        exog_table = report(f"{name}: exogenous family", exogenous, list(models.MODELS))
+        report(f"{name}: benchmarks, on every month each could score", bench,
+               list(benchmarks.BENCHMARKS))
+        report(f"{name}: autoregressive family, on every month each could score",
+               autoregressive, list(models.MODELS))
+        report(f"{name}: exogenous family, on every month each could score",
+               exogenous, list(models.MODELS))
 
-        heading(f"{name}: every method against the best benchmark, by horizon")
+        keys = evaluation.shared_targets([bench, autoregressive, exogenous])
+        heading(f"{name}: every method on the months all of them could score")
+        print(f"  {len(keys)} horizon-and-target pairs are scored by every method in all three\n"
+              f"  families. The tables above rest on different month sets, because the\n"
+              f"  families reach different distances into the record, so only this table\n"
+              f"  compares methods rather than comparing records.")
         combined = pd.concat(
             [
-                bench_table.assign(family="benchmark"),
-                auto_table.assign(family="autoregressive"),
-                exog_table.assign(family="exogenous"),
+                evaluation.score(evaluation.restrict(bench, keys)).assign(family="benchmark"),
+                evaluation.score(evaluation.restrict(autoregressive, keys)).assign(family="autoregressive"),
+                evaluation.score(evaluation.restrict(exogenous, keys)).assign(family="exogenous"),
             ]
         )
         for horizon in evaluation.HORIZONS:
@@ -99,9 +108,13 @@ def main() -> None:
                 continue
             best_benchmark = block[block["family"] == "benchmark"]["MASE"].min()
             block = block.assign(vs_best_benchmark=(block["MASE"] / best_benchmark).round(3))
-            print(f"\n  horizon {horizon}")
-            print(block[["family", "method", "MASE", "MAE", "RMSE", "vs_best_benchmark"]]
-                  .round(3).to_string(index=False))
+            print(f"\n  horizon {horizon}   (n = {int(block['n'].iloc[0])} per method)")
+            print(block[["family", "method", "MASE", "MAE", "RMSE", "share_beating_snaive",
+                         "vs_best_benchmark"]].round(3).to_string(index=False))
+
+        for label, frame in (("benchmarks", bench), ("autoregressive", autoregressive),
+                             ("exogenous", exogenous)):
+            frame.to_csv(paths.processed_dir() / f"forecasts_{stem}_{label}.csv", index=False)
 
         heading(f"{name}: which predictors survived screening, exogenous family")
         frequency = experiment.predictor_frequency(exogenous)
