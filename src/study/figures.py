@@ -157,20 +157,21 @@ LAST_PLOTTED_YEAR = 2008
 RECONSTRUCTION_TEXT = ps.FigureText(
     title="Reconstructed methane emission at Marcell Bog Lake Peatland (1990 to 2008)",
     subtitle=(
-        "Three defensible assumptions about one term give between 10 and 30 g C per "
-        "square meter for the same year"
+        "Three defensible assumptions about the water table give between 10 and 30 g C "
+        "per square meter for the same year"
     ),
     description=(
         "Each marker is one year's emission in grams of carbon per square meter, "
         "fitted on 2009 to 2019. The three lines each assume something different "
         "about the water table beyond its fitted range, and agree only where it "
         "stays inside. The strip gives the share of each year's months outside that "
-        "range. Shurpali et al. (1993) and Shurpali and Verma (1998) measured 1991 "
-        "and 1992, the only years a measurement exists for; this predicts 9.29 and "
-        "8.49 g C for May to October, and their totals have not been obtained. The "
-        "model should read low by about 14%, stated not applied: correcting would "
-        "extrapolate the correction. 2009 is omitted with three months; 1995 keeps "
-        "eleven."
+        "range. Measurement here stopped in 1992 and did not resume until 2007, so "
+        "eighteen of these twenty years can never be checked. Only 1991 and 1992 "
+        "were measured, by Shurpali et al. (1993) and Shurpali and Verma (1998), "
+        "whose totals have not been obtained; this predicts 9.29 and 8.49 g C for "
+        "May to October. The model should read low by about 14%, stated not "
+        "applied: correcting would extrapolate the correction. 2009 is omitted; "
+        "1995 keeps eleven months."
     ),
     emphasize=(),
 )
@@ -210,7 +211,14 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
     check = frame[frame["year"].isin(MEASURED_YEARS)]
     ax.plot(check["year"], check["clamped"], linestyle="none", marker="o",
             markersize=13, markerfacecolor="none", markeredgecolor=ps.INK,
-            markeredgewidth=1.2, zorder=3, label="A measurement exists")
+            markeredgewidth=1.2, zorder=3, label="The only measured years")
+
+    # The circled years are two of these four, so one set of labels serves both.
+    for _, row in frame[frame["support"] == "inside"].iterrows():
+        ax.annotate(f"{int(row['year'])}", xy=(row["year"], row["clamped"]),
+                    xytext=(0, 17), textcoords="offset points", ha="center",
+                    va="bottom", fontsize=7.8, color=ps.INSIDE, zorder=6,
+                    path_effects=[ps._outline()])
 
     ax.set_ylabel(ps.axis_label("Annual emission", "g C m$^{-2}$ yr$^{-1}$"))
     ax.set_ylim(0, frame[list(WATER_TABLE_ASSUMPTIONS)].to_numpy().max() * 1.18)
@@ -246,9 +254,9 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
     # middle of the spread would cross every line it is describing.
     fan = frame.loc[(frame["unclamped"] - frame["reduced"]).idxmax(), "year"]
     ax.annotate(
-        "The three agree where the water table stays inside the fitted range,\n"
-        "and fan apart where it leaves it",
-        xy=(float(fan) + 1.5, ax.get_ylim()[1] * 0.115), ha="center", va="center",
+        "The three assumptions agree inside the fitted range and fan apart outside it",
+        xy=(float(fan) + 1.0, 13.8), ha="center", va="center",
         fontsize=ps.ANNOTATION_SIZE, style="italic", color=ps.INK, zorder=5,
+        path_effects=[ps._outline()],
     )
     return fig
