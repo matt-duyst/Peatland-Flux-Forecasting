@@ -13,6 +13,18 @@ should beat the best shadow about as often as not. A predictor is kept when it
 beats the shadows more often than a fair coin plausibly would, at the five
 percent level. Seasonal terms are retained regardless, as in Li et al., because
 the question is what remains after the season rather than whether a season exists.
+
+The method is all-relevant rather than minimal-optimal: two predictors carrying
+the same information are both relevant, and both survive. That is why the kept
+sets below are larger than a stepwise procedure would return, and why the count
+of survivors is not a measure of how much independent information there is.
+
+The binomial threshold is the published rule rather than a guaranteed error rate.
+Only the shadow is redrawn between repeats, so a candidate that happens to
+correlate with the target in this sample wins repeatedly and the repeats are not
+independent. Measured on synthetic null data with a strong season in the target,
+between four and eight percent of irrelevant candidates survived, which is near
+the nominal five but is an observation rather than a promise.
 """
 
 from __future__ import annotations
@@ -21,12 +33,17 @@ from collections.abc import Sequence
 
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestRegressor
-
 from scipy import stats
+from sklearn.ensemble import RandomForestRegressor
 
 ITERATIONS = 20
 ALPHA = 0.05
+
+#: Shadow columns a repeat needs before its maximum is a real bar. Boruta compares
+#: each candidate against the best of the whole shadow block, so a design with one
+#: candidate would otherwise face one shadow and clear it half the time. Permuted
+#: copies are added until the block reaches this width.
+MIN_SHADOWS = 5
 
 
 def hit_threshold(iterations: int = ITERATIONS, alpha: float = ALPHA) -> int:
@@ -34,7 +51,7 @@ def hit_threshold(iterations: int = ITERATIONS, alpha: float = ALPHA) -> int:
 
     Under the null a predictor beats the best shadow with probability one half,
     so the count of hits is binomial. This returns the smallest count whose upper
-    tail is no larger than `alpha`, which is twenty for twenty repeats at five
+    tail is no larger than `alpha`, which is fifteen of twenty repeats at five
     percent when nothing else is said.
     """
     for count in range(iterations + 1):
@@ -53,8 +70,10 @@ def boruta_select(
 ) -> list[str]:
     """Predictors worth keeping, plus any named as always kept.
 
-    Returns the always-kept columns alone if nothing else survives, so a caller
-    is never handed an empty design.
+    The always-kept columns are given to the forest but never shadowed and never
+    judged, so candidates are ranked in the presence of the season rather than in
+    its absence. Returns the always-kept columns alone if nothing else survives,
+    so a caller is never handed an empty design.
     """
     usable = design.dropna()
     aligned = target.reindex(usable.index).dropna()
@@ -65,18 +84,24 @@ def boruta_select(
 
     rng = np.random.default_rng(seed)
     wins = dict.fromkeys(candidates, 0)
+    kept_columns = [c for c in always_keep if c in usable.columns]
+    context = usable[kept_columns].to_numpy()
     values = usable[candidates].to_numpy()
+    first = context.shape[1]
+
+    width = values.shape[1]
+    columns = [j % width for j in range(max(width, MIN_SHADOWS))]
 
     for iteration in range(iterations):
-        shadow = np.column_stack([rng.permutation(values[:, j]) for j in range(values.shape[1])])
-        combined = np.hstack([values, shadow])
+        shadow = np.column_stack([rng.permutation(values[:, j]) for j in columns])
+        combined = np.hstack([context, values, shadow])
         forest = RandomForestRegressor(
             n_estimators=100, random_state=seed + iteration, n_jobs=1
         ).fit(combined, aligned.to_numpy())
         importance = forest.feature_importances_
-        threshold = importance[len(candidates):].max()
+        threshold = importance[first + width:].max()
         for position, name in enumerate(candidates):
-            if importance[position] > threshold:
+            if importance[first + position] > threshold:
                 wins[name] += 1
 
     needed = hit_threshold(iterations, alpha)

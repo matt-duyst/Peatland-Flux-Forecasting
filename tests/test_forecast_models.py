@@ -123,6 +123,57 @@ def test_named_columns_survive_screening_whatever_the_forest_thinks():
     assert "sin_year" in screening.boruta_select(design, target, always_keep=("sin_year",))
 
 
+def test_a_redundant_copy_of_a_real_predictor_also_survives():
+    """Boruta is all-relevant: two columns carrying the same signal both pass.
+
+    This is why the kept sets are larger than a stepwise procedure would give,
+    and why counting survivors does not count independent information.
+    """
+    rng = np.random.default_rng(4)
+    index = months(96)
+    signal = rng.normal(size=96)
+    design = pd.DataFrame(
+        {"real": signal, "copy": signal + rng.normal(0, 0.01, 96),
+         "noise": rng.normal(size=96)},
+        index=index,
+    )
+    target = pd.Series(3 * signal + rng.normal(0, 0.3, 96), index=index)
+    kept = screening.boruta_select(design, target)
+    assert {"real", "copy"} <= set(kept)
+    assert "noise" not in kept
+
+
+def test_irrelevant_candidates_survive_only_occasionally():
+    """The screening is liberal by design, but it must not wave everything through.
+
+    Only the shadow is redrawn between repeats, so the binomial threshold is not
+    a guaranteed error rate and a single seed proves nothing either way. The
+    bound here is loose on purpose: it catches the rule collapsing, not drift.
+    """
+    index = months(96)
+    season = np.sin(2 * np.pi * index.month / 12)
+    kept_count = trials = 0
+    for seed in range(10):
+        rng = np.random.default_rng(seed)
+        design = pd.DataFrame(
+            {"sin_year": season, **{f"c{i}": rng.normal(size=96) for i in range(4)}},
+            index=index,
+        )
+        target = pd.Series(2 * season + rng.normal(size=96), index=index)
+        kept_count += len(screening.boruta_select(design, target, always_keep=("sin_year",))) - 1
+        trials += 4
+    assert kept_count / trials < 0.25
+
+
+def test_a_retained_term_is_never_judged_and_always_comes_first():
+    rng = np.random.default_rng(5)
+    index = months(96)
+    design = pd.DataFrame({"sin_year": np.sin(2 * np.pi * index.month / 12),
+                           "candidate": rng.normal(size=96)}, index=index)
+    target = pd.Series(rng.normal(size=96), index=index)
+    assert screening.boruta_select(design, target, always_keep=("sin_year",))[0] == "sin_year"
+
+
 def test_screening_never_returns_an_empty_design():
     index = months(6)
     design = pd.DataFrame({"a": range(6)}, index=index, dtype=float)
