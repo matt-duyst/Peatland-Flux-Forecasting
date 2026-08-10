@@ -9,3 +9,4 @@ pillow==11.0.0       # reads back rendered figures in the tests
 pyarrow==18.1.0      # parquet cache for the 227,904-row half-hourly frame
 pytest==8.3.4        # test suite; not imported by the ingestion modules
 scipy==1.11.4        # distribution fits, Kolmogorov-Smirnov tests, least squares
+scikit-learn==1.5.2  # the forecasting comparison; regressors and shadow screening
