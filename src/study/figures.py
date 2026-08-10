@@ -204,10 +204,10 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
 
     inside = frame["support"].to_numpy() == "inside"
     ps.support_scatter(ax, years[inside], frame["clamped"].to_numpy()[inside],
-                       inside=True, label="Year inside the fitted range",
+                       inside=True, label=r"Year $\bf{inside}$ the fitted range",
                        markersize=6.5)
     ps.support_scatter(ax, years[~inside], frame["clamped"].to_numpy()[~inside],
-                       inside=False, label="Year outside it", markersize=7.0)
+                       inside=False, label=r"Year $\bf{outside}$ it", markersize=7.0)
 
     check = frame[frame["year"].isin(MEASURED_YEARS)]
     ax.plot(check["year"], check["clamped"], linestyle="none", marker="o",
@@ -230,8 +230,9 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
     ax.xaxis.set_minor_locator(MultipleLocator(1))
     ax.tick_params(labelbottom=False)
     ps.mirror_ticks(ax)
-    ps.legend(ax, loc="upper left", fontsize=8.2, borderpad=0.36, labelspacing=0.3,
-              handlelength=1.9, handletextpad=0.5, ncols=2, columnspacing=0.9)
+    ps.legend(ax, loc="lower left", fontsize=8.2, borderpad=0.36, labelspacing=0.3,
+              handlelength=1.9, handletextpad=0.5, ncols=2, columnspacing=0.9,
+              bbox_to_anchor=(0.015, 0.02))
 
     share = frame["pct_months_outside"].to_numpy()
     # A year wholly inside has a bar of zero height. Marking those years on the
