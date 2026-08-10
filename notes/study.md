@@ -667,6 +667,16 @@ to 17%. The span tracks support closely, which is the demonstration working:
 where the model has evidence it is nearly indifferent to the assumption, and
 where it does not the assumption determines the answer.
 
+**Two years of the reconstruction window are not full years.** 1995 holds eleven
+months, the water table record having no value for 1995-02, and 2009 holds three,
+the window ending at 2009-03 where the flux record begins. 1995 is kept: eleven
+months of twelve integrate to an annual total without distortion worth naming.
+2009 is not, and it is omitted from the reconstruction figure rather than shown:
+its three months total 0.83 g C m⁻², which beside full years of eight to eighteen
+would read as a collapse in emission rather than as a quarter of a year. Both are
+facts about how the series was assembled rather than about the peatland, which is
+why they are recorded here and not on the figure.
+
 Empirical coverage against a 90% nominal level is 89.7% in sample over the fit
 months, 84.4% on weighted held-out backward transfer and 87.5% unweighted on the
 115-month window, against 62.5% on the nominal window.
