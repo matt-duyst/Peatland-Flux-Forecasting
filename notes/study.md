@@ -1021,6 +1021,106 @@ At a twelve-month horizon seasonal naive and naive are identical by construction
 since the last observed value and the value twelve months before the target are
 the same month.
 
+### The result survives the window it was measured through
+
+The sixty-month minimum puts methane's earliest scorable month at 2015-03, so the
+two highest summers of the record, 2011 at 132.3 and 2012 at 115.3 against an
+all-record July to September mean of 76.1, are training data for every origin
+while the two lowest, 2015 at 46.3 and 2021 at 35.4, are the ones scored.
+Climatology's mean is therefore lifted by years it can never be tested on and
+then over-predicts the low years it can. Both its skill and its failures could be
+artifacts of where that minimum falls, so the benchmarks were rerun across four
+window lengths before anything was fitted.
+
+Climatology's error as a ratio to seasonal naive on the same months:
+
+| Minimum | Methane, h=1 | h=6 | h=12 | Carbon dioxide, h=1 | h=6 | h=12 |
+|---|---|---|---|---|---|---|
+| 36 | **0.732** | 0.675 | 0.720 | **0.803** | 0.800 | 0.815 |
+| 48 | **0.753** | 0.753 | 0.768 | **0.814** | 0.816 | 0.847 |
+| 60 | **0.777** | 0.793 | 0.773 | **0.846** | 0.852 | 0.831 |
+| 72 | **0.778** | 0.785 | 0.829 | **0.829** | 0.834 | 0.850 |
+
+**The conclusion holds at every window.** Climatology beats seasonal naive by 22
+to 33% on methane and 15 to 20% on carbon dioxide, at every horizon and every
+minimum tried. The advantage is *largest* at the shortest window, so the
+sixty-month choice understates it rather than manufacturing it. At a thirty-six
+month minimum the evaluation window admits 2012, a summer 51% above the record
+mean, and climatology still wins by more than at sixty. Including a high year
+does not overturn the result, which is what the confound would have predicted.
+
+**Forty-eight months is adopted**, not because it maximizes the advantage, which
+thirty-six does, but because of what enters the evaluation window:
+
+| Minimum | Summers scored, above vs below the record mean | Observations per month of year at the first origin |
+|---|---|---|
+| 36 | 4 above, 5 below | 3.0 |
+| **48** | **3 above, 5 below** | **4.0** |
+| 60 | 2 above, 5 below | 5.0 |
+| 72 | 2 above, 4 below | 6.0 |
+
+Sixty and seventy-two leave only two above-average summers against four or five
+below, which is the imbalance that raised the question. Thirty-six fixes the
+balance but estimates each month-of-year mean from three observations, which is
+too thin to defend as a seasonal average. Forty-eight admits 2014 at 97.3,
+carries four observations per month, and yields ninety-four scorable months
+against eighty-two. The trade is a slightly noisier seasonal estimate for an
+evaluation window that spans both directions.
+
+### The scaled error did not deliver the comparability it was chosen for
+
+Mean absolute scaled error was chosen so the two gases could be compared on one
+footing. Between these two series it does not do that.
+
+| | Methane | Carbon dioxide |
+|---|---|---|
+| Denominator, seasonal naive on the training window | 20.328 | 0.290 |
+| First origin to last | 25.342 to 16.540, a 35% fall | 0.311 to 0.304 |
+| The same benchmark on the months actually scored | **10.575** | **0.303** |
+| Ratio, scored to training | **0.520** | **1.045** |
+
+Methane's denominator is **twice the difficulty of the period being scored**,
+because the early record is much noisier than the later one, and it falls 35%
+across origins as the training window accumulates better years. Carbon dioxide's
+matches its test period. Every methane scaled error is therefore depressed by
+roughly a factor of two relative to carbon dioxide's, and the apparent gap
+between 0.4 and 0.9 is mostly that rather than a difference in predictability.
+
+**Mean absolute scaled error is kept for comparison within a gas**, where the
+denominator is common to every method. **Cross-gas statements use the error as a
+ratio to seasonal naive measured on the same scored months**, which shares no
+training-period term and does travel between series.
+
+### The framing for the model comparison
+
+Climatology already extracts the entire month-of-year signal, and it does so
+without decaying at horizon: its error at twelve months is no worse than at one,
+on either gas. Persistence carries something for about a month and nothing by
+six. So deseasonalizing before fitting is not a preprocessing convenience. It is
+the question. **What the models are being asked is whether anything predicts what
+the seasonal mean leaves over.**
+
+The diagnostics say what that residual is made of. Methane's seasonal amplitude
+varies **4.5-fold**, from 33.7 in 2021 to 150.6 in 2011, a coefficient of
+variation of 43%, with **no significant trend** (p = 0.119). It is not drifting;
+it varies without direction. The two lowest-amplitude years are exactly the two
+years climatology fails on. A time-varying climatology cannot help, because there
+is no trend for it to track.
+
+**So the proposition under test is that methane at this site is predictable in
+shape and not in magnitude**: the seasonal pattern repeats, the size of the
+season does not, and nothing in the seasonal structure anticipates it. The
+lagged-covariate family exists to test whether anything outside that structure
+does. If nothing reaches it, that is the finding, and it is a more useful one
+than a ranking of methods against each other.
+
+Deseasonalizing is applied to both gases, whose lag-12 autocorrelation is
+significant at z = 3.32 and 4.11 against a Bartlett standard error. **Detrending
+is not applied to either**, because neither shows a trend approaching
+significance, raw or deseasonalized, and following Makridakis et al. (2018) means
+applying each step where its diagnostic fires rather than applying the whole
+protocol regardless.
+
 ### The easier-case framing was wrong, and is retracted
 
 Carbon dioxide was described as the easier case with stronger seasonality, on a

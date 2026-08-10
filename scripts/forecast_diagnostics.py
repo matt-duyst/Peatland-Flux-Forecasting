@@ -92,6 +92,26 @@ def main() -> None:
         print(f"  {name}: first origin {first}, so the earliest month scored is {first + 1}; "
               f"everything before is training for every origin")
 
+    heading("HOW MUCH THE RESULT DEPENDS ON THE MINIMUM TRAINING WINDOW")
+    print("  A shorter window buys evaluable years and pays in a noisier seasonal estimate.")
+    for name in SERIES:
+        series = load(name)
+        print(f"\n  {name}")
+        print(f"    {'min':>4} {'origins':>8} {'targets':>8} {'first scored':>13} "
+              f"{'clim/snaive h1':>15} {'h6':>7} {'h12':>7} {'obs per month':>14}")
+        for minimum in (36, 48, 60, 72):
+            frame = evaluation.rolling_forecasts(series, benchmarks.BENCHMARKS,
+                                                 min_train=minimum)
+            ratio = evaluation.relative_to(frame).set_index("horizon")["climatology"]
+            summary = evaluation.origin_summary(frame)
+            first_origin = evaluation.origins(series, min_train=minimum)[0]
+            train = series.loc[:first_origin].dropna()
+            per_month = train.groupby(train.index.month).size().mean()
+            first_scored = frame.dropna(subset=["actual"])["target"].min()
+            print(f"    {minimum:>4} {summary['origins']:>8} "
+                  f"{summary['distinct target months']:>8} {str(first_scored):>13} "
+                  f"{ratio[1]:>15.3f} {ratio[6]:>7.3f} {ratio[12]:>7.3f} {per_month:>14.1f}")
+
     heading("PREPROCESSING DIAGNOSTICS")
     for name in SERIES:
         series = load(name).dropna()
