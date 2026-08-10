@@ -968,6 +968,101 @@ corroborated by the pore water pH of Deventer et al. (2019).
 No layer anywhere gives a bog or fen boundary as such. The polygon drawn in the
 figure is the inventory's wetland extent, which is what exists.
 
+## Forecasting: the benchmarks, before any model
+
+The reconstruction asked whether a model fitted on 2009 to 2019 answers for the
+1990s. This asks the forward question the 2022 work asked: whether statistical or
+machine learning methods forecast monthly flux better at this site. Benchmarks
+are built and scored first, because a method that cannot beat a naive rule on a
+seasonal series has shown nothing.
+
+Four benchmarks, scored by rolling origin with a sixty-month minimum expanding
+training window at horizons of one, three, six and twelve months. The scaled
+error's denominator is the seasonal naive error on the training window alone.
+`scripts/benchmark_forecasts.py` produces all of it.
+
+### Month-of-year climatology wins at every horizon, on both gases
+
+| Gas | Horizon | Climatology | Seasonal naive | Naive |
+|---|---|---|---|---|
+| Methane | 1 | **0.435** | 0.549 | 0.573 |
+| Methane | 12 | **0.376** | 0.473 | 0.473 |
+| Carbon dioxide | 1 | **0.888** | 1.043 | 1.063 |
+| Carbon dioxide | 12 | **0.890** | 1.071 | 1.071 |
+
+Mean absolute scaled error. Climatology beats seasonal naive by 19 to 21% on
+methane and 15 to 17% on carbon dioxide, at every horizon tested.
+
+**The more telling result is that climatology does not decay with horizon.** Its
+error at twelve months is no worse than at one, on either gas, because it uses no
+recent information at all. Persistence behaves as expected and falls apart,
+methane's scaled error running 0.573 at one month and 1.872 at six. So the recent
+past carries something for one month and nothing by six, while the seasonal mean
+carries the same amount however far ahead you ask.
+
+**That is close to being the study's finding rather than its baseline.** If these
+series are predictable from their month-of-year mean and little else, a model
+comparison measures how well each method recovers a seasonal average. Nothing has
+been fitted yet, and this is the bar to clear.
+
+### What the numbers rest on
+
+For methane, 82 origins and 82 distinct target months carry 1,240 scored
+forecasts; for carbon dioxide, 132 origins and 132 months carry 2,040. **The
+forecasts overlap heavily and the effective sample is far smaller than the
+count.** Distributions are reported with quartiles rather than as single numbers
+for that reason, and the spread is wide: methane's climatology has a median
+scaled error of 0.19 against a mean of 0.44.
+
+No percentage error is reported for either gas. It is undefined for carbon
+dioxide, which crosses zero, and dominated by near-zero months for methane.
+
+At a twelve-month horizon seasonal naive and naive are identical by construction,
+since the last observed value and the value twelve months before the target are
+the same month.
+
+### The easier-case framing was wrong, and is retracted
+
+Carbon dioxide was described as the easier case with stronger seasonality, on a
+lag-12 autocorrelation of 0.83 against methane's 0.62. **That comparison used the
+unbalanced series and was substantially an artifact of diurnal sampling.** On the
+balanced series, over the era both share:
+
+| | Methane | Carbon dioxide, unbalanced | Carbon dioxide, balanced |
+|---|---|---|---|
+| Autocorrelation at the annual lag | 0.617 | 0.829 | **0.692** |
+| Variance explained by month-of-year means | 70.9% | 85.6% | **70.3%** |
+| Seasonal naive against naive, error ratio | 0.985 | 0.709 | **0.916** |
+
+The gap in the annual autocorrelation narrows from 0.21 to 0.08, and on the
+variance measure it **inverts**: methane is fractionally the more seasonally
+explained of the two. Carbon dioxide keeps a real advantage in that its annual
+cycle beats persistence more clearly, 0.916 against 0.985, but it is not the
+easier case in the sense claimed. Neither gas should be framed as the easier one.
+
+### Whether the artifact reached the reconstruction
+
+It did not, and this was checked rather than assumed. The legacy `FC02_Avg`
+column is an unweighted mean of every half-hour and carries the same diurnal
+skew. It is read by `covariates.load_fco2`, named in `windows.CONTEMPORANEOUS_ONLY`
+as excluded from the reconstruction covariates, and appears in the covariate
+coverage table. It reaches **no fitted model, no holdout experiment, no
+reconstruction and no figure**: no module under `src/study` that fits or predicts
+references it, and neither does any figure. The exclusion that kept it out was
+made because it has no pre-2009 record, not because of the artifact, but it had
+the effect of keeping the artifact out of every result.
+
+### An open question, not a decision
+
+Methane has not been diurnally balanced. Its diurnal cycle explains 1.5% of
+half-hourly variance against carbon dioxide's 29.1%, and balancing would move its
+monthly means by about 4.3% of their typical magnitude, so the effect is small.
+It is left alone because every number in the reconstruction rests on the current
+series, and that work is committed and written up. **This is recorded as
+considered rather than settled.** If the forecasting work later needs both gases
+on an identical footing, balancing methane is the change to make, and the cost is
+recomputing the reconstruction rather than any difficulty in the aggregation.
+
 ## What the study concludes
 
 The reconstruction is not the result. The result is that a model fitted on 2009
