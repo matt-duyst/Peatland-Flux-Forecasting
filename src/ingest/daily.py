@@ -81,6 +81,95 @@ def daily_to_monthly(daily: pd.DataFrame) -> pd.DataFrame:
     return out.reset_index()
 
 
+def daily_stats_column(
+    frame: pd.DataFrame,
+    column: str,
+    timestamp: str = "timestamp_start",
+    min_halfhours: int = site.MIN_HALFHOURS_PER_DAY,
+) -> pd.DataFrame:
+    """Daily mean, count and dispersion for one flux column, under the same rule.
+
+    The coverage rule is the one Deventer et al. (2019) apply and is taken from
+    the same constant, so it cannot drift between gases. Carbon dioxide arrives
+    as a single column with no replicates, so nothing here tracks analyzers; a
+    test checks this reproduces `daily_stats` exactly on the methane column.
+    """
+    values = frame.dropna(subset=[column]).copy()
+    values["date"] = values[timestamp].dt.normalize()
+    grouped = values.groupby("date")[column]
+
+    out = pd.DataFrame(
+        {
+            f"{column}_mean": grouped.mean(),
+            f"{column}_n": grouped.size().astype("int64"),
+            f"{column}_sd": grouped.std(ddof=1),
+        }
+    )
+    out[f"{column}_se"] = out[f"{column}_sd"] / np.sqrt(out[f"{column}_n"])
+    out.index.name = "date"
+    return out[out[f"{column}_n"] >= min_halfhours].reset_index()
+
+
+def daily_to_monthly_column(daily: pd.DataFrame, column: str) -> pd.DataFrame:
+    """Monthly mean of daily means for one flux column, with counts and dispersion.
+
+    Dispersion is across days rather than across half-hours, matching the
+    methane series, so the standard error on a monthly mean means the same thing
+    for both gases.
+    """
+    frame = daily.copy()
+    frame["month"] = frame["date"].dt.to_period("M")
+    grouped = frame.groupby("month")
+
+    out = pd.DataFrame(
+        {
+            f"{column}_mean": grouped[f"{column}_mean"].mean(),
+            f"{column}_days": grouped.size().astype("int64"),
+            f"{column}_sd_across_days": grouped[f"{column}_mean"].std(ddof=1),
+            f"{column}_halfhours": grouped[f"{column}_n"].sum().astype("int64"),
+        }
+    )
+    out[f"{column}_se_across_days"] = (
+        out[f"{column}_sd_across_days"] / np.sqrt(out[f"{column}_days"])
+    )
+    out.index.name = "month"
+    return out.reset_index()
+
+
+def monthly_diurnally_balanced(
+    frame: pd.DataFrame, column: str, timestamp: str = "timestamp_start"
+) -> pd.DataFrame:
+    """Monthly mean with every half-hour of the day weighted equally.
+
+    A mean over retained half-hours inherits whatever diurnal skew the retained
+    sample carries. That is immaterial for methane at this site, whose diurnal
+    cycle explains under 2% of half-hourly variance, and material for carbon
+    dioxide, whose cycle explains 29% while daylight supplies 62% of retained
+    observations. Averaging within half-hour of day first, then across those
+    cells, removes the skew at the cost of discarding the uneven weighting.
+    """
+    values = frame.dropna(subset=[column]).copy()
+    stamps = values[timestamp]
+    values["month"] = pd.PeriodIndex(stamps, freq="M")
+    values["halfhour"] = stamps.dt.hour * 2 + stamps.dt.minute // 30
+
+    cell = values.groupby(["month", "halfhour"])[column].mean()
+    grouped = cell.groupby(level="month")
+    out = pd.DataFrame(
+        {
+            f"{column}_mean": grouped.mean(),
+            f"{column}_cells": grouped.size().astype("int64"),
+            f"{column}_sd_across_cells": grouped.std(ddof=1),
+        }
+    )
+    out[f"{column}_halfhours"] = values.groupby("month").size().astype("int64")
+    out[f"{column}_se_across_cells"] = (
+        out[f"{column}_sd_across_cells"] / np.sqrt(out[f"{column}_cells"])
+    )
+    out.index.name = "month"
+    return out.reset_index()
+
+
 def threshold_comparison(
     merged: pd.DataFrame, thresholds: tuple[int, ...] = site.DAILY_THRESHOLDS
 ) -> pd.DataFrame:

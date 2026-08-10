@@ -435,6 +435,92 @@ amplitude ratio of **6.0**, and the hourly means show no coherent diurnal shape
 (the growing-season maximum falls at 22:00 and the minimum at 19:00, which is
 noise, not a cycle).
 
+## Carbon dioxide
+
+Built by `scripts/05_build_co2.py` from `FC` in the 2025 BASE product, under the
+same coverage rule as methane: a daily mean only from days holding at least
+eight valid half-hours, then a monthly mean of those daily means, with counts
+and dispersion retained at both levels. There is one carbon dioxide column and
+no replicates, so no analyzer identification or precedence merge arises.
+
+**The source is the 2025 product rather than the 2022 export**, because that
+export carries only the three methane columns. The two were shown to hold
+identical methane values over every shared half-hour, so drawing one gas from
+each is not a change of source in any material sense. `notes/base_v55.md`
+records that comparison.
+
+| | |
+|---|---|
+| Half-hours, 2009 to 2024 | 280,512, of which 98,006 valid, 34.9% |
+| Days meeting the coverage rule | 4,046 of 5,844 |
+| Months | 192, 2009-01 to 2024-12, none absent |
+| Days per month | median 21, minimum 3; eight months rest on fewer than ten |
+| Monthly mean | −1.264, range −4.586 to 0.123 µmol m⁻² s⁻¹ |
+
+### The single-column series it replaces is a straight half-hourly mean
+
+The carbon dioxide the study has used until now is `FC02_Avg` in
+`All Combined Variables Monthly.csv`, which carried no provenance, no count and
+no dispersion. Its rule is now recovered: it is **the unweighted mean of every
+valid half-hour in the month**, which reproduces all 156 of its values to three
+decimal places. It is not wrong; it is built by a weaker rule than methane's,
+and it weights a month by when observations happened to fall rather than by day.
+
+Against the series built here it correlates 0.9946, with a mean difference of
+−0.024 and a median of −0.002. The largest disagreements are in months where
+observation counts are uneven across days, 2013-09 differing by 0.79.
+
+### The diurnal problem, which methane does not have
+
+Bringing carbon dioxide to methane's standard fixes the weighting of days. It
+does not fix the weighting of hours, and for this gas that is the larger
+problem.
+
+| | Methane | Carbon dioxide |
+|---|---|---|
+| Half-hour of day, share of half-hourly variance | **1.5%** | **29.1%** |
+| Month of year, share of half-hourly variance | 41.3% | 22.4% |
+| Daylight share of retained observations | | **62.1%**, against 50% if even |
+
+For methane the diurnal cycle is negligible, which is why monthly aggregation
+was defensible without further argument. For carbon dioxide it is the dominant
+term, daylight is when the ecosystem takes carbon up, and daylight is
+over-represented in what the instrument retained.
+
+**The consequence is a seasonal artifact, not a constant offset.** Measured
+against a monthly mean that weights every half-hour of the day equally, the
+daily-rule series reads:
+
+| | |
+|---|---|
+| Mean difference | −0.576 µmol m⁻² s⁻¹, 46% of the series' typical magnitude |
+| In January | +0.016 |
+| In August | **−1.849** |
+| Seasonal swing of the difference | 1.865, against a seasonal amplitude of 3.028 |
+
+**About 62% of the carbon dioxide seasonal cycle in the daily-rule series is
+therefore a property of when the instrument was sampling rather than of the
+peatland.** The same measurement on methane gives a seasonal swing worth 4.3% of
+its typical magnitude, so the methane series is not affected in this way.
+
+A diurnally balanced monthly series is written alongside, in
+`monthly_fco2_diurnally_balanced.csv`, averaging within half-hour of day and
+then across those cells. It can only correct a skew where every half-hour of the
+day appears somewhere in the month: 186 of 192 months carry all 48 cells and six
+carry 45 to 47, so the correction is close to complete but not exactly so.
+
+### What carbon dioxide will not inherit from methane
+
+- **No logarithm.** The series crosses zero, with 3 of 192 months at or above it
+  and 62 of 156 within 0.5 of it, so a log target and percentage error are both
+  unavailable.
+- **Inverse-variance weighting behaves differently.** Dispersion across days does
+  not scale with the mean for a quantity that changes sign, so a weight built
+  from it does not mean what it means for methane.
+- **The Laplace error finding does not transfer.** Deventer et al. (2019)
+  established it for methane from paired analyzers. Carbon dioxide has one
+  column and no pair, so nothing here tests the distribution of its error.
+
 ## The earlier analysis: supporting evidence
 
 Detail behind the README's account of the analysis this work replaced. Every
