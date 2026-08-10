@@ -140,10 +140,12 @@ def _run_length(flags: np.ndarray, index: int) -> int:
 #: The three lines are three assumptions about one term, not three models, so
 #: they are named on the panel by what each assumes rather than by the internal
 #: variant names.
+#: The one word each entry shares with the subtitle is set bold, so a reader
+#: carrying "flat, linear, absent" down from there finds it in the key.
 WATER_TABLE_ASSUMPTIONS = {
-    "clamped": "Water table held flat beyond the fitted range",
-    "unclamped": "Water table continued linearly",
-    "reduced": "Water table term absent altogether",
+    "clamped": r"Water table held $\bf{flat}$ beyond the fitted range",
+    "unclamped": r"Water table continued $\bf{linearly}$",
+    "reduced": r"Water table term $\bf{absent}$ altogether",
 }
 
 #: The two years a measurement of this peatland exists for, and the only years
@@ -158,7 +160,7 @@ RECONSTRUCTION_TEXT = ps.FigureText(
     title="Reconstructed methane emission at Marcell Bog Lake Peatland (1990 to 2008)",
     subtitle=(
         "The water table coefficient drifts as its range narrows: flat, linear, or "
-        "absent, the three give 10 to 30 g C per square meter"
+        "absent (the three give 10 to 30 g C per square meter)"
     ),
     description=(
         "Each marker is one year's emission in grams of carbon per square meter, "
@@ -172,7 +174,7 @@ RECONSTRUCTION_TEXT = ps.FigureText(
         "Their published totals have not been obtained; this reconstruction "
         "predicts 9.29 and 8.49 g C for May to October."
     ),
-    emphasize=(),
+    emphasize=("flat", "linear", "absent"),
 )
 
 
@@ -228,8 +230,8 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
     ax.xaxis.set_minor_locator(MultipleLocator(1))
     ax.tick_params(labelbottom=False)
     ps.mirror_ticks(ax)
-    ps.legend(ax, loc="upper left", fontsize=8.2, borderpad=0.42, labelspacing=0.32,
-              handlelength=2.6, ncols=2, columnspacing=1.4)
+    ps.legend(ax, loc="upper left", fontsize=8.2, borderpad=0.36, labelspacing=0.3,
+              handlelength=1.9, handletextpad=0.5, ncols=2, columnspacing=0.9)
 
     share = frame["pct_months_outside"].to_numpy()
     # A year wholly inside has a bar of zero height. Marking those years on the

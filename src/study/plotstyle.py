@@ -177,8 +177,8 @@ class FigureText:
     title: str
     subtitle: str
     description: str
-    #: Phrases set bold inside the description, so a reader can find the part
-    #: they want without reading the block linearly.
+    #: Phrases set bold in the subtitle and description, so a term introduced
+    #: above can be found again below. Matched on whole words only.
     emphasize: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
@@ -206,17 +206,20 @@ def _wrap_width(width_px: int) -> int:
     return max(20, int(drawable_points / (_CHAR_WIDTH * DESCRIPTION_SIZE)))
 
 
-def emphasize(wrapped: str, terms: tuple[str, ...]) -> str:
-    """Set the given phrases bold within already-wrapped text.
+def emphasize(text: str, terms: tuple[str, ...]) -> str:
+    """Set the given phrases bold, matching whole words only.
 
-    Applied after wrapping, so the markup cannot affect where lines break. Bold
-    is slightly wider than regular, which `wrap_description` allows for by
-    shortening the line when any term is to be emphasized.
+    Applied to a description after wrapping, so the markup cannot affect where
+    lines break. Bold is slightly wider than regular, which `wrap_description`
+    allows for by shortening the line when any term is to be emphasized. Whole
+    words only, so emphasizing "flat" cannot reach inside "flatten".
     """
+    import re
+
     for term in terms:
-        if term in wrapped:
-            wrapped = wrapped.replace(term, r"$\bf{" + term.replace(" ", r"\ ") + "}$")
-    return wrapped
+        bold = r"$\bf{" + term.replace(" ", r"\ ") + "}$"
+        text = re.sub(rf"\b{re.escape(term)}\b", bold.replace("\\", "\\\\"), text)
+    return text
 
 
 def wrap_description(text: str, width_px: int, terms: tuple[str, ...] = ()) -> str:
@@ -258,7 +261,8 @@ def canvas_area(text: FigureText, size: str = "wide") -> tuple[Figure, tuple[flo
     fig.text(middle, 1 - MARGIN_PX["top"] / height_px, text.title,
              ha="center", va="top", fontsize=TITLE_SIZE, fontweight="bold", color=INK)
     fig.text(middle, 1 - (MARGIN_PX["top"] + TITLE_SIZE * 1.9 / 72 * DPI) / height_px,
-             text.subtitle, ha="center", va="top", fontsize=SUBTITLE_SIZE, color=INK)
+             emphasize(text.subtitle, text.emphasize), ha="center", va="top",
+             fontsize=SUBTITLE_SIZE, color=INK)
     fig.text(left, (MARGIN_PX["bottom"] + DESCRIPTION_BLOCK_PX) / height_px,
              body, ha="left", va="top", fontsize=DESCRIPTION_SIZE, color=MUTED,
              linespacing=1.45)

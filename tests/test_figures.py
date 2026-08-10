@@ -130,7 +130,12 @@ def test_the_three_lines_are_achromatic_and_separately_styled():
 
 def test_the_panel_names_assumptions_rather_than_internal_variants():
     fig = figures.reconstruction_series(annual_frame())
-    labels = " ".join(t.get_text() for t in fig.axes[0].get_legend().get_texts())
+    import re
+
+    raw = " ".join(t.get_text() for t in fig.axes[0].get_legend().get_texts())
+    # Terms shared with the subtitle are set bold, so the markup is stripped
+    # before comparing against the words a reader actually sees.
+    labels = re.sub(r"\$\\bf\{(.*?)\}\$", r"\1", raw)
     for internal in ("clamped", "unclamped", "reduced"):
         assert internal not in labels.lower()
     assert "held flat" in labels and "continued linearly" in labels
