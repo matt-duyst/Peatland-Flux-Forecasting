@@ -16,6 +16,7 @@ from collections.abc import Callable, Sequence
 
 import numpy as np
 import pandas as pd
+from scipy import stats
 
 HORIZONS = (1, 3, 6, 12)
 
@@ -188,3 +189,61 @@ def restrict(frame: pd.DataFrame, keys: set[tuple[int, pd.Period]]) -> pd.DataFr
     """
     pairs = list(zip(frame["horizon"], frame["target"]))
     return frame[[pair in keys for pair in pairs]].copy()
+
+
+def newey_west_lag(n: int) -> int:
+    """Automatic truncation lag, by the usual n to the two-ninths rule."""
+    return int(np.floor(4 * (n / 100) ** (2 / 9)))
+
+
+def long_run_variance(differences: np.ndarray, lag: int) -> tuple[float, float]:
+    """Bartlett-weighted long-run variance, and the factor it inflates by.
+
+    The inflation factor is the ratio of the long-run variance to the ordinary
+    one. Dividing the number of forecasts by it gives the effective sample size:
+    how many independent comparisons the sequence is really worth.
+    """
+    n = len(differences)
+    centered = differences - differences.mean()
+    gamma0 = float(centered @ centered / n)
+    total = gamma0
+    for k in range(1, lag + 1):
+        weight = 1 - k / (lag + 1)
+        total += 2 * weight * float(centered[k:] @ centered[:-k] / n)
+    total = max(total, 1e-12)
+    return total, total / gamma0 if gamma0 > 0 else np.nan
+
+
+def diebold_mariano(
+    left: pd.Series, right: pd.Series, horizon: int, power: int = 1
+) -> dict[str, float]:
+    """Whether `left` forecasts better than `right`, with overlap accounted for.
+
+    The two arguments are error series indexed by target month. The loss
+    differential is autocorrelated, both because a direct forecast at horizon h
+    overlaps its neighbors and because a model's errors persist, so the variance
+    is estimated over a Bartlett window rather than assuming independence. The
+    Harvey, Leybourne and Newbold (1997) factor corrects the statistic for small
+    samples, and it is read against a t distribution rather than a normal one.
+
+    A negative statistic means `left` had the smaller loss.
+    """
+    aligned = pd.concat([left.rename("left"), right.rename("right")], axis=1).dropna()
+    n = len(aligned)
+    if n < 8:
+        return {"n": n, "statistic": np.nan, "p": np.nan,
+                "effective_n": np.nan, "mean_difference": np.nan}
+    differences = (aligned["left"].abs() ** power - aligned["right"].abs() ** power).to_numpy()
+    lag = max(horizon - 1, newey_west_lag(n))
+    variance, inflation = long_run_variance(differences, lag)
+    statistic = differences.mean() / np.sqrt(variance / n)
+    correction = np.sqrt(max((n + 1 - 2 * horizon + horizon * (horizon - 1) / n) / n, 1e-12))
+    adjusted = statistic * correction
+    return {
+        "n": n,
+        "lag": lag,
+        "statistic": float(adjusted),
+        "p": float(2 * stats.t.sf(abs(adjusted), n - 1)),
+        "effective_n": float(n / inflation) if inflation == inflation else np.nan,
+        "mean_difference": float(differences.mean()),
+    }

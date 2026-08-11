@@ -296,3 +296,49 @@ def test_restricting_to_shared_months_puts_every_family_on_one_footing():
     keys = evaluation.shared_targets([left, right])
     assert len(keys) == 3
     assert len(evaluation.restrict(left, keys)) == len(evaluation.restrict(right, keys)) == 3
+
+
+# --- Diebold-Mariano --------------------------------------------------------
+
+
+def test_identical_forecasts_give_no_evidence_either_way():
+    index = months(120)
+    errors = pd.Series(np.random.default_rng(0).normal(size=120), index=index)
+    result = evaluation.diebold_mariano(errors, errors.copy(), 1)
+    assert result["statistic"] == 0.0
+    assert result["p"] == 1.0
+
+
+def test_a_clearly_worse_forecast_is_detected_and_the_sign_says_which():
+    index = months(120)
+    good = pd.Series(np.random.default_rng(0).normal(size=120), index=index)
+    result = evaluation.diebold_mariano(good, good * 3, 1)
+    assert result["statistic"] < 0          # the first argument had the smaller loss
+    assert result["p"] < 0.001
+
+
+def test_an_autocorrelated_difference_costs_effective_sample_size():
+    """The whole point of the correction: overlap is not free information."""
+    index = months(120)
+    rng = np.random.default_rng(1)
+    smooth = pd.Series(np.convolve(rng.normal(size=140), np.ones(12) / 12, "valid")[:120],
+                       index=index)
+    rough = pd.Series(rng.normal(size=120), index=index)
+    zero = pd.Series(0.0, index=index)
+    assert (evaluation.diebold_mariano(smooth + 3, zero, 6)["effective_n"]
+            < evaluation.diebold_mariano(rough + 3, zero, 1)["effective_n"] / 2)
+
+
+def test_the_small_sample_correction_shrinks_the_statistic_at_long_horizons():
+    index = months(40)
+    errors = pd.Series(np.random.default_rng(2).normal(size=40) + 1.0, index=index)
+    zero = pd.Series(0.0, index=index)
+    short = abs(evaluation.diebold_mariano(errors, zero, 1)["statistic"])
+    long = abs(evaluation.diebold_mariano(errors, zero, 12)["statistic"])
+    assert long < short
+
+
+def test_too_few_paired_months_returns_nothing_rather_than_a_number():
+    index = months(5)
+    errors = pd.Series(np.random.default_rng(3).normal(size=5), index=index)
+    assert np.isnan(evaluation.diebold_mariano(errors, errors * 2, 1)["p"])

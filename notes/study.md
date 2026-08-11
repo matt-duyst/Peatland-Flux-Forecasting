@@ -1203,30 +1203,71 @@ absolute error where below one means the model wins:
 
 Month-of-year climatology is the best benchmark at every horizon on both gases.
 Models beat it at one month on both gases and tie it at six months on methane;
-everywhere else the climatology is better. Paired by month with a sign test, no
-horizon on either gas separates the best method from climatology:
+everywhere else the climatology is better. Corrected for serial correlation with
+a Diebold-Mariano test, Bartlett-weighted at the larger of the horizon minus one
+and the automatic Newey-West lag, and with the Harvey, Leybourne and Newbold
+small-sample factor, **no horizon on either gas separates the best method from
+climatology**:
 
-| gas | horizon | months won by the best method | p |
+| gas | horizon | best method | n | effective n | DM t | DM p | sign-test p |
+|---|---|---|---|---|---|---|---|
+| methane | 1 | autoregressive ridge | 57 | 35.6 | −0.67 | 0.503 | 0.185 |
+| methane | 3 | autoregressive gradient boosting | 60 | 31.4 | +1.41 | 0.163 | 0.245 |
+| methane | 6 | exogenous gradient boosting | 61 | 68.8 | −0.09 | 0.928 | 0.443 |
+| methane | 12 | exogenous gradient boosting | 65 | 39.3 | +1.51 | 0.136 | 0.082 |
+| carbon dioxide | 1 | autoregressive gradient boosting | 85 | 80.4 | −1.37 | 0.175 | 0.386 |
+| carbon dioxide | 3 | exogenous ridge | 85 | 79.3 | +0.28 | 0.779 | 0.828 |
+| carbon dioxide | 6 | exogenous ridge | 85 | 80.1 | +0.62 | 0.539 | 0.386 |
+| carbon dioxide | 12 | autoregressive gradient boosting | 85 | 32.4 | +0.98 | 0.331 | 0.128 |
+
+A negative statistic means the model beat climatology. **The overlap correction
+matters:** methane at one month is worth 35.6 independent comparisons rather than
+57, at three months 31.4 of 60, and carbon dioxide at twelve months 32.4 of 85.
+The earlier sign-test values were optimistic as flagged, and nothing changes
+direction, but methane at one month moves from p = 0.185 to p = 0.503, which is
+the difference between a number worth mentioning and one that is not.
+
+Effective n above n appears in several of the method-group comparisons below.
+That is not an error: it means the loss differential alternates rather than
+persists, which mildly increases precision.
+
+### The methane one-month advantage is one year, and a simpler method has it too
+
+Ridge's lower mean absolute error at one month is real but it is not spread over
+the record. It is **almost entirely 2015**:
+
+| year | months scored | nmol saved against climatology | that summer as a share of normal |
 |---|---|---|---|
-| methane | 1 | 23 of 57 | 0.185 |
-| methane | 3 | 25 of 60 | 0.245 |
-| methane | 6 | 34 of 61 | 0.443 |
-| methane | 12 | 25 of 65 | 0.082 |
-| carbon dioxide | 1 | 47 of 85 | 0.386 |
-| carbon dioxide | 3 | 44 of 85 | 0.828 |
-| carbon dioxide | 6 | 38 of 85 | 0.386 |
-| carbon dioxide | 12 | 35 of 85 | 0.128 |
+| 2015 | 8 | **+85.2** | 0.62 |
+| 2016 | 12 | +0.7 | 0.94 |
+| 2017 | 12 | +19.8 | 1.02 |
+| 2018 | 12 | −33.4 | 1.12 |
+| 2019 | 12 | −8.0 | 1.01 |
+| 2020 | 1 | −1.5 | 1.07 |
 
-Within a horizon each target month is forecast once, so the pairs are distinct
-months; they are still serially correlated, which the sign test does not correct
-for and which makes these p values optimistic rather than conservative.
+The expectation was that the gains would be in low-amplitude years where
+climatology over-predicts, and that is confirmed. 2015 is the weakest summer in
+the scored window at 0.62 of the average year's June-to-September mean, and the
+second weakest in the whole record after 2021. Excluding it, ridge is **worse** than
+climatology by 22.4 nmol over the remaining 49 months. Splitting the same way
+with a Diebold-Mariano test: all months t = −0.67, p = 0.503; excluding 2015
+t = +0.52, p = 0.606; 2015 alone t = −1.35, p = 0.218 on eight months.
 
-**Methane at one month is the one case worth looking at twice.** Ridge has the
-lower mean absolute error by 1.1 nmol m-2 s-1, yet it is the better forecast on
-only 23 of 57 months. Its advantage is not that it is usually right but that it
-is less badly wrong when the month is extreme, which is the opposite of what a
-seasonal mean is good at, and it is the only place in the comparison where a
-model does something climatology structurally cannot.
+**But the advantage is persistence, not detection, and it belongs to a one-line
+benchmark.** In 2015 alone, naive-1, which is last month's value carried forward
+with no seasonal structure at all, saves 117.3 nmol against climatology, against
+ridge's 85.2. The mechanism is visible in the coefficients: fitted at July 2015
+on the deseasonalized series, ridge puts **+1.034 on the one-month lag**, which
+is unit weight on last month's departure from its seasonal mean. Ridge is a
+seasonal mean plus last month's anomaly carried forward, shrunk enough not to pay
+naive's cost in ordinary years, where naive loses 233.7 nmol overall.
+
+So the honest statement is narrower than "a model detects an anomalous year one
+month ahead". The 2015 anomaly was detectable one month ahead, the information
+was in the previous month's flux and nowhere else, and what the model contributed
+was knowing how much to weight it. **No covariate the tower measures was
+involved.** The anomaly is visible in the record from May 2015, when the flux
+fell to 0.75 of its month-of-year mean, and reached 0.50 by July.
 
 ### Statistical against machine learning, which was the original question
 
@@ -1253,21 +1294,77 @@ this short, the extra flexibility does not pay for itself.** Ridge and ordinary
 least squares are within 0.002 of each other throughout, which says the design is
 not collinear enough for the penalty to matter.
 
-### What the screening kept, and what that says
+### What the screening kept: a finding, not a diagnostic
 
 Boruta was rerun in every fold, with the seasonal terms retained without being
-judged. The pattern is the same on both gases: the seasonal terms survive in
-100% of folds by construction, the annual flux lag survives in most, and the
-covariates survive unevenly.
+judged. Share of folds in which each predictor survived, exogenous family:
 
-On carbon dioxide the annual flux lag survives in 100% of folds at every horizon,
-and at three months **nothing else survives at all** — not one covariate, in any
-fold. On methane the one-month lag and lagged air temperature survive in every
-fold at one month, and by three months only the annual lag and a trace of water
-table remain. Where a covariate does survive it is soil or air temperature, which
-is the season again by another route.
+| predictor | methane h=1 | h=3 | h=6 | h=12 | CO2 h=1 | h=3 | h=6 | h=12 |
+|---|---|---|---|---|---|---|---|---|
+| seasonal terms (three) | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 |
+| annual flux lag | 0.66 | 0.25 | 0.55 | 0.17 | 1.00 | **1.00** | 1.00 | 1.00 |
+| one-month flux lag | 1.00 | — | — | — | 1.00 | — | — | — |
+| soil temperature | 0.93 | 0.00 | 1.00 | 0.85 | 0.00 | **0.00** | 0.15 | 0.93 |
+| air temperature | 1.00 | 0.00 | 0.89 | 0.72 | 0.01 | **0.00** | 0.76 | 0.42 |
+| precipitation | 0.20 | 0.00 | 0.03 | 0.54 | 0.09 | **0.00** | 0.14 | 0.33 |
+| water table | 0.29 | 0.10 | 0.00 | 0.00 | 0.15 | **0.00** | 0.00 | 0.48 |
 
-Two cautions on reading these counts. Boruta is all-relevant rather than
+**Carbon dioxide at three months is the sharpest result in the table.** The
+annual flux lag survives in every fold; not one covariate survives in any fold,
+at any point in the record. Soil temperature, air temperature, precipitation and
+water table depth carry nothing about carbon dioxide three months out that the
+seasonal terms and last year's value do not already hold. Carbon dioxide never
+uses water table at three or six months and only reaches for it at twelve, where
+lagging by a year makes it a seasonal quantity again.
+
+Methane is less extreme but points the same way. Its covariates matter at one
+month, vanish entirely at three, and return at six and twelve as temperature.
+
+### The surviving temperatures are the season restated
+
+Where a covariate does survive it is usually soil or air temperature, which the
+earlier note described as the season arriving by another route. That is now
+established rather than asserted. A phase-shifted annual cycle is a linear
+combination of the same sine and cosine, so lagging a seasonal driver does not
+stop the seasonal terms from restating it. Regressing each surviving covariate
+lag on the three seasonal terms:
+
+| gas | predictor | explained by the calendar | partial r with the flux | p |
+|---|---|---|---|---|
+| methane | soil temperature, lag 1 | 0.947 | **0.268** | 0.0017 |
+| methane | air temperature, lag 1 | 0.950 | 0.118 | 0.202 |
+| methane | soil temperature, lag 6 | 0.947 | 0.024 | 0.784 |
+| methane | air temperature, lag 6 | 0.947 | −0.004 | 0.964 |
+| methane | soil temperature, lag 12 | 0.954 | 0.174 | 0.049 |
+| methane | air temperature, lag 12 | 0.954 | 0.032 | 0.729 |
+| methane | precipitation, lag 12 | 0.397 | 0.152 | 0.100 |
+| carbon dioxide | air temperature, lag 6 | 0.950 | **0.277** | 0.0015 |
+| carbon dioxide | soil temperature, lag 12 | 0.953 | 0.099 | 0.236 |
+| carbon dioxide | air temperature, lag 12 | 0.950 | 0.139 | 0.115 |
+| carbon dioxide | water table, lag 12 | 0.005 | −0.157 | 0.063 |
+| carbon dioxide | precipitation, lag 12 | 0.382 | −0.038 | 0.667 |
+
+**Every temperature lag that survived screening is between 94.7% and 95.4%
+explained by the calendar alone**, at every lag, on both gases. The lag is
+irrelevant to this: a six-month lag inverts the phase and a twelve-month lag
+restores it, and both are recoverable from a sine and a cosine of the same
+frequency. What is left over is small. Two of the seventeen partial correlations
+clear a Bonferroni threshold of p = 0.0029 — methane against soil temperature at
+lag 1 (r = 0.268) and carbon dioxide against air temperature at lag 6 (r = 0.277)
+— so there is a genuine non-seasonal temperature signal, but it accounts for
+about 7% of the flux's non-seasonal variance in the two cases where it exists at
+all, and none elsewhere.
+
+Water table is the mirror image and is worth stating separately. It is the one
+covariate the calendar cannot explain, at 0.5% for methane and carbon dioxide
+alike, so it is genuinely non-seasonal information. It is also the one that
+correlates least with what is left of the flux: r = 0.006 for methane at lag 1
+and −0.157 for carbon dioxide at lag 12, neither significant. **The covariate
+that carries independent information carries no usable signal, and the covariates
+that carry signal are the season.** That is the same wall the reconstruction work
+hit from the other side.
+
+Two cautions on reading the survival counts. Boruta is all-relevant rather than
 minimal-optimal, so two predictors carrying the same information both survive and
 the size of a kept set is not a count of independent information. And the
 binomial threshold is the published rule rather than a calibrated error rate:
@@ -1275,17 +1372,37 @@ only the shadow is redrawn between repeats, so the repeats are not independent.
 Measured on synthetic null data, between four and eight percent of irrelevant
 candidates survived.
 
-### What this adds to the benchmark result
+### What the forecasting half concludes
 
-The benchmark result was that month-of-year climatology beats seasonal naive at
-every horizon on both gases. The model result does not overturn it. Four methods
-across two families, with per-fold screening and per-fold deseasonalization,
-reach climatology at one horizon out of eight and beat it nowhere by a margin a
-sign test can see. **The seasonal mean is close to the whole of the monthly
-signal at this site**, and the question the study was reframed to ask — whether
-statistical or machine learning methods forecast these fluxes better — has a
-smaller answer than either: on this record neither group beats the seasonal mean,
-and between them the statistical methods are slightly ahead.
+**Methane and carbon dioxide at this site are predictable in shape and not in
+magnitude.** The seasonal pattern repeats reliably enough that a month-of-year
+mean is the best forecast available at every horizon on both gases. The size of
+the season varies substantially between years and without trend — the
+June-to-September methane mean runs from 0.57 to 1.62 of the average year across
+the thirteen years of record — and nothing in this study reaches that variation. Neither
+statistical nor machine learning methods find it, per-fold screening does not
+find a covariate that carries it, and the one case where a model does beat the
+seasonal mean turns out to be one anomalous year in which last month's flux, and
+no measured driver, was the informative quantity.
+
+That is not a failed comparison. It is a statement about what the tower can and
+cannot see, and it is the same statement the reconstruction half arrived at.
+There the dominant failure was episodic: the 2011 shortfall is 91% carried by two
+months whose covariates are unremarkable, matching the signature Irvin et al.
+(2021) describe. Here the same thing appears as a forecasting limit, from a
+completely different direction and on a different question. **The two halves of
+the study share a conclusion: the between-year variation in these fluxes is not
+a function of anything the site measures.** The reconstruction cannot project it
+backward and the forecast cannot project it forward, for one reason.
+
+The subsidiary answer to the question the original work asked is that ordinary
+least squares and ridge are ahead of the random forest and gradient boosting in
+twelve of sixteen comparisons. Corrected for serial correlation, four of those
+sixteen reach p < 0.05 — three favoring the statistical methods and one, exogenous
+methane at twelve months, favoring gradient boosting — and **none survives a
+Bonferroni threshold of p = 0.0031 for sixteen tests**. The direction replicates
+Makridakis et al. (2018) at a new site and on a different kind of series; the
+margins do not support more than the direction.
 
 ## What the study concludes
 
@@ -1318,6 +1435,18 @@ extrapolating the correction.
 91% carried by two months whose covariates are unremarkable, matching the
 episodic signature Irvin et al. (2021) describe. Nothing in this data constrains
 how often such episodes occurred before 2009.
+
+**The forecasting half reaches the same conclusion from the opposite direction.**
+Asked to predict forward rather than reconstruct backward, and given four methods
+across two families with per-fold screening, nothing beats a month-of-year mean at
+any horizon on either gas. These fluxes are predictable in shape and not in
+magnitude: the seasonal pattern repeats, the size of the season varies from 0.57
+to 1.62 of the average year without trend, and no covariate the tower measures
+reaches that variation. Every temperature that survived screening is about 95%
+explained by the calendar alone, and water table, the one covariate the calendar
+cannot explain, correlates with nothing that is left. **The reconstruction cannot
+project the between-year variation backward and the forecast cannot project it
+forward, and it is one limitation rather than two.**
 
 Deventer et al. (2019) permit merging observations from different measurement
 systems subject to single-system flux uncertainty, and that permission is what
