@@ -207,27 +207,29 @@ def threshold_summary(comparison: pd.DataFrame, thresholds: tuple[int, ...]) -> 
     return pd.DataFrame.from_records(records)
 
 
-def diurnal_vs_seasonal(merged: pd.DataFrame) -> dict[str, object]:
+def diurnal_vs_seasonal(merged: pd.DataFrame, column: str = "fch4") -> dict[str, object]:
     """Compare the strength of the diurnal cycle against the seasonal cycle.
 
     Reports amplitude and explained variance for the half-hour-of-day grouping
     against the month-of-year grouping. A weak diurnal signal relative to the
-    seasonal one is what makes aggregation to monthly defensible.
+    seasonal one is what makes aggregation to monthly defensible, which is true
+    of methane here and emphatically not of carbon dioxide, so the column is a
+    parameter and both gases are reported.
     """
-    values = merged.dropna(subset=["fch4"]).copy()
+    values = merged.dropna(subset=[column]).copy()
     values["halfhour"] = (
         values["timestamp_start"].dt.hour * 2 + values["timestamp_start"].dt.minute // 30
     )
     values["month_of_year"] = values["timestamp_start"].dt.month
 
-    total_variance = values["fch4"].var(ddof=0)
+    total_variance = values[column].var(ddof=0)
     result: dict[str, object] = {"n": len(values), "total_variance": float(total_variance)}
 
     for label, key in (("diurnal", "halfhour"), ("seasonal", "month_of_year")):
-        group_means = values.groupby(key)["fch4"].mean()
-        group_sizes = values.groupby(key)["fch4"].size()
+        group_means = values.groupby(key)[column].mean()
+        group_sizes = values.groupby(key)[column].size()
         between = float(
-            np.average((group_means - values["fch4"].mean()) ** 2, weights=group_sizes)
+            np.average((group_means - values[column].mean()) ** 2, weights=group_sizes)
         )
         result[f"{label}_amplitude"] = float(group_means.max() - group_means.min())
         result[f"{label}_eta_squared"] = between / float(total_variance)
@@ -247,3 +249,15 @@ def diurnal_cycle_by_season(merged: pd.DataFrame) -> pd.DataFrame:
     )
     table = values.pivot_table(index="hour", columns="season", values="fch4", aggfunc="mean")
     return table.reset_index()
+
+
+def daylight_share(merged: pd.DataFrame, column: str, low: int = 6, high: int = 18) -> float:
+    """Share of retained observations falling in daylight hours.
+
+    Even sampling would give a half. Carbon dioxide is taken up in daylight, so
+    over-representation here is what turns a day-weighted monthly mean into a
+    seasonal artifact rather than a constant offset.
+    """
+    values = merged.dropna(subset=[column])
+    hour = values["timestamp_start"].dt.hour
+    return float(((hour >= low) & (hour < high)).mean())

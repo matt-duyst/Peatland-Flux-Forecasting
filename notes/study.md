@@ -353,8 +353,10 @@ nominal intervals:
 On the nominal 117 these read 0.188/20.2%/0.833, 0.246/25.8%/0.917,
 0.232/31.5%/0.844 and 0.174/20.5%/0.889. The wettest-decile coverage falls from
 0.833 to 0.750 on the adopted window, which is the one place narrowing the window
-makes a holdout look worse; it is twelve test months, so the step from 10 of 12
-to 9 of 12 is a single month.
+makes a holdout look worse. **That drop is one month.** The wettest decile is
+twelve test months, so 0.833 is ten of twelve covered and 0.750 is nine of
+twelve; a single month changed side. It should not be read as a trend, and no
+quantity in this study turns on it.
 
 Unweighted backward transfer was reported as 50.2% MAPE at 62.5% coverage on the
 nominal window, and that number was **substantially an artifact of the two
@@ -490,17 +492,29 @@ doing much of the work in these holdouts, which is the same finding as the
 coefficient instability arriving by another route.
 
 The reconstruction period is both earlier and wetter, so the two effects apply
-together. Combining them additively gives +0.002 unweighted and +0.106 weighted.
-**The earlier claim that the two combine to opposite signs does not survive the
-adopted window**; they now agree in direction, and the objection to summing them
-rests on the interaction below rather than on a sign disagreement.
+together, and the question is whether they can be added.
 
-The additive assumption fails a direct test. **Inside the fit window the two axes
-are not independent: the correlation between calendar time and water table is
-+0.393 at p below 0.001**, against +0.098 at p = 0.291 on the nominal window. That
-reversal is itself informative, because the two excluded months sat at the late,
-low extreme of both axes and had enormous leverage on a time correlation. The
-earliest three years remain slightly drier than the rest, at 413.243 against
+**They cannot, and the reason is that the two axes are not independent inside the
+fit window.** The correlation between calendar time and water table is **+0.393
+at p below 0.001**. Adding a time effect to a water table effect assumes each can
+be varied while the other is held fixed, and here they move together, so the sum
+double-counts whatever the two share. Combining them anyway gives +0.002
+unweighted and +0.106 weighted.
+
+*Two earlier arguments in this section have been retracted and should not be
+reused.* The first was that the two effects combine to opposite signs, which was
+true on the nominal window and is not true here: they now agree in direction. The
+second was the opposite of the argument above — that the axes were
+*near-independent*, at +0.098 with p = 0.291, with the objection to additivity
+resting entirely on the non-uniformity below. Both were properties of the nominal
+window. The two excluded months sat at the late, low extreme of both axes, where
+a handful of points has enormous leverage on a time correlation, and removing
+them reversed the independence result. **The conclusion that the effects cannot
+be summed is unchanged; what changed is that it now rests on the correlation
+between the axes, and the non-uniformity below corroborates it rather than
+carrying it alone.**
+
+The earliest three years remain slightly drier than the rest, at 413.243 against
 413.327, rather than wetter. Splitting the backward-transfer holdout by water
 table shows the bias is also not uniform:
 
@@ -510,8 +524,8 @@ table shows the bias is also not uniform:
 | Middle | 413.22 | +0.077 (low 7.5%) | +0.078 (low 7.5%) |
 | **Wettest** | **413.35** | **+0.112 (low 10.6%)** | **+0.145 (low 13.5%)** |
 
-The backward-transfer bias depends on water table, so the two effects interact
-and cannot be summed. The band matching the reconstruction is the wettest, and
+The backward-transfer bias depends on water table, so the two effects interact,
+which is the second reason they cannot be summed. The band matching the reconstruction is the wettest, and
 it gives a consistent answer under both weightings: **the model is expected to
 predict low by roughly 11% unweighted and 13% weighted.** `bias.wet_end_bias`
 computes this from the window in use, and `scripts/reconstruct.py` calls it

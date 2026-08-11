@@ -157,7 +157,8 @@ def main() -> None:
 
     heading("WHAT THIS DEMONSTRATES")
     print("  1  The water table coefficient is a property of the sample, not the system:")
-    print("     it drifts 59% as its supporting range narrows, monotonically.")
+    print(f"     it drifts {100 * result['relative_drift']:.0f}% of its full-range value as that")
+    print("     range narrows, monotonically.")
     print(f"  2  {len(annual) - inside} of {len(annual)} reconstructed years need extrapolation on at least")
     print("     one covariate, mostly water table.")
     print("  3  The episodic component that dominates 2011 is invisible to the")

@@ -90,6 +90,20 @@ def main() -> None:
         diff.abs().nlargest(6).index).round(3).to_string())
 
     heading("THE DIURNAL PROBLEM, WHICH METHANE DOES NOT HAVE")
+    # The contrast between the two gases was recorded in notes/ingestion.md before
+    # any script produced it. Both columns are read from the same product and
+    # before any merge or quality control, so the two gases are compared on the
+    # same footing; the merged methane series gives 0.97% and 37.4% instead,
+    # which is the pair quoted for the aggregation decision.
+    print("  Raw product columns, before merge or quality control:")
+    for label, column in (("methane", "FCH4"), ("carbon dioxide", COLUMN)):
+        shares = daily.diurnal_vs_seasonal(product[[column]].reset_index(), column)
+        print(f"    {label:15s} half-hour-of-day {100 * shares['diurnal_eta_squared']:5.2f}% "
+              f"of variance, month-of-year {100 * shares['seasonal_eta_squared']:5.2f}%, "
+              f"n = {shares['n']:,}")
+    print(f"  daylight share of retained carbon dioxide observations: "
+          f"{100 * daily.daylight_share(frame, COLUMN):.1f}%, against 50% if even")
+
     balanced = daily.monthly_diurnally_balanced(frame, COLUMN)
     bal = balanced.set_index(pd.PeriodIndex(balanced["month"], freq="M"))[f"{COLUMN}_mean"]
     rule = monthly.set_index(pd.PeriodIndex(monthly["month"], freq="M"))["fco2_mean"]

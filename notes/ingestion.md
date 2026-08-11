@@ -476,11 +476,22 @@ Bringing carbon dioxide to methane's standard fixes the weighting of days. It
 does not fix the weighting of hours, and for this gas that is the larger
 problem.
 
-| | Methane | Carbon dioxide |
+Both columns are read from the 2025 product **before any merge or quality
+control**, so the two gases are compared on the same footing. Produced by
+`scripts/05_build_co2.py`.
+
+| | Methane (`FCH4`, n = 66,998) | Carbon dioxide (`FC`, n = 98,006) |
 |---|---|---|
-| Half-hour of day, share of half-hourly variance | **1.5%** | **29.1%** |
-| Month of year, share of half-hourly variance | 41.3% | 22.4% |
+| Half-hour of day, share of half-hourly variance | **1.54%** | **29.14%** |
+| Month of year, share of half-hourly variance | 41.31% | 22.41% |
 | Daylight share of retained observations | | **62.1%**, against 50% if even |
+
+**These are not the same numbers as the 0.97% and 37.4% quoted above**, and the
+difference is the population rather than the measurement. That pair is the
+merged, quality-controlled methane series of 66,946 half-hours, which is what the
+study actually aggregates; this pair is the raw product column. Both are correct
+and they are not interchangeable. A draft writeup took 1.5% from this table and
+37.4% from the other, which is what prompted labeling them.
 
 For methane the diurnal cycle is negligible, which is why monthly aggregation
 was defensible without further argument. For carbon dioxide it is the dominant

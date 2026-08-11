@@ -16,14 +16,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import pandas as pd
 
 from ingest import covariates
-from study import (figures, plotstyle, reconstruct, sitemap, targets,
+from study import (bias, figures, plotstyle, reconstruct, sitemap, targets,
                    weights as weighting, windows)
 
 MONTHLY = "data/processed/monthly_fch4_from_daily.csv"
 
-#: Wet-end directional expectation from src/study/bias.py, carried as a stated
-#: direction rather than applied as a correction.
-WET_END_BIAS_LOG = 0.148
+# The wet-end directional expectation is computed from the fit window in use,
+# not pinned. It was a literal here and in scripts/reconstruct.py, both carrying
+# the nominal window's 0.148 after the study had adopted the 115-month window.
 
 
 def load() -> tuple[pd.DataFrame, pd.DataFrame, dict[str, pd.PeriodIndex]]:
@@ -72,7 +72,7 @@ def main() -> None:
         monthly_recon,
         reconstruct.year_support(cov, built["fit"], built["reconstruction"],
                                  windows.RECONSTRUCTION_COVARIATES),
-        WET_END_BIAS_LOG,
+        bias.wet_end_bias(cov, monthly, built["fit"], inverse_variance),
     )
     # The annual table keeps the primary series and the envelope; the figure
     # draws the three assumptions themselves, so each is totaled here.
