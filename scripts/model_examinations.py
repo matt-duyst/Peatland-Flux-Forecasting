@@ -178,10 +178,16 @@ def examination_two() -> None:
     print("\n  what ridge weights, fitted at one origin inside the anomaly")
     origin = pd.Period(f"{ANOMALOUS_YEAR}-07", freq="M")
     design, target, _, _ = experiment.fold_matrices(series, origin, 1, None)
-    columns = list(features.SEASONAL_TERMS) + [c for c in design.columns
-                                               if c.startswith("flux_lag")]
+    # The predictors that fold's screening actually kept, read back from the run.
+    # Refitting on the full design would report coefficients from a model the
+    # study never fitted, which is how this line was wrong once already.
+    fold = frames["autoregressive"]
+    columns = fold.loc[
+        (fold["origin"] == str(origin)) & (fold["horizon"] == 1), "predictors"
+    ].iloc[0].split(", ")
     fitted = models.MODELS["ridge"]().fit(design[columns].to_numpy(), target.to_numpy())
-    print(f"    origin {origin}, on the deseasonalized series")
+    print(f"    origin {origin}, on the deseasonalized series, "
+          f"on the {len(columns)} predictors that fold's screening kept")
     for name, coefficient in zip(columns, fitted.coef_):
         print(f"      {name:16s} {coefficient:+.3f}")
 

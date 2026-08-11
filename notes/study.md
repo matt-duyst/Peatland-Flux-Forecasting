@@ -174,17 +174,43 @@ claims the study previously made turn out to have depended on the artifacts.
 |---|---|---|
 | Soil temperature slope, unweighted | 0.09781 | 0.09418 |
 | Soil temperature slope, weighted | 0.08883 | 0.08806 |
-| **Q10, unweighted** | **2.66** | **2.57** |
+| **Q10, unweighted** | **2.66** | **2.56** |
 | **Q10, weighted** | **2.43** | **2.41** |
 | Water table coefficient, unweighted | 1.826 | **2.385**, +30.6% |
 | Water table coefficient, weighted | 2.564 | **2.704**, +5.5% |
 | Clamp bounds | 412.51 to 413.46 | **413.13 to 413.46** |
 
 Every Q10 stays inside the published interval of 1.9 to 4.3, under both
-estimators and across all sixteen holdout fits, whose range is 2.33 to 2.72. The
+estimators and across all sixteen holdout fits, whose range is **2.33 to 3.10**.
+The eight fits carrying the water table term, which is the model the study uses,
+range **2.33 to 2.72**; the eight without it reach 3.10. An earlier version of
+this line gave 2.33 to 2.72 for all sixteen. The
 water table coefficient steepens, and it steepens six times more without
 weighting than with it, because inverse-variance weighting had already discounted
 the two months to 0.28% of total weight against a 1.71% equal share.
+
+**The 115-month configuration is not produced by any committed script, and that
+is a defect.** `src/study/windows.py` has no exclusion parameter, and
+`scripts/prepare_study.py`, `scripts/reconstruct.py` and
+`scripts/holdout_experiments.py` all build their fit window from
+`windows.build_windows` and therefore all run on the nominal 117. The two
+artifact months are named only in `src/study/figures.py`, as
+`WATER_TABLE_ARTIFACTS`, and applied only by `scripts/make_figures.py`, so the
+figures describe the adopted window while the tables above it do not.
+
+Every effective-window number in these notes has been verified to reproduce by
+excluding 2019-06 and 2019-09 from `build_windows(...)["fit"]` before fitting:
+the water table path gives 2.704 to 4.077 weighted and 2.385 to 3.299 unweighted,
+and the Q10 gives 2.41 weighted and 2.56 unweighted. **The numbers are right; the
+path to them is not committed.** Until the exclusion is plumbed through
+`windows.py` and the three scripts, running this repository reproduces the
+nominal configuration and not the adopted one.
+
+**This is the same class of defect as the one this rebuild was undertaken to
+fix.** The original analysis was untrustworthy in part because a filtering step
+lived outside the repository and could not be rerun. An adopted window that lives
+only in prose is a smaller instance of the same thing, and it should be closed
+before any writeup cites the effective-window numbers.
 
 **The reconstruction does not move materially.** Every year rises by 1.2 to 4.1%,
 the largest absolute change being 0.69 g C m⁻² yr⁻¹, and the mean over twenty
@@ -244,9 +270,11 @@ standard error of one fit, though the paper does not say so explicitly and this
 reconciliation is inference rather than something stated.
 
 **The value used for comparison here is 2.9 with an interval of 1.9 to 4.3**,
-as the paper's headline figure. Fitted on the 115 months, the Q10 is **2.57**
-unweighted and 2.41 weighted, and it ranges **2.33 to 2.72** across the sixteen
-holdout fits. On the nominal 117 it was 2.66 unweighted and 2.43 weighted.
+as the paper's headline figure. Fitted on the 115 months, the Q10 is **2.56**
+unweighted, from a soil temperature slope of 0.09418, and 2.41 weighted. Across
+the sixteen holdout fits it ranges **2.33 to 3.10**, and across the eight that
+carry the water table term **2.33 to 2.72**. On the nominal 117 it was 2.66
+unweighted and 2.43 weighted.
 
 **Every one of those values falls inside the published interval of 1.9 to 4.3**,
 under both estimators and across all four holdouts, and the whole holdout range
@@ -1041,9 +1069,14 @@ Climatology's error as a ratio to seasonal naive on the same months:
 | 60 | **0.777** | 0.793 | 0.773 | **0.846** | 0.852 | 0.831 |
 | 72 | **0.778** | 0.785 | 0.829 | **0.829** | 0.834 | 0.850 |
 
-**The conclusion holds at every window.** Climatology beats seasonal naive by 22
-to 33% on methane and 15 to 20% on carbon dioxide, at every horizon and every
-minimum tried. The advantage is *largest* at the shortest window, so the
+**The conclusion holds at every window.** Climatology beats seasonal naive by **17
+to 33% on methane and 15 to 20% on carbon dioxide**, across every horizon and
+minimum in the table. The lower bound was previously given as 22%, which omitted
+the weakest cell, methane at twelve months on a seventy-two month minimum, where
+the ratio is 0.829. Note that these are **ratios of mean absolute error**, while
+the percentages in the benchmark section above are ratios of *scaled* error; the
+two measures are not interchangeable and the sections should be read as reporting
+different quantities. The advantage is *largest* at the shortest window, so the
 sixty-month choice understates it rather than manufacturing it. At a thirty-six
 month minimum the evaluation window admits 2012, a summer 51% above the record
 mean, and climatology still wins by more than at sixty. Including a high year
@@ -1189,7 +1222,7 @@ becomes one horizon out of four. **The apparent win was the month set, not the
 method.** `evaluation.shared_targets` and `evaluation.restrict` exist to prevent
 this, and every number below is on shared months.
 
-### Climatology is beaten at one horizon out of eight, and not significantly
+### Climatology is beaten at two horizons of eight, tied at a third, and not significantly
 
 On shared months, the best method against the best benchmark, as a ratio of mean
 absolute error where below one means the model wins:
@@ -1202,8 +1235,9 @@ absolute error where below one means the model wins:
 | 12 | 1.095 | autoregressive ridge | 1.060 | autoregressive gradient boosting |
 
 Month-of-year climatology is the best benchmark at every horizon on both gases.
-Models beat it at one month on both gases and tie it at six months on methane;
-everywhere else the climatology is better. Corrected for serial correlation with
+Models beat it at one month on both gases and tie it at six months on methane,
+so it is beaten at two of eight and tied at a third; everywhere else the
+climatology is better. Corrected for serial correlation with
 a Diebold-Mariano test, Bartlett-weighted at the larger of the horizon minus one
 and the automatic Newey-West lag, and with the Harvey, Leybourne and Newbold
 small-sample factor, **no horizon on either gas separates the best method from
@@ -1356,8 +1390,11 @@ about 7% of the flux's non-seasonal variance in the two cases where it exists at
 all, and none elsewhere.
 
 Water table is the mirror image and is worth stating separately. It is the one
-covariate the calendar cannot explain, at 0.5% for methane and carbon dioxide
-alike, so it is genuinely non-seasonal information. It is also the one that
+covariate the calendar cannot explain, at **0.2% for methane** and **0.5% for
+carbon dioxide**, so it is genuinely non-seasonal information. An earlier version
+of this line gave 0.5% for both, and a draft writeup carried that error forward;
+the values come from `scripts/model_examinations.py`, which reports 0.002 for
+methane at lags 1 and 2 and 0.005 for carbon dioxide at lag 12. It is also the one that
 correlates least with what is left of the flux: r = 0.006 for methane at lag 1
 and −0.157 for carbon dioxide at lag 12, neither significant. **The covariate
 that carries independent information carries no usable signal, and the covariates
