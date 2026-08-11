@@ -1163,6 +1163,130 @@ considered rather than settled.** If the forecasting work later needs both gases
 on an identical footing, balancing methane is the change to make, and the cost is
 recomputing the reconstruction rather than any difficulty in the aggregation.
 
+## Forecasting: the models
+
+Two families were fitted, kept apart throughout. The **autoregressive** family
+sees only the flux's own past and the calendar, so a twelve-month forecast is a
+genuine twelve-month forecast. The **exogenous** family adds lagged soil and air
+temperature, precipitation and water table depth. Pooling them would put a method
+that can see the weather against one that cannot, which measures information
+rather than method.
+
+Every forecast is direct: a separate model per horizon, all of whose predictors
+are lagged by at least the horizon. Nothing contemporaneous appears anywhere. The
+month-of-year means, the predictor screening and the fit all happen inside the
+fold, on months up to the origin.
+
+### The comparison had to be put on shared months before it meant anything
+
+The families reach different distances into the record. On methane the benchmarks
+score 94 target months, the autoregressive family 80, and the exogenous family 57,
+because the four covariates are all present in only 117 of 153 months and the
+lags eat further into the start. Scoring each family on whatever it could reach
+and then dividing produced a table in which models appeared to beat climatology at
+three horizons out of four. On the 57 months every method could score, that
+becomes one horizon out of four. **The apparent win was the month set, not the
+method.** `evaluation.shared_targets` and `evaluation.restrict` exist to prevent
+this, and every number below is on shared months.
+
+### Climatology is beaten at one horizon out of eight, and not significantly
+
+On shared months, the best method against the best benchmark, as a ratio of mean
+absolute error where below one means the model wins:
+
+| horizon | methane | best method | carbon dioxide | best method |
+|---|---|---|---|---|
+| 1 | **0.887** | autoregressive ridge | **0.935** | autoregressive gradient boosting |
+| 3 | 1.073 | autoregressive gradient boosting | 1.012 | exogenous ridge |
+| 6 | 0.999 | exogenous gradient boosting | 1.034 | autoregressive ridge |
+| 12 | 1.095 | autoregressive ridge | 1.060 | autoregressive gradient boosting |
+
+Month-of-year climatology is the best benchmark at every horizon on both gases.
+Models beat it at one month on both gases and tie it at six months on methane;
+everywhere else the climatology is better. Paired by month with a sign test, no
+horizon on either gas separates the best method from climatology:
+
+| gas | horizon | months won by the best method | p |
+|---|---|---|---|
+| methane | 1 | 23 of 57 | 0.185 |
+| methane | 3 | 25 of 60 | 0.245 |
+| methane | 6 | 34 of 61 | 0.443 |
+| methane | 12 | 25 of 65 | 0.082 |
+| carbon dioxide | 1 | 47 of 85 | 0.386 |
+| carbon dioxide | 3 | 44 of 85 | 0.828 |
+| carbon dioxide | 6 | 38 of 85 | 0.386 |
+| carbon dioxide | 12 | 35 of 85 | 0.128 |
+
+Within a horizon each target month is forecast once, so the pairs are distinct
+months; they are still serially correlated, which the sign test does not correct
+for and which makes these p values optimistic rather than conservative.
+
+**Methane at one month is the one case worth looking at twice.** Ridge has the
+lower mean absolute error by 1.1 nmol m-2 s-1, yet it is the better forecast on
+only 23 of 57 months. Its advantage is not that it is usually right but that it
+is less badly wrong when the month is extreme, which is the opposite of what a
+seasonal mean is good at, and it is the only place in the comparison where a
+model does something climatology structurally cannot.
+
+### Statistical against machine learning, which was the original question
+
+Mean scaled error by method group on shared months, with the difference in the
+last column, where positive means the machine learning group did worse:
+
+| family | horizon | methane ML − stat | carbon dioxide ML − stat |
+|---|---|---|---|
+| autoregressive | 1 | +0.092 | −0.002 |
+| autoregressive | 3 | +0.044 | +0.023 |
+| autoregressive | 6 | +0.030 | +0.024 |
+| autoregressive | 12 | +0.054 | −0.001 |
+| exogenous | 1 | +0.039 | +0.001 |
+| exogenous | 3 | +0.023 | +0.047 |
+| exogenous | 6 | −0.017 | +0.033 |
+| exogenous | 12 | −0.113 | −0.019 |
+
+Ordinary least squares and ridge are ahead of the random forest and gradient
+boosting in twelve of sixteen comparisons, and the margins are small everywhere
+except the two exogenous methane cases at six and twelve months, where gradient
+boosting is genuinely ahead. This reproduces the direction Makridakis et al.
+(2018) found on M3 and that Li et al. (2026) found on flux data: **on a series
+this short, the extra flexibility does not pay for itself.** Ridge and ordinary
+least squares are within 0.002 of each other throughout, which says the design is
+not collinear enough for the penalty to matter.
+
+### What the screening kept, and what that says
+
+Boruta was rerun in every fold, with the seasonal terms retained without being
+judged. The pattern is the same on both gases: the seasonal terms survive in
+100% of folds by construction, the annual flux lag survives in most, and the
+covariates survive unevenly.
+
+On carbon dioxide the annual flux lag survives in 100% of folds at every horizon,
+and at three months **nothing else survives at all** — not one covariate, in any
+fold. On methane the one-month lag and lagged air temperature survive in every
+fold at one month, and by three months only the annual lag and a trace of water
+table remain. Where a covariate does survive it is soil or air temperature, which
+is the season again by another route.
+
+Two cautions on reading these counts. Boruta is all-relevant rather than
+minimal-optimal, so two predictors carrying the same information both survive and
+the size of a kept set is not a count of independent information. And the
+binomial threshold is the published rule rather than a calibrated error rate:
+only the shadow is redrawn between repeats, so the repeats are not independent.
+Measured on synthetic null data, between four and eight percent of irrelevant
+candidates survived.
+
+### What this adds to the benchmark result
+
+The benchmark result was that month-of-year climatology beats seasonal naive at
+every horizon on both gases. The model result does not overturn it. Four methods
+across two families, with per-fold screening and per-fold deseasonalization,
+reach climatology at one horizon out of eight and beat it nowhere by a margin a
+sign test can see. **The seasonal mean is close to the whole of the monthly
+signal at this site**, and the question the study was reframed to ask — whether
+statistical or machine learning methods forecast these fluxes better — has a
+smaller answer than either: on this record neither group beats the seasonal mean,
+and between them the statistical methods are slightly ahead.
+
 ## What the study concludes
 
 The reconstruction is not the result. The result is that a model fitted on 2009
