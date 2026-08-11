@@ -17,6 +17,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from study import features
+
 CONVENTION = "observed minus predicted"
 
 
@@ -112,3 +114,38 @@ def bias_by_covariate_band(
     out["prediction_error_pct"] = 100.0 * (np.exp(-out["bias_log_obs_minus_pred"]) - 1.0)
     out["direction"] = out["bias_log_obs_minus_pred"].map(direction)
     return out.round(4)
+
+
+def wet_end_bias(
+    covariates: pd.DataFrame,
+    monthly: pd.DataFrame,
+    fit_months: pd.PeriodIndex,
+    weights: "pd.Series | None" = None,
+    n_years: int = 3,
+    n_bands: int = 3,
+) -> float:
+    """Bias in the wettest band of the backward-transfer holdout.
+
+    The reconstruction period is wetter than the fit window, so this is the band
+    whose conditions it most resembles and the only defensible single number for
+    the direction of error it should be expected to carry.
+
+    Computed rather than pinned. It was a literal in `scripts/reconstruct.py`
+    for a time, which meant changing the fit window silently left it describing
+    the old one; `notes/study.md` records that.
+    """
+    from study import holdout  # imported here to keep the module dependency one-way
+
+    early = holdout.earliest_years(fit_months, n_years)
+    train = fit_months.difference(early)
+    record = holdout.run_experiment(
+        "earliest three years", covariates, monthly, train, early,
+        tuple(covariates.columns), True,
+        weights.reindex(train).dropna() if weights is not None else None,
+    )
+    design = features.build_design(covariates, early, record["fit"].water_table_bounds, True)
+    bands = bias_by_covariate_band(
+        features.log_target(monthly, early), record["fit"].predict(design),
+        covariates[features.WATER_TABLE], n_bands,
+    )
+    return float(bands["bias_log_obs_minus_pred"].iloc[-1])

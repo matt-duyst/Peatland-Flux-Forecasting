@@ -106,3 +106,42 @@ def test_binding_constraint_names_the_limiting_covariate():
 
     assert table.loc["fit window ends at", "covariate"] == "atm_temp_f"
     assert table.loc["reconstruction window starts at", "covariate"] == "precip_in"
+
+
+def test_the_artifact_months_are_excluded_from_the_fit_window_by_default():
+    """The adopted window must come out of the code, not out of a script."""
+    months = pd.period_range("2019-01", periods=12, freq="M")
+    cov = pd.DataFrame(
+        {c: 1.0 for c in windows.RECONSTRUCTION_COVARIATES}, index=months
+    )
+    built = windows.build_windows(cov, months)
+    assert len(built["fit_nominal"]) == 12
+    assert len(built["fit"]) == 10
+    assert list(built["excluded"]) == list(windows.WATER_TABLE_ARTIFACTS)
+    for month in windows.WATER_TABLE_ARTIFACTS:
+        assert month not in built["fit"]
+
+
+def test_passing_no_exclusion_recovers_the_nominal_window():
+    months = pd.period_range("2019-01", periods=12, freq="M")
+    cov = pd.DataFrame(
+        {c: 1.0 for c in windows.RECONSTRUCTION_COVARIATES}, index=months
+    )
+    built = windows.build_windows(cov, months, exclude=())
+    assert built["fit"].equals(built["fit_nominal"])
+    assert len(built["excluded"]) == 0
+
+
+def test_the_fit_window_is_always_the_nominal_one_less_what_was_excluded():
+    months = pd.period_range("2018-06", periods=24, freq="M")
+    cov = pd.DataFrame(
+        {c: 1.0 for c in windows.RECONSTRUCTION_COVARIATES}, index=months
+    )
+    built = windows.build_windows(cov, months)
+    assert built["fit"].equals(built["fit_nominal"].difference(built["excluded"]))
+
+
+def test_the_figures_draw_their_exclusion_from_the_same_place_the_windows_do():
+    """A figure and the table beside it must not disagree about the window."""
+    from study import figures
+    assert figures.WATER_TABLE_ARTIFACTS is windows.WATER_TABLE_ARTIFACTS

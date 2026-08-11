@@ -17,6 +17,17 @@ RECONSTRUCTION_COVARIATES = ("soil_temp_f", "atm_temp_f", "precip_in", "wte_m")
 #: Present only from 2009 onward, and therefore unusable for reconstruction.
 CONTEMPORANEOUS_ONLY = ("fco2",)
 
+#: Months whose water table is not credible as a measurement. Both sit about
+#: 0.8 m below their neighbors and recover within one month, and both are the
+#: lowest value on record for their calendar month by a wide margin. Fitting on
+#: values established as instrument error is fitting on instrument error, so the
+#: study excludes them and the fit window is 115 months rather than 117.
+#:
+#: This is the single source for that exclusion. It lived in `study.figures` for
+#: a time, which meant the figures described the adopted window while every table
+#: described the nominal one; `notes/study.md` records that defect and its fix.
+WATER_TABLE_ARTIFACTS = (pd.Period("2019-06", freq="M"), pd.Period("2019-09", freq="M"))
+
 
 def covariate_coverage(covariates: pd.DataFrame) -> pd.DataFrame:
     """First and last month, count, and interior gaps for each covariate."""
@@ -53,26 +64,35 @@ def build_windows(
     covariates: pd.DataFrame,
     methane_months: pd.PeriodIndex,
     columns: tuple[str, ...] = RECONSTRUCTION_COVARIATES,
+    exclude: tuple[pd.Period, ...] = WATER_TABLE_ARTIFACTS,
 ) -> dict[str, pd.PeriodIndex]:
     """Split the complete-covariate months into fit and reconstruction sets.
 
     The fit window is every month carrying both methane and a complete covariate
-    set. The reconstruction window is every complete-covariate month before the
-    methane record begins. Months after the methane record starts but lacking
-    methane are held separately, since they are interpolation rather than
-    reconstruction.
+    set, less any month named in `exclude`. The reconstruction window is every
+    complete-covariate month before the methane record begins. Months after the
+    methane record starts but lacking methane are held separately, since they are
+    interpolation rather than reconstruction.
+
+    `fit` is the adopted window and `fit_nominal` is the same window before the
+    exclusion, so a caller can report both configurations without rebuilding.
+    Passing `exclude=()` recovers the nominal window as the primary one.
     """
     complete = complete_covariate_months(covariates, columns)
     observed = pd.PeriodIndex(methane_months, freq="M")
     first_methane = observed.min()
 
-    fit = complete.intersection(observed).sort_values()
+    removed = pd.PeriodIndex(exclude, freq="M")
+    fit_nominal = complete.intersection(observed).sort_values()
+    fit = fit_nominal.difference(removed).sort_values()
     without_methane = complete.difference(observed)
     reconstruction = without_methane[without_methane < first_methane].sort_values()
     interior = without_methane[without_methane >= first_methane].sort_values()
 
     return {
         "fit": fit,
+        "fit_nominal": fit_nominal,
+        "excluded": fit_nominal.intersection(removed).sort_values(),
         "reconstruction": reconstruction,
         "interior_gaps": interior,
         "methane_excluded": observed.difference(complete).sort_values(),
@@ -80,7 +100,7 @@ def build_windows(
 
 
 #: Windows that occupy a contiguous span, for which absent months are meaningful.
-_CONTIGUOUS = ("fit", "reconstruction")
+_CONTIGUOUS = ("fit", "fit_nominal", "reconstruction")
 
 
 def window_accounting(windows: dict[str, pd.PeriodIndex]) -> pd.DataFrame:
@@ -91,7 +111,8 @@ def window_accounting(windows: dict[str, pd.PeriodIndex]) -> pd.DataFrame:
     where the difference between a span and its contents carries no meaning.
     """
     records = []
-    for name in ("fit", "reconstruction", "interior_gaps", "methane_excluded"):
+    for name in ("fit", "fit_nominal", "excluded", "reconstruction",
+                 "interior_gaps", "methane_excluded"):
         index = windows[name]
         record = {"window": name, "n_months": len(index)}
         if len(index) == 0:

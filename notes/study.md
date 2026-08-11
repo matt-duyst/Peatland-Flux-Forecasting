@@ -82,10 +82,14 @@ range it was fitted on. Comparison is in `src/study/support.py`.
 | Soil temperature | 26.75 to 65.04 | 23.29 to 62.89 | 2 (0.9%) |
 | Air temperature | −2.37 to 70.36 | −6.09 to 68.96 | 3 (1.3%) |
 | Precipitation | 0.020 to 0.730 | 0.010 to 0.890 | 5 (2.2%) |
-| **Water table** | **412.51 to 413.46** | **413.07 to 413.75** | **107 (46.5%)** |
+| **Water table** | **413.13 to 413.46** | **413.07 to 413.75** | **113 (49.1%)** |
 
-**111 of 230 reconstruction months, 48.3%, hold at least one covariate outside
-the fitted range**, and water table accounts for almost all of it. Temperature
+**117 of 230 reconstruction months, 50.9%, hold at least one covariate outside
+the fitted range**, and water table accounts for almost all of it: 107 above the
+maximum and 6 below the minimum. On the nominal 117-month window the water table
+fit range reads 412.51 to 413.46 with 107 months outside, and 111 of 230, 48.3%,
+outside on any covariate; `scripts/prepare_study.py` now emits the adopted
+figures and reports both window sizes above them. Temperature
 and precipitation excursions are isolated single months of negligible size; the
 largest precipitation excess is 0.005 on a range 0.71 wide.
 
@@ -181,36 +185,45 @@ claims the study previously made turn out to have depended on the artifacts.
 | Clamp bounds | 412.51 to 413.46 | **413.13 to 413.46** |
 
 Every Q10 stays inside the published interval of 1.9 to 4.3, under both
-estimators and across all sixteen holdout fits, whose range is **2.33 to 3.10**.
-The eight fits carrying the water table term, which is the model the study uses,
-range **2.33 to 2.72**; the eight without it reach 3.10. An earlier version of
-this line gave 2.33 to 2.72 for all sixteen. The
+estimators and across all sixteen holdout fits, whose range on the adopted window
+is **2.36 to 3.10**. The eight fits carrying the water table term, which is the
+model the study uses, range **2.36 to 2.65**; the eight without it reach 3.10. Two
+earlier versions of this line were wrong in different ways: one gave 2.33 to 2.72
+for all sixteen, which was the with-water-table subset mislabeled, and the
+correction to that used the nominal window's values, 2.33 to 3.10 and 2.33 to
+2.72. The
 water table coefficient steepens, and it steepens six times more without
 weighting than with it, because inverse-variance weighting had already discounted
 the two months to 0.28% of total weight against a 1.71% equal share.
 
-**The 115-month configuration is not produced by any committed script, and that
-is a defect.** `src/study/windows.py` has no exclusion parameter, and
-`scripts/prepare_study.py`, `scripts/reconstruct.py` and
-`scripts/holdout_experiments.py` all build their fit window from
-`windows.build_windows` and therefore all run on the nominal 117. The two
-artifact months are named only in `src/study/figures.py`, as
-`WATER_TABLE_ARTIFACTS`, and applied only by `scripts/make_figures.py`, so the
-figures describe the adopted window while the tables above it do not.
+**The 115-month configuration was not produced by any committed script, and that
+was a defect.** `src/study/windows.py` had no exclusion parameter, so
+`prepare_study.py`, `reconstruct.py`, `holdout_experiments.py` and
+`bias_and_validation.py` all built their window from `build_windows` and all ran
+on the nominal 117. The two artifact months were named only in
+`src/study/figures.py` and applied only by `make_figures.py`, so **the figures
+described the adopted window while every table beside them described a different
+one**, and the adopted numbers existed only in prose here.
 
-Every effective-window number in these notes has been verified to reproduce by
-excluding 2019-06 and 2019-09 from `build_windows(...)["fit"]` before fitting:
-the water table path gives 2.704 to 4.077 weighted and 2.385 to 3.299 unweighted,
-and the Q10 gives 2.41 weighted and 2.56 unweighted. **The numbers are right; the
-path to them is not committed.** Until the exclusion is plumbed through
-`windows.py` and the three scripts, running this repository reproduces the
-nominal configuration and not the adopted one.
+This is the same class of defect the rebuild was undertaken to fix. The original
+analysis was untrustworthy in part because a filtering step lived outside the
+repository and could not be rerun; an adopted window that lives only in prose is
+a smaller instance of the same thing.
 
-**This is the same class of defect as the one this rebuild was undertaken to
-fix.** The original analysis was untrustworthy in part because a filtering step
-lived outside the repository and could not be rerun. An adopted window that lives
-only in prose is a smaller instance of the same thing, and it should be closed
-before any writeup cites the effective-window numbers.
+**It is now closed.** `WATER_TABLE_ARTIFACTS` lives in `study.windows`, which is
+the single source; `build_windows` takes an `exclude` parameter defaulting to it
+and returns `fit`, `fit_nominal` and `excluded` so both configurations are
+available without rebuilding; `study.figures` re-exports the constant rather than
+declaring its own, and a test asserts the two are the same object; and every
+script prints which window it used before any number. Passing `exclude=()`
+recovers the nominal window. Two further literals were removed at the same time:
+`scripts/reconstruct.py` pinned the wettest-band bias at 0.148 and the
+backward-transfer coverages at 84.4% and 62.5%, all three of which described the
+nominal window, and all three are now computed from the window in use.
+
+**Everything below is the adopted window as the committed scripts now produce it.
+Numbers that moved when the pipeline caught up with the prose are noted where
+they appear.**
 
 **The reconstruction does not move materially.** Every year rises by 1.2 to 4.1%,
 the largest absolute change being 0.69 g C m⁻² yr⁻¹, and the mean over twenty
@@ -272,9 +285,10 @@ reconciliation is inference rather than something stated.
 **The value used for comparison here is 2.9 with an interval of 1.9 to 4.3**,
 as the paper's headline figure. Fitted on the 115 months, the Q10 is **2.56**
 unweighted, from a soil temperature slope of 0.09418, and 2.41 weighted. Across
-the sixteen holdout fits it ranges **2.33 to 3.10**, and across the eight that
-carry the water table term **2.33 to 2.72**. On the nominal 117 it was 2.66
-unweighted and 2.43 weighted.
+the sixteen holdout fits it ranges **2.36 to 3.10**, and across the eight that
+carry the water table term **2.36 to 2.65**. On the nominal 117 it was 2.66
+unweighted and 2.43 weighted, with holdout ranges of 2.33 to 3.10 and 2.33 to
+2.72.
 
 **Every one of those values falls inside the published interval of 1.9 to 4.3**,
 under both estimators and across all four holdouts, and the whole holdout range
@@ -331,10 +345,16 @@ nominal intervals:
 
 | Withheld | MedAE (log) | MAPE | Coverage |
 |---|---|---|---|
-| Wettest decile | 0.188 | 20.2% | 0.833 |
-| Coldest decile | 0.246 | 25.8% | 0.917 |
-| Earliest three years | 0.232 | 31.5% | 0.844 |
-| Latest three years | 0.174 | 20.5% | 0.889 |
+| Wettest decile | 0.204 | 24.6% | 0.750 |
+| Coldest decile | 0.240 | 25.8% | 0.833 |
+| Earliest three years | 0.242 | 30.8% | 0.875 |
+| Latest three years | 0.164 | 18.9% | 0.941 |
+
+On the nominal 117 these read 0.188/20.2%/0.833, 0.246/25.8%/0.917,
+0.232/31.5%/0.844 and 0.174/20.5%/0.889. The wettest-decile coverage falls from
+0.833 to 0.750 on the adopted window, which is the one place narrowing the window
+makes a holdout look worse; it is twelve test months, so the step from 10 of 12
+to 9 of 12 is a single month.
 
 Unweighted backward transfer was reported as 50.2% MAPE at 62.5% coverage on the
 nominal window, and that number was **substantially an artifact of the two
@@ -457,31 +477,45 @@ rather than an additive offset. The convention is fixed in
 
 | Withheld | Weighting | Bias | Prediction over observation | Direction |
 |---|---|---|---|---|
-| Wettest decile | unweighted | +0.143 | 0.867 | predicts low 13.3% |
-| Wettest decile | weighted | +0.126 | 0.882 | predicts low 11.8% |
-| Earliest three years | unweighted | −0.214 | 1.238 | predicts high 23.8% |
-| Earliest three years | weighted | +0.017 | 0.983 | predicts low 1.7% |
+| Wettest decile | unweighted | −0.020 | 1.020 | predicts high 2.0% |
+| Wettest decile | weighted | +0.076 | 0.927 | predicts low 7.3% |
+| Earliest three years | unweighted | +0.022 | 0.979 | predicts low 2.2% |
+| Earliest three years | weighted | +0.030 | 0.970 | predicts low 3.0% |
+
+**These moved substantially when the pipeline caught up with the adopted window.**
+On the nominal 117 they read +0.143, +0.126, −0.214 and +0.017, so the wettest
+decile unweighted and the earliest three years unweighted both change sign. Two
+months carrying 22.3% of the design's leverage in the water table dimension were
+doing much of the work in these holdouts, which is the same finding as the
+coefficient instability arriving by another route.
 
 The reconstruction period is both earlier and wetter, so the two effects apply
-together. Combining them additively is unreliable: it gives a net of −0.071
-unweighted and +0.143 weighted, **opposite signs**.
+together. Combining them additively gives +0.002 unweighted and +0.106 weighted.
+**The earlier claim that the two combine to opposite signs does not survive the
+adopted window**; they now agree in direction, and the objection to summing them
+rests on the interaction below rather than on a sign disagreement.
 
-The additive assumption also fails a direct test. Inside the fit window the two
-axes are near-independent, with a correlation between calendar time and water
-table of +0.098 at p = 0.291, and the earliest three years are slightly drier
-than the rest rather than wetter. But splitting the backward-transfer holdout by
-water table shows the bias is not uniform:
+The additive assumption fails a direct test. **Inside the fit window the two axes
+are not independent: the correlation between calendar time and water table is
++0.393 at p below 0.001**, against +0.098 at p = 0.291 on the nominal window. That
+reversal is itself informative, because the two excluded months sat at the late,
+low extreme of both axes and had enormous leverage on a time correlation. The
+earliest three years remain slightly drier than the rest, at 413.243 against
+413.327, rather than wetter. Splitting the backward-transfer holdout by water
+table shows the bias is also not uniform:
 
 | Water table band | Mean | Unweighted | Weighted |
 |---|---|---|---|
-| Driest | 413.16 | −0.492 (high 63.5%) | −0.131 (high 13.9%) |
-| Middle | 413.22 | −0.194 (high 21.4%) | +0.055 (low 5.4%) |
-| **Wettest** | **413.35** | **+0.074 (low 7.1%)** | **+0.148 (low 13.8%)** |
+| Driest | 413.16 | −0.103 (high 10.8%) | −0.110 (high 11.7%) |
+| Middle | 413.22 | +0.077 (low 7.5%) | +0.078 (low 7.5%) |
+| **Wettest** | **413.35** | **+0.112 (low 10.6%)** | **+0.145 (low 13.5%)** |
 
 The backward-transfer bias depends on water table, so the two effects interact
 and cannot be summed. The band matching the reconstruction is the wettest, and
-it gives a consistent answer in both configurations: **the model is expected to
-predict low by roughly 7% unweighted and 14% weighted.**
+it gives a consistent answer under both weightings: **the model is expected to
+predict low by roughly 11% unweighted and 13% weighted.** `bias.wet_end_bias`
+computes this from the window in use, and `scripts/reconstruct.py` calls it
+rather than carrying the old 0.148 as a literal.
 
 **No correction is applied.** The supporting band has a mean water table of
 413.35 and the reconstruction period sits above it, so applying the correction
@@ -505,12 +539,23 @@ the 2009-2019 fit window it is unremarkable, because that window is itself a
 warm, wet decade against a longer baseline.
 
 **The shortfall is concentrated, not seasonal.** Analysis in
-`src/study/residuals.py`. Of the total shortfall against observations,
-September 2011 alone carries 46.7% and September with August carries **91.2%**.
-Six of eleven months are under-predicted and five over-predicted; June is
-over-predicted by a factor of 3.2. Against the same calendar month in other
-years, September 2011 stands at **+6.07 standard deviations**, November at
+`src/study/residuals.py`, which had no caller until `scripts/reconstruct.py` was
+given one; these numbers could not previously be regenerated by running the
+repository. On the adopted window and the primary weighted model, the eleven
+observed months of 2011 carry a total shortfall of 4.23 g C m⁻², of which
+**September 2011 alone carries 51.8% and September with August carries 96.8%**.
+Seven of eleven months are under-predicted. Against the same calendar month in
+other years, September 2011 stands at **+5.67 standard deviations**, November at
 +3.44 and August at +3.43.
+
+The previously recorded 46.7% and 91.2% **could not be reproduced under any of
+the four configurations tested** — weighted or unweighted, nominal or effective —
+the closest being 49.2% and 92.6% weighted on the nominal window. They predate
+some earlier state of the pipeline and should not be cited. September's
+standardized value moves from +6.07 to +5.67 for a reason that is fully
+explained: 2019-09 leaves the reference set when the artifact months are
+excluded, so September's reference mean and spread both change, while November
+and August are untouched.
 
 Fluxes of that size with unremarkable covariates are the signature described by
 Irvin, J., Zhou, S., McNicol, G., et al., with Jackson, R. B. as senior author
@@ -674,24 +719,29 @@ Produced by `src/study/reconstruct.py` and `scripts/reconstruct.py`, weighted
 full model primary. Every year carries its support verdict, its sensitivity
 range and its directional bias expectation in the same row as its estimate.
 
-**Six of twenty years lie inside the fitted support.** Fourteen require
-extrapolation, almost always on water table. On the effective range described
-under support, four years lie inside rather than six; the table below is on the
-nominal range, as the reconstruction itself was. Representative rows, g C m⁻² yr⁻¹:
+**Four of twenty years lie inside the fitted support.** Sixteen require
+extrapolation, almost always on water table. Representative rows, g C m⁻² yr⁻¹,
+on the adopted window as `scripts/reconstruct.py` now produces it:
 
 | Year | Support | Months outside | Estimate | Interval | Sensitivity span |
 |---|---|---|---|---|---|
-| 1991 | **inside** | 0 | 11.77 | 7.54 to 19.36 | **2%** |
-| 1992 | **inside** | 0 | 11.05 | 7.08 to 18.18 | **2%** |
-| 1994 | outside | 9 | 17.02 | 10.90 to 28.01 | 66% |
-| 1997 | outside | 12 | 16.74 | 10.72 to 27.54 | **107%** |
-| 1999 | outside | 9 | 17.30 | 11.08 to 28.46 | 98% |
-| 2004 | **inside** | 0 | 11.20 | 7.17 to 18.42 | 8% |
-| 2008 | **inside** | 0 | 8.08 | 5.17 to 13.29 | 17% |
+| 1991 | **inside** | 0 | 11.95 | 7.51 to 18.92 | **5%** |
+| 1992 | **inside** | 0 | 11.23 | 7.06 to 17.78 | **6%** |
+| 1994 | outside | 9 | 17.68 | 11.11 to 27.99 | 72% |
+| 1997 | outside | 12 | 17.42 | 10.94 to 27.58 | **115%** |
+| 1999 | outside | 9 | 17.98 | 11.30 to 28.47 | 106% |
+| 2004 | **inside** | 0 | 11.42 | 7.17 to 18.07 | 11% |
+| 2008 | outside | 3 | 8.22 | 5.17 to 13.02 | 14% |
 
-The sensitivity span reaches 107% of the estimate in 1997: the three water table
-variants disagree by more than the estimate itself. Inside-support years span 2
-to 17%. The span tracks support closely, which is the demonstration working:
+On the nominal 117 these read 11.77, 11.05, 17.02, 16.74, 17.30, 11.20 and 8.08,
+with spans of 2%, 2%, 66%, 107%, 98%, 8% and 17%, and six years inside support
+rather than four. 2008 crosses from inside to outside on the narrowed range, by
+margins of 0.01 to 0.06 m, and should be read as marginal rather than as a change
+of kind.
+
+The sensitivity span reaches 115% of the estimate in 1997: the three water table
+variants disagree by more than the estimate itself. Inside-support years span 5
+to 11%. The span tracks support closely, which is the demonstration working:
 where the model has evidence it is nearly indifferent to the assumption, and
 where it does not the assumption determines the answer.
 
@@ -705,9 +755,12 @@ would read as a collapse in emission rather than as a quarter of a year. Both ar
 facts about how the series was assembled rather than about the peatland, which is
 why they are recorded here and not on the figure.
 
-Empirical coverage against a 90% nominal level is 89.7% in sample over the fit
-months, 84.4% on weighted held-out backward transfer and 87.5% unweighted on the
-115-month window, against 62.5% on the nominal window.
+Empirical coverage against a 90% nominal level is **89.6% in sample** over the
+115 fit months, and **87.5% on held-out backward transfer under both weightings**.
+On the nominal 117 the backward-transfer figures were 84.4% weighted and 62.5%
+unweighted, so narrowing the window brought the unweighted case from far below
+nominal to close to it. An earlier version of this line paired the nominal
+weighted figure with the effective unweighted one.
 **No empirical coverage can be computed over the reconstruction period**,
 because nothing was observed there. The held-out figures are the only evidence
 about how these intervals behave away from the fit window. Irvin et al. (2021)
@@ -715,8 +768,9 @@ report that raw machine learning ensemble uncertainties are underestimated and
 require calibration, which is consistent with the direction seen here.
 
 Against the retrospective range of Olson et al. (2013), +7.8 to +15.2 ± 2.7 g C
-m⁻² yr⁻¹ for 1991 to 2011, this reconstruction gives 7.78 to 17.30 across
-eighteen complete years with a mean of 14.40. Both were produced by fitting a
+m⁻² yr⁻¹ for 1991 to 2011, this reconstruction gives **7.90 to 17.98 across
+eighteen complete years with a mean of 14.88**, against 7.78 to 17.30 and a mean
+of 14.40 on the nominal window. Both were produced by fitting a
 short flux record and projecting backward, so this is method agreement and not
 independent confirmation.
 
@@ -753,7 +807,7 @@ predictions of 9.29 and 8.49. That is the model reading low by 20% for 1991 and
 takes midday values from an abstract and averages them over a season in which
 flux varies by a factor of five, so the arithmetic is indicative at best. What
 can be said is that the direction matches: the bias bands expect the model to
-read low by roughly 14%, and this crude comparison points the same way at a
+read low by roughly 13%, and this crude comparison points the same way at a
 similar order. One point cuts in its favour and is worth stating, since it is
 measured rather than assumed: the diurnal cycle at this site explains 0.97% of
 half-hourly variance, so midday flux is a far better stand-in for a daily mean
@@ -1465,11 +1519,11 @@ way. What changed is the strength of two supporting claims, not the finding.
 
 **The direction of error is known and points the wrong way.** The band matching
 the reconstruction's hydrological state indicates under-prediction of roughly
-14%, and the estimate is not corrected for it because correcting would require
+13%, and the estimate is not corrected for it because correcting would require
 extrapolating the correction.
 
 **The dominant failure is invisible to the covariates.** The 2011 shortfall is
-91% carried by two months whose covariates are unremarkable, matching the
+97% carried by two months whose covariates are unremarkable, matching the
 episodic signature Irvin et al. (2021) describe. Nothing in this data constrains
 how often such episodes occurred before 2009.
 

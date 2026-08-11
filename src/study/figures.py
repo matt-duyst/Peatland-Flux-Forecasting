@@ -16,12 +16,12 @@ from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 
 from study import plotstyle as ps
+from study import windows
 
-#: Months whose water table is not credible as a measurement. Both sit about
-#: 0.8 m below their neighbors and recover within one month, and both are the
-#: lowest value on record for their calendar month by a wide margin. They set no
-#: bound and are not drawn; `notes/study.md` carries the evidence.
-WATER_TABLE_ARTIFACTS = (pd.Period("2019-06", freq="M"), pd.Period("2019-09", freq="M"))
+#: Re-exported so a figure and the tables it sits beside cannot disagree about
+#: which months the study fitted on. Defined in `study.windows`, which is what
+#: every script builds its windows from.
+WATER_TABLE_ARTIFACTS = windows.WATER_TABLE_ARTIFACTS
 
 WATER_TABLE_TEXT = ps.FigureText(
     title="Monthly water table elevation at Marcell Bog Lake Peatland, Minnesota (1990 to 2019)",

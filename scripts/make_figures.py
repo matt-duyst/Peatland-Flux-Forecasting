@@ -29,8 +29,9 @@ WET_END_BIAS_LOG = 0.148
 def load() -> tuple[pd.DataFrame, pd.DataFrame, dict[str, pd.PeriodIndex]]:
     """Covariates, the monthly series, and the windows they imply.
 
-    The fit window excludes the two months of 2019 recorded as instrument
-    artifacts, so every figure describes the window the study adopted.
+    `windows.build_windows` excludes the two months of 2019 recorded as
+    instrument artifacts, so every figure describes the window the study adopted
+    and describes the same one the tables do.
     """
     root = Path(__file__).resolve().parents[1]
     cov = covariates.load_all()
@@ -38,9 +39,6 @@ def load() -> tuple[pd.DataFrame, pd.DataFrame, dict[str, pd.PeriodIndex]]:
     monthly["month"] = pd.PeriodIndex(monthly["month"], freq="M")
     monthly = monthly.set_index("month")
     built = windows.build_windows(cov, monthly.index)
-    built["fit"] = built["fit"].difference(
-        pd.PeriodIndex(figures.WATER_TABLE_ARTIFACTS, freq="M")
-    )
     return cov, monthly, built
 
 

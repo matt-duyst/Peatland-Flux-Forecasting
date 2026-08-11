@@ -29,6 +29,13 @@ def heading(text: str) -> None:
     print(f"\n{RULE}\n{text}\n{RULE}")
 
 
+def state_window(built) -> None:
+    """Say which fit window the numbers below rest on, every time."""
+    excluded = ", ".join(str(m) for m in built["excluded"]) or "none"
+    print(f"  Fit window: {len(built['fit'])} months "
+          f"(nominal {len(built['fit_nominal'])}, excluded as instrument artifacts: {excluded})")
+
+
 def main() -> None:
     pd.set_option("display.width", 220)
     cov = covariates.load_all()
@@ -49,6 +56,7 @@ def main() -> None:
 
     heading("FIT AND RECONSTRUCTION WINDOWS")
     built = windows.build_windows(cov, monthly.index, columns)
+    state_window(built)
     print(windows.window_accounting(built).to_string(index=False))
     for name in ("fit", "reconstruction"):
         absent = windows.absent_months(built, name)

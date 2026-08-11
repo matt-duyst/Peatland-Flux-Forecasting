@@ -29,6 +29,13 @@ def heading(text: str) -> None:
     print(f"\n{RULE}\n{text}\n{RULE}")
 
 
+def state_window(built) -> None:
+    """Say which fit window the numbers below rest on, every time."""
+    excluded = ", ".join(str(m) for m in built["excluded"]) or "none"
+    print(f"  Fit window: {len(built['fit'])} months "
+          f"(nominal {len(built['fit_nominal'])}, excluded as instrument artifacts: {excluded})")
+
+
 def main() -> None:
     pd.set_option("display.width", 240)
     cov = covariates.load_all()
@@ -40,6 +47,7 @@ def main() -> None:
 
     columns = windows.RECONSTRUCTION_COVARIATES
     built = windows.build_windows(cov, monthly.index, columns)
+    state_window(built)
     fit_months, reconstruction = built["fit"], built["reconstruction"]
     inverse_variance = weighting.inverse_variance_weights(monthly).reindex(fit_months).dropna()
 
