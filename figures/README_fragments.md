@@ -21,3 +21,11 @@ Panel a is the peatland around the tower, with the wetland polygon the National 
 **The water table coefficient drifts as its range narrows: flat, linear, or absent (the three give 10 to 30 g C per square meter)**
 
 Each marker is one year's emission in grams of carbon per square meter, from relationships fitted on 2009 to 2019. The three lines each assume something different about the water table beyond the range it was fitted on, and they agree only where it stays inside that range. The strip below gives the share of each year's months that fall outside it. Measurement at this peatland stopped in 1992 and did not resume until 2007, so eighteen of these twenty years can never be checked against one. Only 1991 and 1992 were measured, by Shurpali et al. (1993) and Shurpali and Verma (1998). Their published totals have not been obtained; this reconstruction predicts 9.29 and 8.49 g C for May to October.
+
+### A month-of-year average forecasts this peatland as well as anything fitted against it
+
+![A month-of-year average forecasts this peatland as well as anything fitted against it](figures/forecast_comparison.png)
+
+**Climatology does not degrade from one month to twelve, and no fitted method separates from it**
+
+Mean absolute error against forecast horizon, one panel per gas, in different units whose heights are not comparable. The pale band is the margin a method needs to be distinguishable from climatology, so anything inside it is not; its width uses the effective number of independent comparisons, which overlap cuts to 35.6 from 57 at methane's one month. The blue region is the range across all eight fitted models in both families, undrawn separately because none separates from another. Its lower edge dips below climatology at one month on both gases and at six on methane, never far enough to leave the band. Persistence stops at six months, where carrying the last value forward twelve reaches the month the seasonal benchmark already uses.

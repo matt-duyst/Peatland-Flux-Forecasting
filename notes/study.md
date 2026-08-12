@@ -1477,6 +1477,71 @@ only the shadow is redrawn between repeats, so the repeats are not independent.
 Measured on synthetic null data, between four and eight percent of irrelevant
 candidates survived.
 
+### The figure, and the palette measurement behind it
+
+`figures/forecast_comparison.png`, built by `study.figures.forecast_comparison`
+from the scored forecasts rather than by refitting.
+
+**Mean absolute error against horizon, one panel per gas, in each gas's own
+units.** Scaled error does not appear at all. It was chosen so the gases could be
+compared on one footing and does not deliver that, so removing the measure
+removes the axis a reader could misuse, which is stronger than labeling it.
+
+**The pale band is an inverted Diebold-Mariano test.** `evaluation.significance_margin`
+returns the difference in mean absolute error that would have reached p = 0.05
+given the observed noise in the loss differential, so a method inside the band is
+not distinguishable from climatology and a reader checks that directly instead of
+taking a caption's word. Its width uses the long-run variance and the Harvey
+correction, so it reflects effective sample size: 35.6 rather than 57 at methane's
+one-month horizon. **The best fitted method is inside the band at every horizon on
+both gases**, which is the figure's whole claim, drawn rather than asserted.
+
+**The fitted methods are a range, not eight curves.** Four of the sixteen method
+comparisons reach nominal significance and none survives correction, so drawing an
+order would assert a ranking the evidence cannot support. The envelope's lower
+edge dips below climatology at one month on both gases and at six on methane, in
+each case without leaving the band. Its upper edge does leave the band at three,
+six and twelve months, which is a real finding in the other direction: some fitted
+methods are distinguishably *worse* than a seasonal average.
+
+**Persistence is drawn to six months only.** At twelve, carrying the last value
+forward reaches the same month the seasonal benchmark uses, so the two coincide by
+construction and the curve would appear to recover from 41.4 back to 10.5.
+Drawing that would be true and misleading at once.
+
+**Persistence leaves the top of the panel rather than being compressed into it.**
+Fitting 41.4 onto an axis that must also resolve the gap between 6.9 and 8.1
+would flatten everything the figure is about. The axis does not start at zero
+either, and the band is why it does not have to: a zero baseline exists to stop a
+reader over-reading small differences, and the band states directly which
+differences are too small to read.
+
+**Hue is rescoped, and the comment in `plotstyle` was amended in the same commit.**
+Hue carried support status because that was the distinction the reconstruction
+figures are about. This panel has no such distinction, so hue marks the benchmark
+against fitted contrast instead. The alternative, an entirely achromatic panel,
+was rejected because it carries two filled regions and a gray envelope beside a
+gray inferential band would be the one genuine confusion on it.
+
+| candidate | worst separation under simulated deficiency | against |
+|---|---|---|
+| **Sky blue `#56B4E9`** | **25.0** | `INSIDE`, deuteranopia |
+| Bluish green `#009E73` | 11.7 | gray `#767676`, deuteranopia |
+| Orange `#E69F00` | 14.9 | `OUTSIDE`, tritanopia |
+| Reddish purple `#CC79A7` | **0.9** | `OUTSIDE`, tritanopia |
+
+Two colors become distinguishable at about 2.3. **Reddish purple would have been
+invisible against the support orange for a tritanope**, which is the same failure
+as the tab10 orange against green in Irvin et al. (2021) figure 9, measured here
+at 5.6 under protanopia. Sky blue's worst case against any gray on its own panel
+is 33.0, and against either support hue 25.0. A test asserts every one of those
+separations.
+
+The two filled regions also had to separate without hue. At the chosen fill alpha
+the envelope sits at 0.680 relative luminance against the band's 0.823, a gap of
+0.143, with the subject darker than the apparatus. A test asserts both the gap and
+its direction.
+
 ### What the forecasting half concludes
 
 **Methane and carbon dioxide at this site are predictable in shape and not in

@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import pandas as pd
 
 from ingest import covariates
+from forecast import evaluation
 from study import (bias, figures, plotstyle, reconstruct, sitemap, targets,
                    weights as weighting, windows)
 
@@ -43,6 +44,7 @@ def load() -> tuple[pd.DataFrame, pd.DataFrame, dict[str, pd.PeriodIndex]]:
 
 
 def main() -> None:
+    root = Path(__file__).resolve().parents[1]
     cov, monthly, built = load()
     fragments = []
 
@@ -84,6 +86,22 @@ def main() -> None:
     path = plotstyle.save(fig, "reconstruction_series")
     fragments.append(plotstyle.readme_block(figures.RECONSTRUCTION_TEXT,
                                             "reconstruction_series"))
+    print(f"wrote {path.relative_to(plotstyle.figures_dir().parent)}")
+
+    # The forecast comparison reads the scored forecasts rather than refitting.
+    # scripts/forecast_models.py writes them; nothing here can drift from them.
+    panels = {}
+    for key, _, _ in figures.GAS_PANEL:
+        frames = {}
+        for family in ("benchmarks", "autoregressive", "exogenous"):
+            frame = pd.read_csv(root / f"data/processed/forecasts_{key}_{family}.csv")
+            frame["target"] = pd.PeriodIndex(frame["target"], freq="M")
+            frames[family] = frame
+        panels[key] = figures.forecast_panel(frames, evaluation.HORIZONS)
+
+    fig = figures.forecast_comparison(panels)
+    path = plotstyle.save(fig, "forecast_comparison")
+    fragments.append(plotstyle.readme_block(figures.FORECAST_TEXT, "forecast_comparison"))
     print(f"wrote {path.relative_to(plotstyle.figures_dir().parent)}")
 
     target = plotstyle.figures_dir() / "README_fragments.md"

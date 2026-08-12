@@ -32,9 +32,32 @@ from ingest import paths
 # Ink
 # --------------------------------------------------------------------------
 
-#: Support status. The one distinction hue is allowed to carry.
+#: Support status, in the reconstruction figures. Hue carries the one distinction
+#: a figure is about, and there it is whether a month lies inside the fitted
+#: range. The forecast comparison carries no such distinction, so it scopes hue
+#: to the benchmark against fitted contrast instead and uses `FITTED` below;
+#: nothing draws both conventions at once, and the two sets of hues are measured
+#: clear of each other so a reader moving between figures cannot conflate them.
 INSIDE = "#0072B2"
 OUTSIDE = "#D55E00"
+
+#: The fitted methods in the forecast comparison. Okabe-Ito sky blue, chosen by
+#: measurement rather than by taste: its worst separation from either support
+#: hue is 25.0 under simulated deficiency, and from every gray on its own panel
+#: at least 33.0, against the 2.3 at which two colors become distinguishable.
+#: Reddish purple was rejected at 0.9 against `OUTSIDE` under tritanopia, which
+#: is the same failure as the tab10 orange against green in Irvin et al. (2021)
+#: figure 9, measured here at 5.6 under protanopia.
+FITTED = "#56B4E9"
+#: Alpha for the fitted envelope. Set so the filled region separates from the
+#: significance band in grayscale as well as in hue: 0.680 against 0.823 in
+#: relative luminance, with a color difference of 15.5 under the worst deficiency.
+FITTED_FILL_ALPHA = 0.45
+
+#: The region within which a method is not distinguishable from the benchmark.
+#: Apparatus rather than a category, so it is achromatic and lighter than the
+#: envelope it must not be confused with.
+NOT_DISTINGUISHABLE = "#EAEAEA"
 
 #: Model variants, achromatic so that hue stays reserved for support status.
 #: Each also takes a line style, so lightness alone never has to carry them.
@@ -483,9 +506,15 @@ def credit(ax: plt.Axes, text: str, xy: tuple[float, float] = (0.5, 0.012),
                 fontsize=7.6, color=INK, zorder=7, path_effects=[_outline()])
 
 
-def panel_letter(ax: plt.Axes, letter: str) -> None:
-    """Mark a panel so the description can refer to it without naming positions."""
-    ax.annotate(f"({letter})", xy=(0.014, 0.986), xycoords="axes fraction",
+def panel_letter(ax: plt.Axes, letter: str, label: str | None = None) -> None:
+    """Mark a panel so the description can refer to it without naming positions.
+
+    A label placed here rather than on the axis keeps a long axis name from
+    reaching into the title block, and names the panel where a reader looks
+    first.
+    """
+    text = f"({letter})" if label is None else f"({letter})  {label}"
+    ax.annotate(text, xy=(0.014, 0.986), xycoords="axes fraction",
                 ha="left", va="top", fontsize=LEGEND_SIZE, fontweight="bold",
                 color=INK, zorder=8, path_effects=[_outline()])
 

@@ -247,3 +247,29 @@ def diebold_mariano(
         "effective_n": float(n / inflation) if inflation == inflation else np.nan,
         "mean_difference": float(differences.mean()),
     }
+
+
+def significance_margin(
+    left: pd.Series, right: pd.Series, horizon: int, alpha: float = 0.05
+) -> float:
+    """How far apart two methods' mean absolute errors would have to be to matter.
+
+    Inverts the Diebold-Mariano test: given the observed noise in the loss
+    differential, this is the smallest absolute difference in mean absolute error
+    that would reach `alpha`. A method closer to its comparator than this is not
+    distinguishable from it.
+
+    The width is set by the long-run variance and the Harvey correction, so it
+    reflects the effective number of independent comparisons rather than the
+    number of forecasts, which overlapping horizons inflate.
+    """
+    aligned = pd.concat([left.rename("left"), right.rename("right")], axis=1).dropna()
+    n = len(aligned)
+    if n < 8:
+        return np.nan
+    differences = (aligned["left"].abs() - aligned["right"].abs()).to_numpy()
+    lag = max(horizon - 1, newey_west_lag(n))
+    variance, _ = long_run_variance(differences, lag)
+    correction = np.sqrt(max((n + 1 - 2 * horizon + horizon * (horizon - 1) / n) / n, 1e-12))
+    critical = stats.t.isf(alpha / 2, n - 1)
+    return float(critical * np.sqrt(variance / n) / correction)
