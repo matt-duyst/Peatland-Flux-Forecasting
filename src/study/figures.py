@@ -355,19 +355,22 @@ FORECAST_TEXT = ps.FigureText(
         "Each is evaluated at forecast horizons of one to twelve months, meaning "
         "how far ahead the prediction is made. The most accurate at every horizon "
         "on both gases is the simplest: predicting each month as the average of "
-        "that month in previous years. Carrying last month's value forward, not "
-        "drawn here, degrades from 12.2 to 41.4 nmol between one and six months, "
-        "while the seasonal average does not degrade at all. The pale band marks "
-        "how far below that average a method would have to fall before the "
-        "difference could be told apart from noise."
+        "that month in previous years. The pale band marks how far below that "
+        "average a method would have to fall before the difference could be told "
+        "apart from noise."
     ),
     description=(
-        "The two panels are in different units and their heights are not "
-        "comparable. The blue range spans all eight fitted methods: its lower "
-        "edge dips below the seasonal average at one month on both gases and at "
-        "six months on methane, in each case by less than the band, while its "
-        "upper edge leaves the band at three, six and twelve months, where some "
-        "fitted methods are distinguishably worse than the average."
+        "The two panels are in different units, so their heights are not "
+        "comparable. The blue region spans all eight fitted methods. Its lower "
+        "edge dips below the seasonal average at one month on both gases, and at "
+        "six months on methane, though never by more than the band. Its upper "
+        "edge rises above the band at three, six and twelve months: some fitted "
+        "methods are distinguishably worse than the average. The band is wide "
+        "where the closest fitted method disagrees with the average erratically "
+        "from month to month, not where the average is least certain. Carrying "
+        "last month's value forward, not drawn here, degrades from 12.2 to 41.4 "
+        "nmol between one and six months, while the seasonal average does not "
+        "degrade at all."
     ),
 )
 
@@ -447,7 +450,7 @@ def forecast_comparison(panels: dict[str, pd.DataFrame]) -> Figure:
         row = bottom + (1 - index) * (panel_height + gap)
         ax = fig.add_axes((left, row, width, panel_height))
         _draw_forecast_panel(ax, panels[key], unit, labeled=index == len(GAS_PANEL) - 1)
-        ps.panel_letter(ax, "ab"[index], gas, size=ps.SUBTITLE_SIZE + 1.5)
+        ps.panel_name(ax, gas)
         _forecast_legend(ax)
         _raise_top_until_legend_clears(ax)
         axes.append(ax)
@@ -504,19 +507,19 @@ def _forecast_legend(ax) -> None:
     blank = Line2D([], [], linestyle="none", marker="none")
     # Two columns, filled down each in turn, so the two groups sit side by side
     # and the block is short enough to clear the curves across the whole panel.
-    column_one = [(blank, r"$\bf{Benchmark\ methods}$")]
-    column_one += [(Line2D([], [], **style), BENCHMARK_LABEL[method])
-                   for method, style in BENCHMARK_STYLE.items()]
-    column_two = [
+    entries = [(blank, r"$\bf{Benchmark\ methods}$")]
+    entries += [(Line2D([], [], **style), BENCHMARK_LABEL[method])
+                for method, style in BENCHMARK_STYLE.items()]
+    entries += [
         (blank, r"$\bf{Shaded\ regions}$"),
         (Patch(facecolor=ps.FITTED, alpha=ps.FITTED_FILL_ALPHA, edgecolor=ps.FITTED,
                linewidth=0.9), "Range across the eight fitted methods"),
         (Patch(facecolor=ps.NOT_DISTINGUISHABLE, edgecolor="none"),
-         "Too close to the average to tell apart"),
+         "Difference from the average could be chance"),
     ]
-    entries = column_one + column_two
-    # Anchored below the panel name, which occupies the top-left corner.
+    # One column and inset from the corner: two columns reached most of the way
+    # across the plot area, and sitting against the border read as attached to it.
     ps.legend(ax, handles=[h for h, _ in entries], labels=[label for _, label in entries],
-              loc="upper left", bbox_to_anchor=(0.0, 0.90), ncol=2, borderpad=0.5,
-              labelspacing=0.3, columnspacing=1.6, handlelength=2.0,
-              fontsize=ps.LEGEND_SIZE - 0.7)
+              loc="upper left", bbox_to_anchor=(0.03, 0.85), borderpad=0.5,
+              labelspacing=0.2, handlelength=1.8, fontsize=ps.LEGEND_SIZE - 2.0,
+              framealpha=1.0)

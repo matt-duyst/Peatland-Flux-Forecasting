@@ -227,14 +227,14 @@ def test_the_panel_name_is_larger_than_a_legend_entry():
     ps.plt.close(fig)
 
 
-def test_the_subtitle_quotes_the_persistence_values_the_data_holds():
-    """The subtitle states what the panel no longer draws, so it has to be checked.
+def test_the_description_quotes_the_persistence_values_the_data_holds():
+    """The text states what the panel no longer draws, so it has to be checked.
 
     This is the one test here that reads the scored forecasts rather than a
     synthetic frame, because that is the thing being checked.
     """
     table = real_panel("methane")
-    said = figures.FORECAST_TEXT.subtitle
+    said = figures.FORECAST_TEXT.description
     at_one = table.loc[table["horizon"] == 1, "naive"].iloc[0]
     at_six = table.loc[table["horizon"] == PERSISTENCE_LAST, "naive"].iloc[0]
     assert f"{at_one:.1f}" in said, f"subtitle should quote {at_one:.1f}"

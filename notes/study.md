@@ -1496,6 +1496,41 @@ does not appear at all. It was chosen so the gases could be
 compared on one footing and does not deliver that, so removing the measure
 removes the axis a reader could misuse, which is stronger than labeling it.
 
+**What sets the band's width, which is not what a reader first assumes.** The
+half-width at each horizon is a critical value times the long-run standard
+deviation of the loss differential, divided by the root of the sample size. The
+sample size varies modestly across horizons; the standard deviation of the
+differential varies enormously, and it dominates:
+
+| gas | horizon | sd of the month-to-month difference in absolute error | effective n | band half-width |
+|---|---|---|---|---|
+| methane | 1 | **9.744** | 35.6 | **3.273** |
+| methane | 3 | 2.160 | 31.4 | 0.798 |
+| methane | 6 | 1.449 | 68.8 | 0.381 |
+| methane | 12 | 3.064 | 39.3 | 1.177 |
+| carbon dioxide | 1 | 0.091 | 80.4 | 0.020 |
+| carbon dioxide | 3 | 0.095 | 79.3 | 0.022 |
+| carbon dioxide | 6 | 0.101 | 80.1 | 0.024 |
+| carbon dioxide | 12 | 0.073 | 32.4 | 0.029 |
+
+The methane band is a wedge, reaching from 8.1 down to 4.8 at one month and
+narrowing to a sliver by six. **That is not a statement that short horizons are
+uncertain.** At one month the closest method is ridge, which puts near-unit weight
+on last month's departure from the seasonal mean, so its errors differ from
+climatology's erratically month to month: the standard deviation of that
+difference is 9.744, larger than climatology's own mean absolute error of 8.106.
+A method whose advantage is concentrated in a few months, which is exactly what
+the 2015 examination found, produces a high-variance loss differential and
+therefore a wide band. At six months the closest method is a gradient boosting
+fit that tracks climatology closely, the differential has a standard deviation of
+1.449, and a much smaller gap would be detectable.
+
+So the band answers "how large a difference would be needed here", and the answer
+depends on how erratically the two methods being compared disagree, not on how
+well the seasonal average is known. The description says so, because a reader
+would otherwise read the wedge as uncertainty and draw the opposite conclusion
+from the one the study reached.
+
 **The pale band is an inverted Diebold-Mariano test.** `evaluation.significance_margin`
 returns the difference in mean absolute error that would have reached p = 0.05
 given the observed noise in the loss differential, so a method inside the band is
@@ -1544,6 +1579,12 @@ Each panel now spans what its drawn series occupy: 4.8 to 15.1 on methane and
 from six months to twelve is twice the step from three to six, which stretches the
 curves for a reason that has nothing to do with the forecasts. No tick is drawn at
 nine, because nothing was evaluated there.
+
+**The subtitle ends on the band; the panel notes sit at the bottom.** The
+persistence fact was briefly put in the subtitle, where it fell between the
+finding and the explanation of the band and pushed that block to six lines. It
+belongs with the other panel notes in the description, and a test checks that the
+figures it quotes are the ones the data holds.
 
 **The legend's headroom is measured rather than fixed.** How much room it needs
 depends on its own rendered height and on how high the series run beneath it,

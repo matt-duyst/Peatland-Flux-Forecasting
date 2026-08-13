@@ -550,6 +550,21 @@ def panel_letter(ax: plt.Axes, letter: str, label: str | None = None,
                 color=INK, zorder=8, path_effects=[_outline()])
 
 
+def panel_name(ax: plt.Axes, name: str, x: float = 0.016, y: float = 0.952) -> None:
+    """Name a panel in a bordered box, which carries the emphasis size otherwise would.
+
+    Used where the panels differ in what they show rather than in which step of an
+    argument they carry, so the name is the label and no letter is needed. Seated
+    below the top of the axes rather than against it: the padded box is drawn
+    outside the text extent, so an anchor that measures as inside can still cross
+    the spine.
+    """
+    ax.annotate(name, xy=(x, y), xycoords="axes fraction", ha="left", va="top",
+                fontsize=LEGEND_SIZE + 1.6, fontweight="bold", color=INK, zorder=9,
+                bbox=dict(boxstyle="round,pad=0.42", facecolor="white",
+                          edgecolor=BOUNDARY, linewidth=0.9))
+
+
 def figures_dir() -> Path:
     """Directory the figure set is written to, tracked so the README resolves."""
     return paths.repo_root() / "figures"
