@@ -278,22 +278,24 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
 #: each one carries: climatology is the result, so it is heaviest.
 BENCHMARK_STYLE = {
     "climatology": {"color": "#1A1A1A", "linestyle": "-", "linewidth": 2.4},
-    "seasonal naive": {"color": "#A9A9A9", "linestyle": (0, (1.4, 2.2)), "linewidth": 1.7},
-    "naive": {"color": "#767676", "linestyle": (0, (7, 2, 2, 2)), "linewidth": 1.3},
+    "seasonal naive": {"color": "#767676", "linestyle": (0, (1.4, 2.2)), "linewidth": 1.9},
 }
 
-#: Persistence is drawn only this far. At twelve months carrying the last value
-#: forward reaches the same month the seasonal benchmark uses, so the two
-#: coincide by construction and the curve would appear to recover. Drawing that
-#: would be true and misleading at once.
+#: Benchmarks the panel table carries. Drawing is a separate question: the table
+#: keeps every benchmark the study scored, so the subtitle can quote one the
+#: panel does not draw and a test can check that it quotes it correctly.
+PANEL_BENCHMARKS = ("climatology", "seasonal naive", "naive")
+
+#: Carrying last month's value forward is scored and reported but not drawn. It
+#: is not a contender, and at twelve months it coincides with the seasonal
+#: benchmark by construction. The subtitle states what it establishes.
 PERSISTENCE_LAST_HORIZON = 6
 
-#: Named by what they do. "Persistence" and "seasonal naive" tell a reader
+#: Named by what they do. "Seasonal naive" and "climatology" tell a reader
 #: nothing on first meeting; the subtitle and the notes carry the technical terms.
 BENCHMARK_LABEL = {
     "climatology": "The average of that month in previous years",
     "seasonal naive": "The same month last year",
-    "naive": f"Last month's value carried forward (to {PERSISTENCE_LAST_HORIZON} months)",
 }
 
 GAS_PANEL = (
@@ -335,7 +337,7 @@ def forecast_panel(
             "margin": evaluation.significance_margin(
                 errors[best], errors["benchmarks/climatology"], horizon),
         }
-        for method in BENCHMARK_STYLE:
+        for method in PANEL_BENCHMARKS:
             row[method] = mae[f"benchmarks/{method}"]
         rows.append(row)
     return pd.DataFrame(rows)
@@ -353,9 +355,11 @@ FORECAST_TEXT = ps.FigureText(
         "Each is evaluated at forecast horizons of one to twelve months, meaning "
         "how far ahead the prediction is made. The most accurate at every horizon "
         "on both gases is the simplest: predicting each month as the average of "
-        "that month in previous years. The pale band marks how far below that "
-        "average a method would have to fall before the difference could be told "
-        "apart from noise."
+        "that month in previous years. Carrying last month's value forward, not "
+        "drawn here, degrades from 12.2 to 41.4 nmol between one and six months, "
+        "while the seasonal average does not degrade at all. The pale band marks "
+        "how far below that average a method would have to fall before the "
+        "difference could be told apart from noise."
     ),
     description=(
         "The two panels are in different units and their heights are not "
@@ -363,23 +367,25 @@ FORECAST_TEXT = ps.FigureText(
         "edge dips below the seasonal average at one month on both gases and at "
         "six months on methane, in each case by less than the band, while its "
         "upper edge leaves the band at three, six and twelve months, where some "
-        "fitted methods are distinguishably worse than the average. Carrying "
-        "last month's value forward stops at six months because at twelve it "
-        "reaches the same month the seasonal benchmark already uses."
+        "fitted methods are distinguishably worse than the average."
     ),
 )
 
 
 def _draw_forecast_panel(ax, panel: pd.DataFrame, unit: str, labeled: bool = True) -> None:
-    """One gas: benchmarks, the fitted range, and the band they are judged against.
+    """One gas: the two benchmarks worth comparing, the fitted range, and the band.
 
-    The vertical scale is logarithmic. Persistence reaches six times the error of
-    the seasonal average by six months, and on a linear axis holding that value
-    the gap between 6.9 and 8.1, which is what the figure is about, collapses to
-    nothing. On a logarithmic axis every series is visible at its own value, so
-    persistence reads as a series rather than as a fragment leaving the frame,
-    and no annotation has to quote a number the axis cannot reach. Flatness
-    survives the change: a ratio is a fixed distance wherever it sits.
+    Carrying last month's value forward is not drawn. It loses at every horizon
+    past one month and nobody would use it, and holding its 41.4 on the same axis
+    as a seasonal average of 6.9 compresses the comparison the figure exists to
+    show into the bottom of the panel. What it establishes, that recent
+    information decays with horizon while a seasonal average does not, is a
+    sentence, and the subtitle carries it.
+
+    The vertical scale is linear and spans what the drawn series occupy. A
+    logarithmic scale was tried while persistence was still drawn and made the
+    carbon dioxide panel unreadable: a real 15% margin over the seasonal
+    benchmark looks like nothing on an axis running to 1.0.
 
     The horizontal scale is categorical. At their true numeric positions the step
     from six months to twelve is twice the step from three to six, which stretches
@@ -389,13 +395,14 @@ def _draw_forecast_panel(ax, panel: pd.DataFrame, unit: str, labeled: bool = Tru
     climatology = panel["climatology"].to_numpy()
     margin = panel["margin"].to_numpy()
 
-    ax.set_yscale("log")
-    lowest = float(min(panel["fitted_low"].min(), (climatology - margin).min()))
-    highest = float(max(panel["naive"].max(), panel["fitted_high"].max()))
-    # Headroom above the tallest series for the legend, which then never covers it.
-    # Headroom for the legend, sized so it clears every series across the whole
-    # panel rather than only the part of it the legend happens to sit over.
-    ax.set_ylim(lowest * 0.92, highest * 2.7)
+    lowest = float(min(panel["fitted_low"].min(), (climatology - margin).min(),
+                       panel["seasonal naive"].min()))
+    highest = float(max(panel["fitted_high"].max(), (climatology + margin).max(),
+                        panel["seasonal naive"].max()))
+    span = highest - lowest
+    # A little room below, and enough above for the legend to sit over the left
+    # of the panel without covering anything.
+    ax.set_ylim(lowest - 0.05 * span, highest + 0.18 * span)
     ax.set_xlim(-0.35, len(panel) - 0.65)
 
     ax.fill_between(positions, climatology - margin, climatology + margin,
@@ -407,42 +414,16 @@ def _draw_forecast_panel(ax, panel: pd.DataFrame, unit: str, labeled: bool = Tru
         ax.plot(positions, panel[edge], color=ps.FITTED, linewidth=0.9, zorder=3)
 
     for method, style in BENCHMARK_STYLE.items():
-        values = panel[method].to_numpy()
-        x, y = positions, values
-        if method == "naive":
-            keep = panel["horizon"].to_numpy() <= PERSISTENCE_LAST_HORIZON
-            x, y = positions[keep], values[keep]
-        ax.plot(x, y, zorder=4, **style)
-        if method == "naive":
-            ax.plot(x[-1:], y[-1:], marker="o", markersize=4.6, zorder=5,
-                    color=style["color"], linestyle="none")
+        ax.plot(positions, panel[method].to_numpy(), zorder=4, **style)
 
     ax.set_xticks(positions)
     ax.set_xticklabels([str(h) for h in panel["horizon"]])
-    ax.set_yscale("log")
-    ax.yaxis.set_major_formatter(ScalarFormatter())
-    ax.yaxis.set_minor_formatter(NullFormatter())
-    ax.set_yticks(_log_ticks(lowest * 0.92, highest * 1.55))
     if labeled:
         ax.set_xlabel(ps.axis_label("Forecast horizon", "months"))
     # Two lines: stacked panels are shorter than a single-line label is long, and
     # the two labels would otherwise run into each other down the left margin.
     ax.set_ylabel(f"Mean absolute error\n({unit})")
     ps.mirror_ticks(ax)
-
-
-def _log_ticks(low: float, high: float) -> list[float]:
-    """Readable ticks on a logarithmic axis spanning less than two decades."""
-    steps = [1, 1.5, 2, 3, 4, 5, 6, 8]
-    out = []
-    exponent = np.floor(np.log10(low))
-    while 10.0 ** exponent <= high:
-        for step in steps:
-            value = step * 10.0 ** exponent
-            if low <= value <= high:
-                out.append(float(value))
-        exponent += 1
-    return out
 
 
 def forecast_comparison(panels: dict[str, pd.DataFrame]) -> Figure:
@@ -457,7 +438,7 @@ def forecast_comparison(panels: dict[str, pd.DataFrame]) -> Figure:
     survives correction for multiple testing, so drawing an order would assert a
     ranking the evidence does not support.
     """
-    fig, (left, bottom, width, height) = ps.canvas_area(FORECAST_TEXT, size="stacked")
+    fig, (left, bottom, width, height) = ps.canvas_area(FORECAST_TEXT, size="stacked", extra_left_px=34)
     gap = 0.055
     panel_height = (height - gap) / 2
     axes = []
@@ -466,22 +447,51 @@ def forecast_comparison(panels: dict[str, pd.DataFrame]) -> Figure:
         row = bottom + (1 - index) * (panel_height + gap)
         ax = fig.add_axes((left, row, width, panel_height))
         _draw_forecast_panel(ax, panels[key], unit, labeled=index == len(GAS_PANEL) - 1)
-        ps.panel_letter(ax, "ab"[index], gas)
+        ps.panel_letter(ax, "ab"[index], gas, size=ps.SUBTITLE_SIZE + 1.5)
         _forecast_legend(ax)
+        _raise_top_until_legend_clears(ax)
         axes.append(ax)
 
-    # The result in the other direction. Only one panel carries it: repeating an
-    # annotation reads as two findings rather than one shown twice. Anchored at
-    # three months, which is left of the legend and where the panel has room.
-    methane = panels[GAS_PANEL[0][0]]
-    at = 1
-    ps.annotate(
-        axes[0],
-        "above the band, some fitted\nmethods are distinguishably worse",
-        xy=(float(at), float(methane["fitted_high"].iloc[at])),
-        xytext=(float(at) - 0.62, float(methane["fitted_high"].iloc[at]) * 1.55),
-    )
+    # The result in the other direction, on both panels because it holds on both.
+    # Anchored at twelve months, where the envelope's upper edge is highest and
+    # the approach from the left passes over every series rather than through the
+    # seasonal benchmark, which an earlier anchor at six months crossed.
+    for ax, (key, _, _) in zip(axes, GAS_PANEL):
+        table = panels[key]
+        low, high = ax.get_ylim()
+        last = len(table) - 1
+        ps.annotate(
+            ax,
+            "above the band, some fitted\nmethods are distinguishably worse",
+            xy=(float(last), float(table["fitted_high"].iloc[last])),
+            xytext=(float(last) - 1.05, high - 0.14 * (high - low)),
+        )
     return fig
+
+
+def _raise_top_until_legend_clears(ax, margin: float = 0.02, rounds: int = 6) -> None:
+    """Grow the axis upward until the legend sits above every series beneath it.
+
+    The headroom a legend needs depends on its own rendered height and on how
+    high the series run under it, which differ between the two gases. Fixing a
+    pad by hand gave one panel too much empty space and the other an overlap of
+    a thousandth of a unit, so it is measured and corrected instead.
+    """
+    for _ in range(rounds):
+        ax.figure.canvas.draw()
+        box = ax.get_legend().get_window_extent().transformed(ax.transData.inverted())
+        highest = -np.inf
+        for line in ax.lines:
+            x = np.asarray(line.get_xdata(), dtype=float)
+            y = np.asarray(line.get_ydata(), dtype=float)
+            under = (x >= box.x0) & (x <= box.x1)
+            if under.any():
+                highest = max(highest, float(y[under].max()))
+        low, high = ax.get_ylim()
+        needed = highest + margin * (high - low)
+        if box.y0 >= needed:
+            return
+        ax.set_ylim(low, high + (needed - box.y0))
 
 
 def _forecast_legend(ax) -> None:
@@ -503,9 +513,10 @@ def _forecast_legend(ax) -> None:
                linewidth=0.9), "Range across the eight fitted methods"),
         (Patch(facecolor=ps.NOT_DISTINGUISHABLE, edgecolor="none"),
          "Too close to the average to tell apart"),
-        (blank, " "),
     ]
     entries = column_one + column_two
+    # Anchored below the panel name, which occupies the top-left corner.
     ps.legend(ax, handles=[h for h, _ in entries], labels=[label for _, label in entries],
-              loc="upper right", ncol=2, borderpad=0.5, labelspacing=0.3,
-              columnspacing=1.6, handlelength=2.0, fontsize=ps.LEGEND_SIZE - 0.7)
+              loc="upper left", bbox_to_anchor=(0.0, 0.90), ncol=2, borderpad=0.5,
+              labelspacing=0.3, columnspacing=1.6, handlelength=2.0,
+              fontsize=ps.LEGEND_SIZE - 0.7)

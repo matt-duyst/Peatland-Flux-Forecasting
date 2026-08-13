@@ -1491,8 +1491,8 @@ terms is given the room instead of being compressed into it; every other block s
 fixed.
 
 **Mean absolute error against horizon, one panel per gas, in each gas's own
-units, on a logarithmic vertical scale and a categorical horizontal one.** Scaled
-error does not appear at all. It was chosen so the gases could be
+units, on linear vertical scales and a categorical horizontal one.** Scaled error
+does not appear at all. It was chosen so the gases could be
 compared on one footing and does not deliver that, so removing the measure
 removes the axis a reader could misuse, which is stronger than labeling it.
 
@@ -1518,22 +1518,40 @@ forward reaches the same month the seasonal benchmark uses, so the two coincide 
 construction and the curve would appear to recover from 41.4 back to 10.5.
 Drawing that would be true and misleading at once.
 
-**The vertical scale is logarithmic, and that replaced an earlier device that
-did not work.** Persistence reaches 41.4 against a seasonal average of 6.9, and a
-linear axis holding both flattens the gap the figure is about. The first version
-let persistence leave the top of the panel with its value annotated, which failed
-for a reason worth recording: **the annotated number was unreachable from the
-axis**, so a reader saw a line exit the frame and a figure with no relationship to
-any scale, and the visible stub read as apparatus rather than as a series. On a
-logarithmic axis every series sits at its own value, persistence spans about half
-the panel, and no annotation has to quote a number the axis cannot show. Flatness
-survives the change, because a ratio is a fixed distance wherever it sits: the
-seasonal average occupies 7% of the panel height on either scale.
+**Carrying last month's value forward is scored but not drawn, and two earlier
+attempts to draw it were both wrong.** It loses at every horizon past one month
+and nobody would use it, so it is not a contender; what it establishes is that
+recent information decays with horizon, which reads as a sentence and now sits in
+the subtitle.
+
+The first attempt let it leave the top of a linear panel with its value
+annotated. That failed because **the annotated number was unreachable from the
+axis**: a reader saw a line exit the frame and a figure with no relationship to
+any scale, and the visible stub read as apparatus rather than as a series. The
+second attempt put the vertical scale on a logarithm, which did make it reachable
+and did preserve flatness, but **it was scaling the figure for the benchmark that
+loses badly**. Compressing everything else into the lower half of the axis costs
+most on carbon dioxide, where climatology's 15% margin over the seasonal
+benchmark is real and looks like nothing on an axis running to 1.0. Dropping the
+series fixed both at once, and with it the mixed logarithmic tick labels, the
+empty band left by a legend pad, an unexplained terminal marker, and an
+annotation that crossed the curve.
+
+Each panel now spans what its drawn series occupy: 4.8 to 15.1 on methane and
+0.193 to 0.270 on carbon dioxide, plus headroom for the legend.
 
 **The horizontal scale is categorical.** At their true numeric positions the step
 from six months to twelve is twice the step from three to six, which stretches the
 curves for a reason that has nothing to do with the forecasts. No tick is drawn at
 nine, because nothing was evaluated there.
+
+**The legend's headroom is measured rather than fixed.** How much room it needs
+depends on its own rendered height and on how high the series run beneath it,
+which differ between the gases: a pad chosen by hand gave methane visible empty
+space and still left carbon dioxide overlapping its seasonal line by a
+thousandth of a unit. `_raise_top_until_legend_clears` grows the axis until the
+legend sits above everything under it, and a test walks every line against the
+rendered legend box.
 
 **The panels are stacked rather than side by side, and the legend forced it.**
 Naming the benchmarks by what they do rather than by their jargon makes the

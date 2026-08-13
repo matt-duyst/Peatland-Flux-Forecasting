@@ -15,6 +15,7 @@ from study import figures
 from study import plotstyle as ps
 
 HORIZONS = (1, 3, 6, 12)
+PERSISTENCE_LAST = 6
 
 
 def frames(seed: int = 0) -> dict[str, pd.DataFrame]:
@@ -46,6 +47,18 @@ def frames(seed: int = 0) -> dict[str, pd.DataFrame]:
 
 def panel() -> pd.DataFrame:
     return figures.forecast_panel(frames(), HORIZONS)
+
+
+def real_panel(gas: str) -> pd.DataFrame:
+    """The committed forecasts for one gas, for the few checks that need them."""
+    from ingest import paths
+
+    built = {}
+    for family in ("benchmarks", "autoregressive", "exogenous"):
+        frame = pd.read_csv(paths.processed_dir() / f"forecasts_{gas}_{family}.csv")
+        frame["target"] = pd.PeriodIndex(frame["target"], freq="M")
+        built[family] = frame
+    return figures.forecast_panel(built, HORIZONS)
 
 
 # --- the panel data ---------------------------------------------------------
@@ -94,21 +107,36 @@ def test_the_band_widens_when_the_effective_sample_shrinks():
 # --- what the panel draws ---------------------------------------------------
 
 
-def test_persistence_stops_before_it_would_coincide_with_seasonal_naive():
-    """Drawn to twelve it would appear to recover, which is an artifact."""
+def test_persistence_is_scored_but_not_drawn():
+    """It is not a contender, and holding its value compresses the comparison."""
+    tables = {k: panel() for k, _, _ in figures.GAS_PANEL}
+    assert "naive" in tables["methane"], "it is still scored"
+    assert "naive" not in figures.BENCHMARK_STYLE, "and no longer drawn"
+    fig = figures.forecast_comparison(tables)
+    for ax in fig.axes:
+        assert len([line for line in ax.lines if line.get_linestyle() != "None"]) == 4
+    ps.plt.close(fig)
+
+
+def test_both_scales_are_linear():
+    """A logarithmic scale made the carbon dioxide comparison unreadable."""
     fig = figures.forecast_comparison({k: panel() for k, _, _ in figures.GAS_PANEL})
-    ax = fig.axes[0]
-    # Matplotlib normalizes a dash tuple, so the line is found by its ink instead.
-    colour = figures.BENCHMARK_STYLE["naive"]["color"]
-    drawn = [l for l in ax.lines if l.get_color() == colour]
-    assert drawn, "persistence was not drawn"
-    # Positions are categorical, so the check is how many horizons it covers.
-    expected = sum(h <= figures.PERSISTENCE_LAST_HORIZON for h in HORIZONS)
-    assert len(drawn[0].get_xdata()) == expected
-    assert expected < len(HORIZONS), "the test would pass vacuously otherwise"
-    others = [l for l in ax.lines
-              if l.get_color() == figures.BENCHMARK_STYLE["climatology"]["color"]]
-    assert len(others[0].get_xdata()) == len(HORIZONS), "the others run the full range"
+    for ax in fig.axes:
+        assert ax.get_yscale() == "linear"
+    ps.plt.close(fig)
+
+
+def test_each_panel_spans_what_its_series_occupy():
+    """The axis is set from the data, not padded out to a shared round number."""
+    tables = {k: panel() for k, _, _ in figures.GAS_PANEL}
+    fig = figures.forecast_comparison(tables)
+    for ax, key in zip(fig.axes, [k for k, _, _ in figures.GAS_PANEL]):
+        table = tables[key]
+        low, high = ax.get_ylim()
+        drawn_low = min(table["fitted_low"].min(),
+                        (table["climatology"] - table["margin"]).min())
+        assert low < drawn_low, "the lowest mark must be inside the axis"
+        assert low > drawn_low - (high - low), "and not floated far above the floor"
     ps.plt.close(fig)
 
 
@@ -168,15 +196,49 @@ def test_the_horizons_are_evenly_spaced_and_no_tick_is_invented():
     ps.plt.close(fig)
 
 
-def test_the_vertical_scale_is_logarithmic_so_every_series_is_reachable():
-    """On a linear axis persistence leaves the frame and its value is unreadable."""
-    tables = {k: panel() for k, _, _ in figures.GAS_PANEL}
+def test_the_annotation_reaches_its_target_without_crossing_a_series():
+    """An earlier anchor at six months put the arrow through the seasonal line.
+
+    Read from the scored forecasts, because whether an arrow clears a curve is a
+    property of the real geometry and a synthetic frame would not test it.
+    """
+    tables = {key: real_panel(key) for key, _, _ in figures.GAS_PANEL}
     fig = figures.forecast_comparison(tables)
     for ax, key in zip(fig.axes, [k for k, _, _ in figures.GAS_PANEL]):
-        assert ax.get_yscale() == "log"
+        note = next(a for a in ax.texts if "above the band" in a.get_text())
+        (x0, y0), (x1, y1) = note.get_position(), note.xy
+        xs = np.linspace(x0, x1, 80)
+        ys = np.interp(xs, [x0, x1], [y0, y1])
         low, high = ax.get_ylim()
-        assert high > tables[key]["naive"].max(), "persistence must fit inside the axis"
+        positions = np.arange(len(tables[key]), dtype=float)
+        for name in ("climatology", "seasonal naive", "fitted_low"):
+            series = np.interp(xs, positions, tables[key][name].to_numpy())
+            assert np.all(np.abs(series - ys) > 0.004 * (high - low)), name
     ps.plt.close(fig)
+
+
+def test_the_panel_name_is_larger_than_a_legend_entry():
+    """It is the primary distinction between the panels."""
+    fig = figures.forecast_comparison({k: panel() for k, _, _ in figures.GAS_PANEL})
+    for ax in fig.axes:
+        name = next(a for a in ax.texts if "Methane" in a.get_text()
+                    or "Carbon dioxide" in a.get_text())
+        assert name.get_fontsize() > ps.LEGEND_SIZE
+    ps.plt.close(fig)
+
+
+def test_the_subtitle_quotes_the_persistence_values_the_data_holds():
+    """The subtitle states what the panel no longer draws, so it has to be checked.
+
+    This is the one test here that reads the scored forecasts rather than a
+    synthetic frame, because that is the thing being checked.
+    """
+    table = real_panel("methane")
+    said = figures.FORECAST_TEXT.subtitle
+    at_one = table.loc[table["horizon"] == 1, "naive"].iloc[0]
+    at_six = table.loc[table["horizon"] == PERSISTENCE_LAST, "naive"].iloc[0]
+    assert f"{at_one:.1f}" in said, f"subtitle should quote {at_one:.1f}"
+    assert f"{at_six:.1f}" in said, f"subtitle should quote {at_six:.1f}"
 
 
 # --- the palette ------------------------------------------------------------

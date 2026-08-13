@@ -278,7 +278,8 @@ def wrap_description(text: str, width_px: int, terms: tuple[str, ...] = ()) -> s
     return emphasize(wrapped, terms)
 
 
-def canvas_area(text: FigureText, size: str = "wide") -> tuple[Figure, tuple[float, float, float, float]]:
+def canvas_area(text: FigureText, size: str = "wide",
+                extra_left_px: int = 0) -> tuple[Figure, tuple[float, float, float, float]]:
     """A figure carrying its text blocks, and the rectangle left for drawing.
 
     Callers that need one axes use `canvas`; callers laying out several panels
@@ -298,7 +299,10 @@ def canvas_area(text: FigureText, size: str = "wide") -> tuple[Figure, tuple[flo
         TITLE_SIZE * 1.9 / 72.0 * DPI + (heading.count("\n") + 1) * subtitle_line_px + 18,
     )
 
-    left = MARGIN_PX["left"] / width_px
+    # Wider tick labels need a wider margin, or a two-line axis name runs off the
+    # canvas. Measured rather than guessed: the carbon dioxide panel's label
+    # reached 7.6 px past the left edge before this was added.
+    left = (MARGIN_PX["left"] + extra_left_px) / width_px
     right = 1 - MARGIN_PX["right"] / width_px
     axes_top = 1 - (MARGIN_PX["top"] + title_block_px) / height_px
     axes_bottom = (
@@ -531,16 +535,18 @@ def credit(ax: plt.Axes, text: str, xy: tuple[float, float] = (0.5, 0.012),
                 fontsize=7.6, color=INK, zorder=7, path_effects=[_outline()])
 
 
-def panel_letter(ax: plt.Axes, letter: str, label: str | None = None) -> None:
+def panel_letter(ax: plt.Axes, letter: str, label: str | None = None,
+                 size: float = LEGEND_SIZE) -> None:
     """Mark a panel so the description can refer to it without naming positions.
 
     A label placed here rather than on the axis keeps a long axis name from
     reaching into the title block, and names the panel where a reader looks
-    first.
+    first. Where the label is the main distinction between panels rather than a
+    cross-reference, it is set larger than a legend entry.
     """
     text = f"({letter})" if label is None else f"({letter})  {label}"
     ax.annotate(text, xy=(0.014, 0.986), xycoords="axes fraction",
-                ha="left", va="top", fontsize=LEGEND_SIZE, fontweight="bold",
+                ha="left", va="top", fontsize=size, fontweight="bold",
                 color=INK, zorder=8, path_effects=[_outline()])
 
 
