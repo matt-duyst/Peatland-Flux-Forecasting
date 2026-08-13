@@ -257,18 +257,50 @@ def test_the_panel_name_is_larger_than_a_legend_entry():
     ps.plt.close(fig)
 
 
-def test_the_description_quotes_the_persistence_values_the_data_holds():
-    """The text states what the panel no longer draws, so it has to be checked.
+def test_the_figure_does_not_describe_a_series_it_does_not_draw():
+    """Persistence is scored and recorded in the notes, not narrated on the panel."""
+    words = figures.FORECAST_TEXT.description + figures.FORECAST_TEXT.subtitle
+    assert "carrying last month" not in words.lower()
+    assert "41.4" not in words
 
-    This is the one test here that reads the scored forecasts rather than a
-    synthetic frame, because that is the thing being checked.
-    """
-    table = real_panel("methane")
+
+def test_the_units_caveat_names_the_units():
+    """An abstract "different units" leaves a reader to work out which."""
     said = figures.FORECAST_TEXT.description
-    at_one = table.loc[table["horizon"] == 1, "naive"].iloc[0]
-    at_six = table.loc[table["horizon"] == PERSISTENCE_LAST, "naive"].iloc[0]
-    assert f"{at_one:.1f}" in said, f"subtitle should quote {at_one:.1f}"
-    assert f"{at_six:.1f}" in said, f"subtitle should quote {at_six:.1f}"
+    assert "nanomole" in said and "micromole" in said
+
+
+def test_the_annotation_target_sits_low_enough_to_show_its_arrow():
+    tables = {key: real_panel(key) for key, _, _ in figures.GAS_PANEL}
+    fig = figures.forecast_comparison(tables)
+    fig.canvas.draw()
+    for ax in fig.axes:
+        note = next(a for a in ax.texts if "above the band" in a.get_text())
+        frame = ax.get_window_extent()
+        share = (ax.transData.transform(note.xy)[1] - frame.y0) / frame.height
+        # At or below the share, never above it: the legend's clearance can push
+        # the target lower still, which only lengthens the arrow.
+        assert share <= figures.ANNOTATION_TARGET_SHARE + 0.02
+    ps.plt.close(fig)
+
+
+def test_the_legend_keeps_its_clearance_on_both_panels():
+    tables = {key: real_panel(key) for key, _, _ in figures.GAS_PANEL}
+    fig = figures.forecast_comparison(tables)
+    fig.canvas.draw()
+    for ax in fig.axes:
+        legend = ax.get_legend().get_window_extent()
+        box = legend.transformed(ax.transData.inverted())
+        highest = -np.inf
+        for line in ax.lines:
+            x = np.asarray(line.get_xdata(), dtype=float)
+            y = np.asarray(line.get_ydata(), dtype=float)
+            under = (x >= box.x0) & (x <= box.x1)
+            if under.any():
+                highest = max(highest, float(y[under].max()))
+        gap = legend.y0 - ax.transData.transform((0, highest))[1]
+        assert gap >= figures.LEGEND_CLEARANCE_PX - 1
+    ps.plt.close(fig)
 
 
 # --- the palette ------------------------------------------------------------

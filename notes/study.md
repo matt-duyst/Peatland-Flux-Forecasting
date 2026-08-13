@@ -1597,16 +1597,36 @@ close to the average to tell apart" described the methods that fall in the band
 rather than the region itself, which is why it read oddly as a key entry. It now
 reads "Margin needed to differ from the average", which is what the region is.
 
+**The description names the units rather than saying they differ.** "The two
+panels are in different units" leaves a reader to work out which and why it
+matters; the panel now says methane is in nanomoles and carbon dioxide in
+micromoles, so the two cannot be compared by eye. The persistence sentence was
+cut from the figure entirely: it described a series the panel does not draw, and
+these notes carry it.
+
 **The headroom is measured rather than fixed, and for every piece of furniture.**
 How much room is needed depends on the furniture's rendered size and on how high
 the series run beneath it, which differ between the gases: a pad chosen by hand
 gave methane visible empty space and still left carbon dioxide overlapping its
 seasonal line by a thousandth of a unit. Correcting the legend alone then moved
 the collision onto the annotation rather than removing it, so
-`_raise_top_until_furniture_clears` grows the axis until the legend, the panel
-name and the annotation all sit clear, and a test walks every line in every panel
-against each of them. A second test asserts the furniture does not overlap
-itself.
+`_raise_top_until_furniture_clears` grows the axis until the legend keeps a fixed
+pixel gap above the nearest series and the annotation's target sits at a fixed
+share of the panel height, which is what gives its arrow length.
+
+**Two things about that loop are worth recording, because both diverged first.**
+The clearance was initially a share of the data range, so each enlargement raised
+the requirement that had prompted it and the axis ran away. It is a pixel
+quantity now. The arrow length was initially measured from the annotation's own
+window extent, which for an `Annotation` **covers the arrow as well as the text**,
+so sizing the arrow from it is circular; both panels stayed at ten pixels while
+the axis grew fourfold. The target's position is set rather than measured.
+
+Carbon dioxide's benchmark line runs high in its panel, so the legend clearance
+is what separates them, and it is the binding constraint there rather than the
+annotation. Matching methane's much larger gap exactly would compress the carbon
+dioxide comparison into half its panel, so the clearance is set to sixty pixels
+rather than to whatever methane happens to have.
 
 **The panels are stacked rather than side by side, and the legend forced it.**
 Naming the benchmarks by what they do rather than by their jargon makes the

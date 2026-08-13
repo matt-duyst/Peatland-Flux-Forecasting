@@ -360,17 +360,15 @@ FORECAST_TEXT = ps.FigureText(
         "apart from noise."
     ),
     description=(
-        "The two panels are in different units, so their heights are not "
-        "comparable. The blue region spans all eight fitted methods. Its lower "
-        "edge dips below the seasonal average at one month on both gases, and at "
-        "six months on methane, though never by more than the band. Its upper "
-        "edge rises above the band at three, six and twelve months: some fitted "
-        "methods are distinguishably worse than the average. The band is wide "
-        "where the closest fitted method disagrees with the average erratically "
-        "from month to month, not where the average is least certain. Carrying "
-        "last month's value forward, not drawn here, degrades from 12.2 to 41.4 "
-        "nmol between one and six months, while the seasonal average does not "
-        "degrade at all."
+        "Methane is measured in nanomoles and carbon dioxide in micromoles, so "
+        "the two panels cannot be compared by eye. The blue region spans all "
+        "eight fitted methods. Its lower edge dips below the seasonal average at "
+        "one month on both gases, and at six months on methane, though never by "
+        "more than the band. Its upper edge rises above the band at three, six "
+        "and twelve months: some fitted methods are distinguishably worse than "
+        "the average. The band is wide where the closest fitted method disagrees "
+        "with the average erratically from month to month, not where the average "
+        "is least certain."
     ),
 )
 
@@ -475,36 +473,55 @@ def forecast_comparison(panels: dict[str, pd.DataFrame]) -> Figure:
     return fig
 
 
-def _raise_top_until_furniture_clears(ax, margin: float = 0.02, rounds: int = 8) -> None:
-    """Grow the axis upward until nothing drawn over it covers a series.
+#: Where the annotation's target sits in the panel, as a share of its height.
+#: The note is anchored near the top, so holding its target here leaves a leader
+#: long enough for the arrowhead to read. Set rather than measured: an
+#: Annotation's window extent covers its arrow as well as its text, so sizing the
+#: arrow from that extent is circular and does not converge.
+ANNOTATION_TARGET_SHARE = 0.72
 
-    Checks the legend and every annotation, not the legend alone: fixing one and
-    not the other moved the collision rather than removing it. How much room the
-    furniture needs depends on its rendered size and on how high the series run
-    beneath it, which differ between the gases, so it is measured and corrected
-    rather than padded by hand.
+#: Pixels of clear space between the legend and the nearest series beneath it.
+#: In pixels rather than as a share of the data range, which would grow with the
+#: range it is used to enlarge. Carbon dioxide's benchmark line runs high in its
+#: panel, so this is what separates the two; matching methane's much larger gap
+#: exactly would compress the carbon dioxide comparison into half its panel.
+LEGEND_CLEARANCE_PX = 60
+
+
+def _raise_top_until_furniture_clears(ax, rounds: int = 8) -> None:
+    """Grow the axis upward until the legend clears the series and the leader shows.
+
+    The legend and the note are both anchored in axes fractions, so raising the
+    top moves the data away from them. Two requirements: the legend keeps a fixed
+    pixel gap above the highest series beneath it, and the note's target sits at a
+    fixed share of the panel height, which is what gives the arrow its length.
     """
     for _ in range(rounds):
         ax.figure.canvas.draw()
-        boxes = [ax.get_legend().get_window_extent()]
-        boxes += [text.get_window_extent() for text in ax.texts
-                  if "above the band" in text.get_text()]
-        worst = 0.0
         low, high = ax.get_ylim()
-        for pixels in boxes:
-            box = pixels.transformed(ax.transData.inverted())
-            highest = -np.inf
-            for line in ax.lines:
-                x = np.asarray(line.get_xdata(), dtype=float)
-                y = np.asarray(line.get_ydata(), dtype=float)
-                under = (x >= box.x0) & (x <= box.x1)
-                if under.any():
-                    highest = max(highest, float(y[under].max()))
-            if highest > -np.inf:
-                worst = max(worst, highest + margin * (high - low) - box.y0)
-        if worst <= 0:
+        frame = ax.get_window_extent()
+        needed = high - low
+
+        legend = ax.get_legend().get_window_extent()
+        box = legend.transformed(ax.transData.inverted())
+        highest = -np.inf
+        for line in ax.lines:
+            x = np.asarray(line.get_xdata(), dtype=float)
+            y = np.asarray(line.get_ydata(), dtype=float)
+            under = (x >= box.x0) & (x <= box.x1)
+            if under.any():
+                highest = max(highest, float(y[under].max()))
+        share = (legend.y0 - frame.y0 - LEGEND_CLEARANCE_PX) / frame.height
+        if highest > -np.inf and share > 0:
+            needed = max(needed, (highest - low) / share)
+
+        for note in ax.texts:
+            if "above the band" in note.get_text():
+                needed = max(needed, (note.xy[1] - low) / ANNOTATION_TARGET_SHARE)
+
+        if needed <= (high - low) * 1.001:
             return
-        ax.set_ylim(low, high + worst)
+        ax.set_ylim(low, low + needed)
 
 
 def _forecast_legend(ax) -> None:
