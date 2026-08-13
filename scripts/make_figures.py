@@ -104,6 +104,27 @@ def main() -> None:
     fragments.append(plotstyle.readme_block(figures.FORECAST_TEXT, "forecast_error_by_horizon"))
     print(f"wrote {path.relative_to(plotstyle.figures_dir().parent)}")
 
+    # Observed against predicted reads the same scored forecasts, plus the
+    # observed series over the whole record so the unforecast years stay visible.
+    flux = {}
+    for key, _, _ in figures.GAS_PANEL:
+        filename, column, error = figures.GAS_OBSERVED[key]
+        series = pd.read_csv(root / "data/processed" / filename)
+        series["month"] = pd.PeriodIndex(series["month"], freq="M")
+        observed_series = series.set_index("month")[[column, error]].rename(
+            columns={column: "observed", error: "se"})
+        frames = {}
+        for family in ("benchmarks", "autoregressive", "exogenous"):
+            frame = pd.read_csv(root / f"data/processed/forecasts_{key}_{family}.csv")
+            frame["target"] = pd.PeriodIndex(frame["target"], freq="M")
+            frames[family] = frame
+        flux[key] = figures.flux_panel(observed_series, frames)
+
+    fig = figures.observed_and_predicted(flux)
+    path = plotstyle.save(fig, "observed_and_predicted")
+    fragments.append(plotstyle.readme_block(figures.FLUX_TEXT, "observed_and_predicted"))
+    print(f"wrote {path.relative_to(plotstyle.figures_dir().parent)}")
+
     target = plotstyle.figures_dir() / "README_fragments.md"
     target.write_text("\n".join(fragments))
     print(f"wrote {target.relative_to(plotstyle.figures_dir().parent)}")

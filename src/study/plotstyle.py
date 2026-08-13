@@ -54,6 +54,13 @@ FITTED = "#56B4E9"
 #: relative luminance, with a color difference of 15.5 under the worst deficiency.
 FITTED_FILL_ALPHA = 0.45
 
+#: The uncertainty in an observed monthly mean, drawn as a band in the line's own
+#: ink rather than as error bars, following Deventer et al. (2019) figure 10. The
+#: alpha is measured, not chosen: it separates from the fitted fill by 0.160 in
+#: relative luminance and 17.8 under the worst simulated deficiency, and where the
+#: two overlap the result is distinct from each of them.
+OBSERVED_BAND_ALPHA = 0.28
+
 #: The region within which a method is not distinguishable from the benchmark.
 #: Apparatus rather than a category, so it is achromatic and lighter than the
 #: envelope it must not be confused with.
@@ -545,7 +552,8 @@ def panel_letter(ax: plt.Axes, letter: str, label: str | None = None,
     A label placed here rather than on the axis keeps a long axis name from
     reaching into the title block, and names the panel where a reader looks
     first. Where the label is the main distinction between panels rather than a
-    cross-reference, it is set larger than a legend entry.
+    cross-reference, it is set larger than a legend entry. It takes the corner the
+    legend does not, so the two never contend for the same one.
     """
     text = f"({letter})" if label is None else f"({letter})  {label}"
     ax.annotate(text, xy=(0.014, 0.986), xycoords="axes fraction",
@@ -553,7 +561,7 @@ def panel_letter(ax: plt.Axes, letter: str, label: str | None = None,
                 color=INK, zorder=8, path_effects=[_outline()])
 
 
-def panel_name(ax: plt.Axes, name: str, x: float = 0.016, y: float = 0.952) -> None:
+def panel_name(ax: plt.Axes, name: str, y: float = 0.952, align: str = "left") -> None:
     """Name a panel in a bordered box, which carries the emphasis size otherwise would.
 
     Used where the panels differ in what they show rather than in which step of an
@@ -562,7 +570,8 @@ def panel_name(ax: plt.Axes, name: str, x: float = 0.016, y: float = 0.952) -> N
     outside the text extent, so an anchor that measures as inside can still cross
     the spine.
     """
-    ax.annotate(name, xy=(x, y), xycoords="axes fraction", ha="left", va="top",
+    x = 0.016 if align == "left" else 0.984
+    ax.annotate(name, xy=(x, y), xycoords="axes fraction", ha=align, va="top",
                 fontsize=LEGEND_SIZE + 1.6, fontweight="bold", color=INK, zorder=9,
                 bbox=dict(boxstyle="round,pad=0.42", facecolor="white",
                           edgecolor=BOUNDARY, linewidth=0.9))

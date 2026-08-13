@@ -1669,6 +1669,73 @@ the envelope sits at 0.680 relative luminance against the band's 0.823, a gap of
 0.143, with the subject darker than the apparatus. A test asserts both the gap and
 its direction.
 
+### Observed against predicted, and two results that came out of drawing it
+
+`figures/observed_and_predicted.png`, built by
+`study.figures.observed_and_predicted` from the scored forecasts and the observed
+monthly series.
+
+**A time series, not a scatter against a one-to-one line.** A scatter shows how
+far predictions miss by and destroys when they miss. The finding is about which
+months, so the axis has to be time.
+
+**The whole record is drawn, with the evaluated months shaded.** Predictions
+exist for **40% of the methane record and 44% of the carbon dioxide record**, and
+shading rather than clipping is what makes that visible. It also makes visible
+that **2021, the weakest summer in the record at 0.57 of the average year, lies
+outside the evaluated window and was never forecast.** An earlier note here said
+the two years climatology fails on are the two lowest-amplitude years; only 2015
+of those two is evaluable at any horizon, and the figure now says so.
+
+**One horizon, at one month.** It is the horizon most favorable to the fitted
+methods, so showing that they do not follow the observations even there is a
+stronger claim than showing it a year out. The forecast comparison already
+carries the horizon story.
+
+**Two prediction marks, not one.** Merging the seasonal average into the fitted
+range was tried, because it would have removed the benchmark-against-model
+framing altogether. It does not work: the seasonal average lies inside the fitted
+range in only 63% of methane months and 40% of carbon dioxide months, and merging
+widens the band by 16% and 38%. On carbon dioxide it usually sits below the
+fitted range, which is why it wins, and merging would hide exactly that.
+
+**The observed uncertainty band is a result, not decoration.** Drawn as a band in
+the line's own ink following Deventer et al. (2019) figure 10. Comparing the
+spread across the eight fitted models against the width of that band:
+
+| gas | spread across the eight models | observed, two standard errors | ratio |
+|---|---|---|---|
+| methane | 13.26 | 3.49 | 3.8 |
+| carbon dioxide | 0.148 | 0.362 | **0.41** |
+
+**On carbon dioxide the eight models disagree with each other by less than half
+the uncertainty in the quantity they are predicting.** That is the non-separation
+finding arriving from a direction the error measures cannot reach, and it is
+visible on the panel without a number: the blue band sits inside the black one.
+On methane the relationship inverts. The contrast is what the second panel is for.
+
+**A count in the description was wrong and is corrected.** The measured flux falls
+below **every fitted model in 12 of the 57 evaluated methane months, and below all
+nine predictions in 9 of them**. The two counts differ because the seasonal
+average is below the observation in three of those twelve, and an earlier draft
+stated the first number against the second. A test pins both.
+
+**No score is drawn on the panel.** Every number that could go there is either a
+verdict the evidence does not support or a repeat of the forecast comparison. A
+test asserts none appears.
+
+**The two translucent fills were measured against each other**, since they overlap
+across most of the carbon dioxide panel. The observed band at its chosen alpha
+separates from the fitted fill by 0.160 in relative luminance and 17.8 under the
+worst simulated deficiency, and where the two overlap the result is distinct from
+each of them. Tests assert the greyscale separation and the overlap.
+
+**What was left out.** Individual model lines; the other three benchmarks; any
+horizon but one; a residual panel; markers on the observed series, which at 150
+monthly points over sixteen years crowd where the line alone carries it; and an
+annotation naming 2015 on the panel, which could not be placed without crossing a
+series or the legend, so the description names it instead.
+
 ### What the forecasting half concludes
 
 **Methane and carbon dioxide at this site are predictable in shape and not in
