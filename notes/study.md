@@ -1586,13 +1586,27 @@ finding and the explanation of the band and pushed that block to six lines. It
 belongs with the other panel notes in the description, and a test checks that the
 figures it quotes are the ones the data holds.
 
-**The legend's headroom is measured rather than fixed.** How much room it needs
-depends on its own rendered height and on how high the series run beneath it,
-which differ between the gases: a pad chosen by hand gave methane visible empty
-space and still left carbon dioxide overlapping its seasonal line by a
-thousandth of a unit. `_raise_top_until_legend_clears` grows the axis until the
-legend sits above everything under it, and a test walks every line against the
-rendered legend box.
+**The legend is two columns, one group each, centered above the curves.** Each
+heading sits over its own entries and is underlined by a drawn rule, because
+matplotlib's mathtext has no underline. The rules are added to the figure rather
+than to the axes, so they do not appear in `ax.lines`, where the checks that keep
+the furniture off the data would otherwise count them as series.
+
+**The band's legend entry names the band, not what is true inside it.** "Too
+close to the average to tell apart" described the methods that fall in the band
+rather than the region itself, which is why it read oddly as a key entry. It now
+reads "Margin needed to differ from the average", which is what the region is.
+
+**The headroom is measured rather than fixed, and for every piece of furniture.**
+How much room is needed depends on the furniture's rendered size and on how high
+the series run beneath it, which differ between the gases: a pad chosen by hand
+gave methane visible empty space and still left carbon dioxide overlapping its
+seasonal line by a thousandth of a unit. Correcting the legend alone then moved
+the collision onto the annotation rather than removing it, so
+`_raise_top_until_furniture_clears` grows the axis until the legend, the panel
+name and the annotation all sit clear, and a test walks every line in every panel
+against each of them. A second test asserts the furniture does not overlap
+itself.
 
 **The panels are stacked rather than side by side, and the legend forced it.**
 Naming the benchmarks by what they do rather than by their jargon makes the
