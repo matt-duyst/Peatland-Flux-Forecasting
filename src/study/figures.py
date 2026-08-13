@@ -452,61 +452,70 @@ def forecast_comparison(panels: dict[str, pd.DataFrame]) -> Figure:
         _draw_forecast_panel(ax, panels[key], unit, labeled=index == len(GAS_PANEL) - 1)
         ps.panel_name(ax, gas)
         _forecast_legend(ax)
-        _raise_top_until_legend_clears(ax)
         axes.append(ax)
 
     # The result in the other direction, on both panels because it holds on both.
-    # Anchored at twelve months, where the envelope's upper edge is highest and
-    # the approach from the left passes over every series rather than through the
-    # seasonal benchmark, which an earlier anchor at six months crossed.
+    # Anchored at twelve months, where the envelope's upper edge is highest, and
+    # set into the corner beyond the legend's right edge. Wrapped narrow so it
+    # fits the strip the legend leaves rather than reaching back across it.
     for ax, (key, _, _) in zip(axes, GAS_PANEL):
         table = panels[key]
-        low, high = ax.get_ylim()
         last = len(table) - 1
         ps.annotate(
             ax,
-            "above the band, some fitted\nmethods are distinguishably worse",
+            "above the band,\nsome fitted methods are\ndistinguishably worse",
             xy=(float(last), float(table["fitted_high"].iloc[last])),
-            xytext=(float(last) - 1.05, high - 0.14 * (high - low)),
+            xytext=(0.988, 0.97), textcoords="axes fraction", ha="right", va="top",
         )
+
+    # Both pieces of furniture are in place, so the axis can be grown to fit them.
+    for ax in axes:
+        _raise_top_until_furniture_clears(ax)
+        _underline_legend_headings(fig, ax)
     return fig
 
 
-def _raise_top_until_legend_clears(ax, margin: float = 0.02, rounds: int = 6) -> None:
-    """Grow the axis upward until the legend sits above every series beneath it.
+def _raise_top_until_furniture_clears(ax, margin: float = 0.02, rounds: int = 8) -> None:
+    """Grow the axis upward until nothing drawn over it covers a series.
 
-    The headroom a legend needs depends on its own rendered height and on how
-    high the series run under it, which differ between the two gases. Fixing a
-    pad by hand gave one panel too much empty space and the other an overlap of
-    a thousandth of a unit, so it is measured and corrected instead.
+    Checks the legend and every annotation, not the legend alone: fixing one and
+    not the other moved the collision rather than removing it. How much room the
+    furniture needs depends on its rendered size and on how high the series run
+    beneath it, which differ between the gases, so it is measured and corrected
+    rather than padded by hand.
     """
     for _ in range(rounds):
         ax.figure.canvas.draw()
-        box = ax.get_legend().get_window_extent().transformed(ax.transData.inverted())
-        highest = -np.inf
-        for line in ax.lines:
-            x = np.asarray(line.get_xdata(), dtype=float)
-            y = np.asarray(line.get_ydata(), dtype=float)
-            under = (x >= box.x0) & (x <= box.x1)
-            if under.any():
-                highest = max(highest, float(y[under].max()))
+        boxes = [ax.get_legend().get_window_extent()]
+        boxes += [text.get_window_extent() for text in ax.texts
+                  if "above the band" in text.get_text()]
+        worst = 0.0
         low, high = ax.get_ylim()
-        needed = highest + margin * (high - low)
-        if box.y0 >= needed:
+        for pixels in boxes:
+            box = pixels.transformed(ax.transData.inverted())
+            highest = -np.inf
+            for line in ax.lines:
+                x = np.asarray(line.get_xdata(), dtype=float)
+                y = np.asarray(line.get_ydata(), dtype=float)
+                under = (x >= box.x0) & (x <= box.x1)
+                if under.any():
+                    highest = max(highest, float(y[under].max()))
+            if highest > -np.inf:
+                worst = max(worst, highest + margin * (high - low) - box.y0)
+        if worst <= 0:
             return
-        ax.set_ylim(low, high + (needed - box.y0))
+        ax.set_ylim(low, high + worst)
 
 
 def _forecast_legend(ax) -> None:
     """One legend per panel, carrying both distinctions, so each panel reads alone.
 
-    Split across the panels each would have been half a key, and a reader looking
-    at one gas would have had no entry for the other's marks. The two groups keep
-    their own bold headings inside the single frame.
+    Two columns, one group each, filled down the column so a heading sits above
+    its own entries. Centered horizontally rather than pushed against the left
+    edge, so it occupies the empty band above the curves instead of crowding the
+    part of the panel where the comparison is closest.
     """
     blank = Line2D([], [], linestyle="none", marker="none")
-    # Two columns, filled down each in turn, so the two groups sit side by side
-    # and the block is short enough to clear the curves across the whole panel.
     entries = [(blank, r"$\bf{Benchmark\ methods}$")]
     entries += [(Line2D([], [], **style), BENCHMARK_LABEL[method])
                 for method, style in BENCHMARK_STYLE.items()]
@@ -515,11 +524,27 @@ def _forecast_legend(ax) -> None:
         (Patch(facecolor=ps.FITTED, alpha=ps.FITTED_FILL_ALPHA, edgecolor=ps.FITTED,
                linewidth=0.9), "Range across the eight fitted methods"),
         (Patch(facecolor=ps.NOT_DISTINGUISHABLE, edgecolor="none"),
-         "Difference from the average could be chance"),
+         "Margin needed to differ from the average"),
     ]
-    # One column and inset from the corner: two columns reached most of the way
-    # across the plot area, and sitting against the border read as attached to it.
     ps.legend(ax, handles=[h for h, _ in entries], labels=[label for _, label in entries],
-              loc="upper left", bbox_to_anchor=(0.03, 0.85), borderpad=0.5,
-              labelspacing=0.2, handlelength=1.8, fontsize=ps.LEGEND_SIZE - 2.0,
-              framealpha=1.0)
+              loc="upper center", bbox_to_anchor=(0.46, 0.90), ncol=2, borderpad=0.7,
+              labelspacing=0.34, columnspacing=2.0, handlelength=2.2,
+              handletextpad=0.8, fontsize=ps.LEGEND_SIZE - 1.0, framealpha=1.0)
+
+
+def _underline_legend_headings(fig, ax) -> None:
+    """Rule each legend heading, which mathtext cannot do itself.
+
+    Drawn on the figure rather than the axes so it does not appear in `ax.lines`,
+    where the checks that keep the legend off the data would then see it.
+    """
+    fig.canvas.draw()
+    legend = ax.get_legend()
+    for text in legend.get_texts():
+        if not text.get_text().startswith("$"):
+            continue
+        box = text.get_window_extent().transformed(fig.transFigure.inverted())
+        y = box.y0 - 0.10 * (box.y1 - box.y0)
+        fig.add_artist(Line2D([box.x0, box.x1], [y, y], transform=fig.transFigure,
+                              color=ps.INK, linewidth=0.9,
+                              zorder=legend.get_zorder() + 1))

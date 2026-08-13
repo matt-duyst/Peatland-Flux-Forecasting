@@ -9,6 +9,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import pytest
+from matplotlib.lines import Line2D
 
 from forecast import evaluation
 from study import figures
@@ -164,6 +165,18 @@ def test_no_legend_covers_any_series():
     ps.plt.close(fig)
 
 
+def test_the_legend_is_two_columns_with_a_heading_over_each_group():
+    fig = figures.forecast_comparison({k: panel() for k, _, _ in figures.GAS_PANEL})
+    for ax in fig.axes:
+        legend = ax.get_legend()
+        assert legend._ncols == 2
+        headings = [t.get_text() for t in legend.get_texts() if t.get_text().startswith("$")]
+        assert len(headings) == 2
+    # Mathtext cannot underline, so a rule is drawn under each heading instead.
+    assert len([a for a in fig.artists if isinstance(a, Line2D)]) == 2 * len(fig.axes)
+    ps.plt.close(fig)
+
+
 def test_every_panel_carries_the_whole_key():
     """Split across panels, each would have been half a key."""
     fig = figures.forecast_comparison({k: panel() for k, _, _ in figures.GAS_PANEL})
@@ -196,24 +209,41 @@ def test_the_horizons_are_evenly_spaced_and_no_tick_is_invented():
     ps.plt.close(fig)
 
 
-def test_the_annotation_reaches_its_target_without_crossing_a_series():
-    """An earlier anchor at six months put the arrow through the seasonal line.
+def test_nothing_drawn_over_a_panel_covers_a_series():
+    """Legend, panel name and annotation all measured against the drawn data.
 
-    Read from the scored forecasts, because whether an arrow clears a curve is a
-    property of the real geometry and a synthetic frame would not test it.
+    Fixing only the legend once moved a collision onto the annotation rather than
+    removing it, so every piece of furniture is checked, not just the one that
+    failed last.
     """
     tables = {key: real_panel(key) for key, _, _ in figures.GAS_PANEL}
     fig = figures.forecast_comparison(tables)
-    for ax, key in zip(fig.axes, [k for k, _, _ in figures.GAS_PANEL]):
-        note = next(a for a in ax.texts if "above the band" in a.get_text())
-        (x0, y0), (x1, y1) = note.get_position(), note.xy
-        xs = np.linspace(x0, x1, 80)
-        ys = np.interp(xs, [x0, x1], [y0, y1])
-        low, high = ax.get_ylim()
-        positions = np.arange(len(tables[key]), dtype=float)
-        for name in ("climatology", "seasonal naive", "fitted_low"):
-            series = np.interp(xs, positions, tables[key][name].to_numpy())
-            assert np.all(np.abs(series - ys) > 0.004 * (high - low)), name
+    fig.canvas.draw()
+    for ax in fig.axes:
+        furniture = [("legend", ax.get_legend())]
+        furniture += [(text.get_text()[:18], text) for text in ax.texts]
+        for name, artist in furniture:
+            box = artist.get_window_extent().transformed(ax.transData.inverted())
+            for line in ax.lines:
+                x = np.asarray(line.get_xdata(), dtype=float)
+                y = np.asarray(line.get_ydata(), dtype=float)
+                covered = ((x >= box.x0) & (x <= box.x1)
+                           & (y >= box.y0) & (y <= box.y1))
+                assert not covered.any(), f"{name} covers a series"
+    ps.plt.close(fig)
+
+
+def test_the_furniture_does_not_overlap_itself():
+    fig = figures.forecast_comparison({k: real_panel(k) for k, _, _ in figures.GAS_PANEL})
+    fig.canvas.draw()
+    for ax in fig.axes:
+        boxes = [ax.get_legend().get_window_extent()]
+        boxes += [text.get_window_extent() for text in ax.texts]
+        for i, first in enumerate(boxes):
+            for second in boxes[i + 1:]:
+                apart = (first.x1 <= second.x0 or second.x1 <= first.x0
+                         or first.y1 <= second.y0 or second.y1 <= first.y0)
+                assert apart, "two pieces of furniture overlap"
     ps.plt.close(fig)
 
 
