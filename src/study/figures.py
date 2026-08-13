@@ -427,7 +427,7 @@ def _draw_forecast_panel(ax, panel: pd.DataFrame, unit: str, labeled: bool = Tru
     ps.mirror_ticks(ax)
 
 
-def forecast_comparison(panels: dict[str, pd.DataFrame]) -> Figure:
+def forecast_error_by_horizon(panels: dict[str, pd.DataFrame]) -> Figure:
     """The forecast result: the seasonal average against everything fitted to beat it.
 
     Two panels rather than one axis, in each gas's own units, because the scaled

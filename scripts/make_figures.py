@@ -99,9 +99,9 @@ def main() -> None:
             frames[family] = frame
         panels[key] = figures.forecast_panel(frames, evaluation.HORIZONS)
 
-    fig = figures.forecast_comparison(panels)
-    path = plotstyle.save(fig, "forecast_comparison")
-    fragments.append(plotstyle.readme_block(figures.FORECAST_TEXT, "forecast_comparison"))
+    fig = figures.forecast_error_by_horizon(panels)
+    path = plotstyle.save(fig, "forecast_error_by_horizon")
+    fragments.append(plotstyle.readme_block(figures.FORECAST_TEXT, "forecast_error_by_horizon"))
     print(f"wrote {path.relative_to(plotstyle.figures_dir().parent)}")
 
     target = plotstyle.figures_dir() / "README_fragments.md"

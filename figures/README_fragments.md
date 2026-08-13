@@ -24,7 +24,7 @@ Each marker is one year's emission in grams of carbon per square meter, from rel
 
 ### Monthly methane and carbon dioxide forecast error at Marcell Bog Lake Peatland
 
-![Monthly methane and carbon dioxide forecast error at Marcell Bog Lake Peatland](figures/forecast_comparison.png)
+![Monthly methane and carbon dioxide forecast error at Marcell Bog Lake Peatland](figures/forecast_error_by_horizon.png)
 
 **Four fitted methods (ordinary least squares, ridge regression, random forest and gradient boosting), each run with and without lagged environmental covariates, are compared against four simple benchmarks. Each is evaluated at forecast horizons of one to twelve months, meaning how far ahead the prediction is made. The most accurate at every horizon on both gases is the simplest: predicting each month as the average of that month in previous years. The pale band marks how far below that average a method would have to fall before the difference could be told apart from noise.**
 

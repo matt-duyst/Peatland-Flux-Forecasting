@@ -132,7 +132,10 @@ XAXIS_BLOCK_PX = 74
 MARGIN_PX = {"left": 108, "right": 40, "top": 26, "bottom": 22}
 
 TITLE_SIZE = 15
-SUBTITLE_SIZE = 11.5
+#: Set to the description size. The subtitle carries the finding and is read
+#: first, but it is near-black against the description's muted gray, and that
+#: difference carries the hierarchy without a difference in size as well.
+SUBTITLE_SIZE = 9.5
 DESCRIPTION_SIZE = 9.5
 LABEL_SIZE = 9.5
 TICK_SIZE = 9.5

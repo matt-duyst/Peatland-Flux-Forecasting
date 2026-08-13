@@ -113,7 +113,7 @@ def test_persistence_is_scored_but_not_drawn():
     tables = {k: panel() for k, _, _ in figures.GAS_PANEL}
     assert "naive" in tables["methane"], "it is still scored"
     assert "naive" not in figures.BENCHMARK_STYLE, "and no longer drawn"
-    fig = figures.forecast_comparison(tables)
+    fig = figures.forecast_error_by_horizon(tables)
     for ax in fig.axes:
         assert len([line for line in ax.lines if line.get_linestyle() != "None"]) == 4
     ps.plt.close(fig)
@@ -121,7 +121,7 @@ def test_persistence_is_scored_but_not_drawn():
 
 def test_both_scales_are_linear():
     """A logarithmic scale made the carbon dioxide comparison unreadable."""
-    fig = figures.forecast_comparison({k: panel() for k, _, _ in figures.GAS_PANEL})
+    fig = figures.forecast_error_by_horizon({k: panel() for k, _, _ in figures.GAS_PANEL})
     for ax in fig.axes:
         assert ax.get_yscale() == "linear"
     ps.plt.close(fig)
@@ -130,7 +130,7 @@ def test_both_scales_are_linear():
 def test_each_panel_spans_what_its_series_occupy():
     """The axis is set from the data, not padded out to a shared round number."""
     tables = {k: panel() for k, _, _ in figures.GAS_PANEL}
-    fig = figures.forecast_comparison(tables)
+    fig = figures.forecast_error_by_horizon(tables)
     for ax, key in zip(fig.axes, [k for k, _, _ in figures.GAS_PANEL]):
         table = tables[key]
         low, high = ax.get_ylim()
@@ -146,14 +146,14 @@ def test_the_two_panels_do_not_share_a_scale():
     tables = {k: panel() for k, _, _ in figures.GAS_PANEL}
     tables["carbon_dioxide"] = tables["carbon_dioxide"] * 0.01
     tables["carbon_dioxide"]["horizon"] = list(HORIZONS)
-    fig = figures.forecast_comparison(tables)
+    fig = figures.forecast_error_by_horizon(tables)
     assert fig.axes[0].get_ylim() != fig.axes[1].get_ylim()
     ps.plt.close(fig)
 
 
 def test_no_legend_covers_any_series():
     """Measured against the drawn data, not judged by eye, which missed it twice."""
-    fig = figures.forecast_comparison({k: panel() for k, _, _ in figures.GAS_PANEL})
+    fig = figures.forecast_error_by_horizon({k: panel() for k, _, _ in figures.GAS_PANEL})
     fig.canvas.draw()
     for ax in fig.axes:
         box = ax.get_legend().get_window_extent().transformed(ax.transData.inverted())
@@ -166,7 +166,7 @@ def test_no_legend_covers_any_series():
 
 
 def test_the_legend_is_two_columns_with_a_heading_over_each_group():
-    fig = figures.forecast_comparison({k: panel() for k, _, _ in figures.GAS_PANEL})
+    fig = figures.forecast_error_by_horizon({k: panel() for k, _, _ in figures.GAS_PANEL})
     for ax in fig.axes:
         legend = ax.get_legend()
         assert legend._ncols == 2
@@ -179,7 +179,7 @@ def test_the_legend_is_two_columns_with_a_heading_over_each_group():
 
 def test_every_panel_carries_the_whole_key():
     """Split across panels, each would have been half a key."""
-    fig = figures.forecast_comparison({k: panel() for k, _, _ in figures.GAS_PANEL})
+    fig = figures.forecast_error_by_horizon({k: panel() for k, _, _ in figures.GAS_PANEL})
     for ax in fig.axes:
         legend = ax.get_legend()
         assert legend is not None
@@ -201,7 +201,7 @@ def test_the_benchmarks_are_named_by_what_they_do():
 
 def test_the_horizons_are_evenly_spaced_and_no_tick_is_invented():
     """At true positions the step from six to twelve is twice the step before it."""
-    fig = figures.forecast_comparison({k: panel() for k, _, _ in figures.GAS_PANEL})
+    fig = figures.forecast_error_by_horizon({k: panel() for k, _, _ in figures.GAS_PANEL})
     for ax in fig.axes:
         ticks = ax.get_xticks()
         assert list(np.diff(ticks)) == [1.0] * (len(ticks) - 1)
@@ -217,7 +217,7 @@ def test_nothing_drawn_over_a_panel_covers_a_series():
     failed last.
     """
     tables = {key: real_panel(key) for key, _, _ in figures.GAS_PANEL}
-    fig = figures.forecast_comparison(tables)
+    fig = figures.forecast_error_by_horizon(tables)
     fig.canvas.draw()
     for ax in fig.axes:
         furniture = [("legend", ax.get_legend())]
@@ -234,7 +234,7 @@ def test_nothing_drawn_over_a_panel_covers_a_series():
 
 
 def test_the_furniture_does_not_overlap_itself():
-    fig = figures.forecast_comparison({k: real_panel(k) for k, _, _ in figures.GAS_PANEL})
+    fig = figures.forecast_error_by_horizon({k: real_panel(k) for k, _, _ in figures.GAS_PANEL})
     fig.canvas.draw()
     for ax in fig.axes:
         boxes = [ax.get_legend().get_window_extent()]
@@ -249,7 +249,7 @@ def test_the_furniture_does_not_overlap_itself():
 
 def test_the_panel_name_is_larger_than_a_legend_entry():
     """It is the primary distinction between the panels."""
-    fig = figures.forecast_comparison({k: panel() for k, _, _ in figures.GAS_PANEL})
+    fig = figures.forecast_error_by_horizon({k: panel() for k, _, _ in figures.GAS_PANEL})
     for ax in fig.axes:
         name = next(a for a in ax.texts if "Methane" in a.get_text()
                     or "Carbon dioxide" in a.get_text())
@@ -272,7 +272,7 @@ def test_the_units_caveat_names_the_units():
 
 def test_the_annotation_target_sits_low_enough_to_show_its_arrow():
     tables = {key: real_panel(key) for key, _, _ in figures.GAS_PANEL}
-    fig = figures.forecast_comparison(tables)
+    fig = figures.forecast_error_by_horizon(tables)
     fig.canvas.draw()
     for ax in fig.axes:
         note = next(a for a in ax.texts if "above the band" in a.get_text())
@@ -286,7 +286,7 @@ def test_the_annotation_target_sits_low_enough_to_show_its_arrow():
 
 def test_the_legend_keeps_its_clearance_on_both_panels():
     tables = {key: real_panel(key) for key, _, _ in figures.GAS_PANEL}
-    fig = figures.forecast_comparison(tables)
+    fig = figures.forecast_error_by_horizon(tables)
     fig.canvas.draw()
     for ax in fig.axes:
         legend = ax.get_legend().get_window_extent()

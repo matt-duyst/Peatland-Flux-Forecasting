@@ -1479,7 +1479,8 @@ candidates survived.
 
 ### The figure, and the palette measurement behind it
 
-`figures/forecast_comparison.png`, built by `study.figures.forecast_comparison`
+`figures/forecast_error_by_horizon.png`, built by
+`study.figures.forecast_error_by_horizon`
 from the scored forecasts rather than by refitting.
 
 The subtitle carries the method definitions, the benchmark count and what the band
@@ -1596,6 +1597,13 @@ the furniture off the data would otherwise count them as series.
 close to the average to tell apart" described the methods that fall in the band
 rather than the region itself, which is why it read oddly as a key entry. It now
 reads "Margin needed to differ from the average", which is what the region is.
+
+**The subtitle is set at the description's size.** It carries the finding and is
+read first, but it is near-black against the description's muted gray, and that
+difference carries the hierarchy without a difference in size as well. Set on the
+shared constant, so the whole figure set matches; two intermediate sizes were
+rendered and compared before choosing. On this figure the subtitle rewraps from
+five lines to four and the panels gain the room.
 
 **The description names the units rather than saying they differ.** "The two
 panels are in different units" leaves a reader to work out which and why it
