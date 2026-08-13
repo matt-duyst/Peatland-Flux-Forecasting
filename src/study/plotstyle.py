@@ -116,6 +116,10 @@ SIZES = {
     "standard": (1800, 1200),
     "compact": (1200, 1200),
     "tall": (1800, 1400),
+    #: Two panels stacked. Side by side, a panel is too narrow to hold a legend
+    #: that names its methods by what they do rather than by their jargon, and the
+    #: legend ends up over the data. Full width leaves room beside the curves.
+    "stacked": (1800, 1500),
 }
 
 #: Fixed pixel allocations, so a figure's proportions do not depend on how much
@@ -245,6 +249,20 @@ def emphasize(text: str, terms: tuple[str, ...]) -> str:
     return text
 
 
+def wrap_subtitle(text: str, width_px: int) -> str:
+    """Wrap a subtitle to the canvas width.
+
+    A subtitle is usually one line, and the block that holds it is sized from
+    what it wraps to rather than fixed, so a figure whose subtitle carries the
+    definitions a reader needs is given the room instead of being compressed
+    into it. Every other block stays fixed, so proportions still do not depend
+    on how much text a figure happens to carry below the subtitle.
+    """
+    drawable_points = (width_px - MARGIN_PX["left"] - MARGIN_PX["right"]) / DPI * 72.0
+    width = max(20, int(drawable_points / (_CHAR_WIDTH * SUBTITLE_SIZE)))
+    return textwrap.fill(" ".join(text.split()), width=width)
+
+
 def wrap_description(text: str, width_px: int, terms: tuple[str, ...] = ()) -> str:
     """Wrap a description to the canvas width, refusing text that will not fit."""
     width = _wrap_width(width_px) - (2 if terms else 0)
@@ -272,10 +290,17 @@ def canvas_area(text: FigureText, size: str = "wide") -> tuple[Figure, tuple[flo
     fig = plt.figure(figsize=(width_px / DPI, height_px / DPI), dpi=DPI)
 
     body = wrap_description(text.description, width_px, text.emphasize)
+    heading = wrap_subtitle(text.subtitle, width_px)
+
+    subtitle_line_px = SUBTITLE_SIZE * 1.5 / 72.0 * DPI
+    title_block_px = max(
+        TITLE_BLOCK_PX,
+        TITLE_SIZE * 1.9 / 72.0 * DPI + (heading.count("\n") + 1) * subtitle_line_px + 18,
+    )
 
     left = MARGIN_PX["left"] / width_px
     right = 1 - MARGIN_PX["right"] / width_px
-    axes_top = 1 - (MARGIN_PX["top"] + TITLE_BLOCK_PX) / height_px
+    axes_top = 1 - (MARGIN_PX["top"] + title_block_px) / height_px
     axes_bottom = (
         MARGIN_PX["bottom"] + DESCRIPTION_BLOCK_PX + XAXIS_BLOCK_PX
     ) / height_px
@@ -284,8 +309,8 @@ def canvas_area(text: FigureText, size: str = "wide") -> tuple[Figure, tuple[flo
     fig.text(middle, 1 - MARGIN_PX["top"] / height_px, text.title,
              ha="center", va="top", fontsize=TITLE_SIZE, fontweight="bold", color=INK)
     fig.text(middle, 1 - (MARGIN_PX["top"] + TITLE_SIZE * 1.9 / 72 * DPI) / height_px,
-             emphasize(text.subtitle, text.emphasize), ha="center", va="top",
-             fontsize=SUBTITLE_SIZE, color=INK)
+             emphasize(heading, text.emphasize), ha="center", va="top",
+             fontsize=SUBTITLE_SIZE, color=INK, linespacing=1.5)
     fig.text(left, (MARGIN_PX["bottom"] + DESCRIPTION_BLOCK_PX) / height_px,
              body, ha="left", va="top", fontsize=DESCRIPTION_SIZE, color=MUTED,
              linespacing=1.45)

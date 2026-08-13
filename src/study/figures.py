@@ -17,6 +17,7 @@ import pandas as pd
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
+from matplotlib.ticker import NullFormatter, ScalarFormatter
 
 from forecast import evaluation
 from study import plotstyle as ps
@@ -287,10 +288,12 @@ BENCHMARK_STYLE = {
 #: would be true and misleading at once.
 PERSISTENCE_LAST_HORIZON = 6
 
+#: Named by what they do. "Persistence" and "seasonal naive" tell a reader
+#: nothing on first meeting; the subtitle and the notes carry the technical terms.
 BENCHMARK_LABEL = {
-    "climatology": "Month-of-year climatology",
-    "seasonal naive": "Seasonal naive",
-    "naive": f"Persistence (to {PERSISTENCE_LAST_HORIZON} months)",
+    "climatology": "The average of that month in previous years",
+    "seasonal naive": "The same month last year",
+    "naive": f"Last month's value carried forward (to {PERSISTENCE_LAST_HORIZON} months)",
 }
 
 GAS_PANEL = (
@@ -340,134 +343,169 @@ def forecast_panel(
 
 FORECAST_TEXT = ps.FigureText(
     title=(
-        "A month-of-year average forecasts this peatland as well as anything "
-        "fitted against it"
+        "Monthly methane and carbon dioxide forecast error at Marcell Bog Lake "
+        "Peatland"
     ),
     subtitle=(
-        "Climatology does not degrade from one month to twelve, and no fitted "
-        "method separates from it"
+        "Four fitted methods (ordinary least squares, ridge regression, random "
+        "forest and gradient boosting), each run with and without lagged "
+        "environmental covariates, are compared against four simple benchmarks. "
+        "Each is evaluated at forecast horizons of one to twelve months, meaning "
+        "how far ahead the prediction is made. The most accurate at every horizon "
+        "on both gases is the simplest: predicting each month as the average of "
+        "that month in previous years. The pale band marks how far below that "
+        "average a method would have to fall before the difference could be told "
+        "apart from noise."
     ),
     description=(
-        "Mean absolute error against forecast horizon, one panel per gas, in "
-        "different units whose heights are not comparable. The pale band is the "
-        "margin a method needs to be distinguishable from climatology, so anything "
-        "inside it is not; its width uses the effective number of independent "
-        "comparisons, which overlap cuts to 35.6 from 57 at methane's one month. "
-        "The blue region is the range across all eight fitted models in both "
-        "families, undrawn separately because none separates from another. Its "
-        "lower edge dips below climatology at one month on both gases and at six "
-        "on methane, never far enough to leave the band. Persistence stops at six "
-        "months, where carrying the last value forward twelve reaches the month "
-        "the seasonal benchmark already uses."
+        "The two panels are in different units and their heights are not "
+        "comparable. The blue range spans all eight fitted methods: its lower "
+        "edge dips below the seasonal average at one month on both gases and at "
+        "six months on methane, in each case by less than the band, while its "
+        "upper edge leaves the band at three, six and twelve months, where some "
+        "fitted methods are distinguishably worse than the average. Carrying "
+        "last month's value forward stops at six months because at twelve it "
+        "reaches the same month the seasonal benchmark already uses."
     ),
 )
 
 
-def _persistence_exit(x: np.ndarray, y: np.ndarray, ceiling: float) -> tuple[float, float]:
-    """Where a rising curve crosses the top of the panel, for labeling it there."""
-    for i in range(len(x) - 1):
-        if y[i] <= ceiling < y[i + 1]:
-            share = (ceiling - y[i]) / (y[i + 1] - y[i])
-            return float(x[i] + share * (x[i + 1] - x[i])), ceiling
-    return float(x[-1]), float(min(y[-1], ceiling))
+def _draw_forecast_panel(ax, panel: pd.DataFrame, unit: str, labeled: bool = True) -> None:
+    """One gas: benchmarks, the fitted range, and the band they are judged against.
 
+    The vertical scale is logarithmic. Persistence reaches six times the error of
+    the seasonal average by six months, and on a linear axis holding that value
+    the gap between 6.9 and 8.1, which is what the figure is about, collapses to
+    nothing. On a logarithmic axis every series is visible at its own value, so
+    persistence reads as a series rather than as a fragment leaving the frame,
+    and no annotation has to quote a number the axis cannot reach. Flatness
+    survives the change: a ratio is a fixed distance wherever it sits.
 
-def _draw_forecast_panel(ax, panel: pd.DataFrame, unit: str) -> None:
-    horizons = panel["horizon"].to_numpy(dtype=float)
+    The horizontal scale is categorical. At their true numeric positions the step
+    from six months to twelve is twice the step from three to six, which stretches
+    the curves for a reason that has nothing to do with the forecasts.
+    """
+    positions = np.arange(len(panel), dtype=float)
     climatology = panel["climatology"].to_numpy()
     margin = panel["margin"].to_numpy()
 
-    # The axis does not start at zero, and the band is why it does not have to.
-    # A zero baseline exists to stop a reader over-reading small differences; here
-    # the band states directly which differences are too small to read, and on
-    # carbon dioxide a zero baseline would compress every series into one line.
-    # The lower bound clears the band, the upper bound clears everything except
-    # persistence, which is meant to leave.
-    ceiling = 1.08 * float(
-        max(panel["seasonal naive"].max(), panel["fitted_high"].max(),
-            panel["naive"].iloc[0])
-    )
-    # The pad below the lowest mark is deliberate room for the legend, so it can
-    # sit inside the panel without ever covering a series.
+    ax.set_yscale("log")
     lowest = float(min(panel["fitted_low"].min(), (climatology - margin).min()))
-    floor_value = lowest - 0.28 * (ceiling - lowest)
-    ax.set_xlim(0.2, 12.8)
-    ax.set_ylim(floor_value, ceiling)
+    highest = float(max(panel["naive"].max(), panel["fitted_high"].max()))
+    # Headroom above the tallest series for the legend, which then never covers it.
+    # Headroom for the legend, sized so it clears every series across the whole
+    # panel rather than only the part of it the legend happens to sit over.
+    ax.set_ylim(lowest * 0.92, highest * 2.7)
+    ax.set_xlim(-0.35, len(panel) - 0.65)
 
-    # The band first: it is apparatus and everything else reads against it.
-    ax.fill_between(horizons, climatology - margin, climatology + margin,
+    ax.fill_between(positions, climatology - margin, climatology + margin,
                     facecolor=ps.NOT_DISTINGUISHABLE, edgecolor="none", zorder=1)
-    ax.fill_between(horizons, panel["fitted_low"], panel["fitted_high"],
+    ax.fill_between(positions, panel["fitted_low"], panel["fitted_high"],
                     facecolor=ps.FITTED, alpha=ps.FITTED_FILL_ALPHA,
                     edgecolor="none", zorder=2)
-    ax.plot(horizons, panel["fitted_low"], color=ps.FITTED, linewidth=0.9, zorder=3)
-    ax.plot(horizons, panel["fitted_high"], color=ps.FITTED, linewidth=0.9, zorder=3)
+    for edge in ("fitted_low", "fitted_high"):
+        ax.plot(positions, panel[edge], color=ps.FITTED, linewidth=0.9, zorder=3)
 
     for method, style in BENCHMARK_STYLE.items():
         values = panel[method].to_numpy()
-        x, y = horizons, values
+        x, y = positions, values
         if method == "naive":
-            keep = horizons <= PERSISTENCE_LAST_HORIZON
-            x, y = horizons[keep], values[keep]
+            keep = panel["horizon"].to_numpy() <= PERSISTENCE_LAST_HORIZON
+            x, y = positions[keep], values[keep]
         ax.plot(x, y, zorder=4, **style)
+        if method == "naive":
+            ax.plot(x[-1:], y[-1:], marker="o", markersize=4.6, zorder=5,
+                    color=style["color"], linestyle="none")
 
-    # Persistence leaves the panel rather than being compressed into it, so the
-    # scale stays honest for everything else. Where it goes is stated in place.
-    values = panel.set_index("horizon")["naive"]
-    exit_x, exit_y = _persistence_exit(
-        horizons[horizons <= PERSISTENCE_LAST_HORIZON],
-        values.loc[values.index <= PERSISTENCE_LAST_HORIZON].to_numpy(), ceiling)
-    if exit_y >= ceiling - 1e-9:
-        span = ceiling - floor_value
-        ps.annotate(
-            ax,
-            f"persistence reaches {values.loc[PERSISTENCE_LAST_HORIZON]:.3g}\n"
-            f"by {PERSISTENCE_LAST_HORIZON} months",
-            xy=(exit_x, ceiling - 0.02 * span),
-            xytext=(exit_x + 1.0, ceiling - 0.15 * span),
-        )
-
-    ax.set_xticks([1, 3, 6, 12])
-    ax.set_xlabel(ps.axis_label("Forecast horizon", "months"))
-    ax.set_ylabel(ps.axis_label("Mean absolute error", unit))
+    ax.set_xticks(positions)
+    ax.set_xticklabels([str(h) for h in panel["horizon"]])
+    ax.set_yscale("log")
+    ax.yaxis.set_major_formatter(ScalarFormatter())
+    ax.yaxis.set_minor_formatter(NullFormatter())
+    ax.set_yticks(_log_ticks(lowest * 0.92, highest * 1.55))
+    if labeled:
+        ax.set_xlabel(ps.axis_label("Forecast horizon", "months"))
+    # Two lines: stacked panels are shorter than a single-line label is long, and
+    # the two labels would otherwise run into each other down the left margin.
+    ax.set_ylabel(f"Mean absolute error\n({unit})")
     ps.mirror_ticks(ax)
 
 
+def _log_ticks(low: float, high: float) -> list[float]:
+    """Readable ticks on a logarithmic axis spanning less than two decades."""
+    steps = [1, 1.5, 2, 3, 4, 5, 6, 8]
+    out = []
+    exponent = np.floor(np.log10(low))
+    while 10.0 ** exponent <= high:
+        for step in steps:
+            value = step * 10.0 ** exponent
+            if low <= value <= high:
+                out.append(float(value))
+        exponent += 1
+    return out
+
+
 def forecast_comparison(panels: dict[str, pd.DataFrame]) -> Figure:
-    """The forecast result: climatology against everything fitted against it.
+    """The forecast result: the seasonal average against everything fitted to beat it.
 
     Two panels rather than one axis, in each gas's own units, because the scaled
-    error that would put them on a common axis is not comparable between them:
-    methane's denominator is twice the difficulty of the period being scored and
-    carbon dioxide's matches it. Removing the measure removes the temptation.
+    error that would put them on a common axis is not comparable between them.
+    Removing the measure removes the temptation.
 
     The fitted methods appear as a range rather than as eight labeled curves.
     Four of the sixteen method comparisons reach nominal significance and none
     survives correction for multiple testing, so drawing an order would assert a
     ranking the evidence does not support.
     """
-    fig, (left, bottom, width, height) = ps.canvas_area(FORECAST_TEXT, size="wide")
-    gap = 0.085
-    panel_width = (width - gap) / 2
+    fig, (left, bottom, width, height) = ps.canvas_area(FORECAST_TEXT, size="stacked")
+    gap = 0.055
+    panel_height = (height - gap) / 2
     axes = []
     for index, (key, gas, unit) in enumerate(GAS_PANEL):
-        ax = fig.add_axes((left + index * (panel_width + gap), bottom, panel_width, height))
-        _draw_forecast_panel(ax, panels[key], unit)
+        # Top panel first, so the panels read down the page in the order lettered.
+        row = bottom + (1 - index) * (panel_height + gap)
+        ax = fig.add_axes((left, row, width, panel_height))
+        _draw_forecast_panel(ax, panels[key], unit, labeled=index == len(GAS_PANEL) - 1)
         ps.panel_letter(ax, "ab"[index], gas)
+        _forecast_legend(ax)
         axes.append(ax)
 
-    methods = [Line2D([], [], label=BENCHMARK_LABEL[m], **s)
-               for m, s in BENCHMARK_STYLE.items()]
-    regions = [
-        Patch(facecolor=ps.FITTED, alpha=ps.FITTED_FILL_ALPHA, edgecolor=ps.FITTED,
-              linewidth=0.9, label="Range across the eight fitted models"),
-        Patch(facecolor=ps.NOT_DISTINGUISHABLE, edgecolor="none",
-              label="Not distinguishable from climatology"),
-    ]
-    # Two legends for two distinctions, following Irvin et al. (2021) figure 9.
-    # They are split across the panels rather than stacked in one, because
-    # neither panel has room for both without sitting on the data.
-    for ax, handles, title in ((axes[0], methods, "Methods"), (axes[1], regions, "Regions")):
-        ps.legend(ax, handles=handles, labels=[h.get_label() for h in handles],
-                  loc="lower right", title=title, borderpad=0.45, labelspacing=0.35)
+    # The result in the other direction. Only one panel carries it: repeating an
+    # annotation reads as two findings rather than one shown twice. Anchored at
+    # three months, which is left of the legend and where the panel has room.
+    methane = panels[GAS_PANEL[0][0]]
+    at = 1
+    ps.annotate(
+        axes[0],
+        "above the band, some fitted\nmethods are distinguishably worse",
+        xy=(float(at), float(methane["fitted_high"].iloc[at])),
+        xytext=(float(at) - 0.62, float(methane["fitted_high"].iloc[at]) * 1.55),
+    )
     return fig
+
+
+def _forecast_legend(ax) -> None:
+    """One legend per panel, carrying both distinctions, so each panel reads alone.
+
+    Split across the panels each would have been half a key, and a reader looking
+    at one gas would have had no entry for the other's marks. The two groups keep
+    their own bold headings inside the single frame.
+    """
+    blank = Line2D([], [], linestyle="none", marker="none")
+    # Two columns, filled down each in turn, so the two groups sit side by side
+    # and the block is short enough to clear the curves across the whole panel.
+    column_one = [(blank, r"$\bf{Benchmark\ methods}$")]
+    column_one += [(Line2D([], [], **style), BENCHMARK_LABEL[method])
+                   for method, style in BENCHMARK_STYLE.items()]
+    column_two = [
+        (blank, r"$\bf{Shaded\ regions}$"),
+        (Patch(facecolor=ps.FITTED, alpha=ps.FITTED_FILL_ALPHA, edgecolor=ps.FITTED,
+               linewidth=0.9), "Range across the eight fitted methods"),
+        (Patch(facecolor=ps.NOT_DISTINGUISHABLE, edgecolor="none"),
+         "Too close to the average to tell apart"),
+        (blank, " "),
+    ]
+    entries = column_one + column_two
+    ps.legend(ax, handles=[h for h, _ in entries], labels=[label for _, label in entries],
+              loc="upper right", ncol=2, borderpad=0.5, labelspacing=0.3,
+              columnspacing=1.6, handlelength=2.0, fontsize=ps.LEGEND_SIZE - 0.7)

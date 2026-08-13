@@ -102,10 +102,13 @@ def test_persistence_stops_before_it_would_coincide_with_seasonal_naive():
     colour = figures.BENCHMARK_STYLE["naive"]["color"]
     drawn = [l for l in ax.lines if l.get_color() == colour]
     assert drawn, "persistence was not drawn"
-    assert max(drawn[0].get_xdata()) == figures.PERSISTENCE_LAST_HORIZON
+    # Positions are categorical, so the check is how many horizons it covers.
+    expected = sum(h <= figures.PERSISTENCE_LAST_HORIZON for h in HORIZONS)
+    assert len(drawn[0].get_xdata()) == expected
+    assert expected < len(HORIZONS), "the test would pass vacuously otherwise"
     others = [l for l in ax.lines
               if l.get_color() == figures.BENCHMARK_STYLE["climatology"]["color"]]
-    assert max(others[0].get_xdata()) == 12, "the other benchmarks run the full range"
+    assert len(others[0].get_xdata()) == len(HORIZONS), "the others run the full range"
     ps.plt.close(fig)
 
 
@@ -119,22 +122,60 @@ def test_the_two_panels_do_not_share_a_scale():
     ps.plt.close(fig)
 
 
-def test_neither_legend_covers_any_series():
+def test_no_legend_covers_any_series():
+    """Measured against the drawn data, not judged by eye, which missed it twice."""
     fig = figures.forecast_comparison({k: panel() for k, _, _ in figures.GAS_PANEL})
     fig.canvas.draw()
     for ax in fig.axes:
-        legend = ax.get_legend()
-        assert legend is not None
-        box = legend.get_window_extent().transformed(ax.transData.inverted())
-        lowest = min(line.get_ydata().min() for line in ax.lines if len(line.get_ydata()))
-        assert box.y1 < lowest, "the legend reaches into the drawn series"
+        box = ax.get_legend().get_window_extent().transformed(ax.transData.inverted())
+        for line in ax.lines:
+            x = np.asarray(line.get_xdata(), dtype=float)
+            y = np.asarray(line.get_ydata(), dtype=float)
+            inside = (x >= box.x0) & (x <= box.x1) & (y >= box.y0) & (y <= box.y1)
+            assert not inside.any(), f"the legend covers {line.get_color()}"
     ps.plt.close(fig)
 
 
-def test_both_legends_are_drawn_one_for_methods_and_one_for_regions():
+def test_every_panel_carries_the_whole_key():
+    """Split across panels, each would have been half a key."""
     fig = figures.forecast_comparison({k: panel() for k, _, _ in figures.GAS_PANEL})
-    titles = [ax.get_legend().get_title().get_text() for ax in fig.axes]
-    assert set(titles) == {"Methods", "Regions"}
+    for ax in fig.axes:
+        legend = ax.get_legend()
+        assert legend is not None
+        labels = [text.get_text() for text in legend.get_texts()]
+        assert any("Benchmark" in label for label in labels)
+        assert any("Shaded" in label for label in labels)
+        for method in figures.BENCHMARK_STYLE:
+            assert figures.BENCHMARK_LABEL[method] in labels
+    ps.plt.close(fig)
+
+
+def test_the_benchmarks_are_named_by_what_they_do():
+    """A reader meeting "persistence" or "seasonal naive" learns nothing."""
+    for label in figures.BENCHMARK_LABEL.values():
+        assert "naive" not in label.lower()
+        assert "persistence" not in label.lower()
+        assert "climatology" not in label.lower()
+
+
+def test_the_horizons_are_evenly_spaced_and_no_tick_is_invented():
+    """At true positions the step from six to twelve is twice the step before it."""
+    fig = figures.forecast_comparison({k: panel() for k, _, _ in figures.GAS_PANEL})
+    for ax in fig.axes:
+        ticks = ax.get_xticks()
+        assert list(np.diff(ticks)) == [1.0] * (len(ticks) - 1)
+        assert [t.get_text() for t in ax.get_xticklabels()] == ["1", "3", "6", "12"]
+    ps.plt.close(fig)
+
+
+def test_the_vertical_scale_is_logarithmic_so_every_series_is_reachable():
+    """On a linear axis persistence leaves the frame and its value is unreadable."""
+    tables = {k: panel() for k, _, _ in figures.GAS_PANEL}
+    fig = figures.forecast_comparison(tables)
+    for ax, key in zip(fig.axes, [k for k, _, _ in figures.GAS_PANEL]):
+        assert ax.get_yscale() == "log"
+        low, high = ax.get_ylim()
+        assert high > tables[key]["naive"].max(), "persistence must fit inside the axis"
     ps.plt.close(fig)
 
 

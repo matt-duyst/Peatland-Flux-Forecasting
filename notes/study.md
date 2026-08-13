@@ -1482,8 +1482,17 @@ candidates survived.
 `figures/forecast_comparison.png`, built by `study.figures.forecast_comparison`
 from the scored forecasts rather than by refitting.
 
+The subtitle carries the method definitions, the benchmark count and what the band
+means, so the description carries only what it does not: that the two panels are in
+different units whose heights are not comparable, and where the fitted range crosses
+the seasonal average. `plotstyle.wrap_subtitle` sizes the title block from the
+wrapped subtitle rather than fixing it, so a figure whose subtitle has to define its
+terms is given the room instead of being compressed into it; every other block stays
+fixed.
+
 **Mean absolute error against horizon, one panel per gas, in each gas's own
-units.** Scaled error does not appear at all. It was chosen so the gases could be
+units, on a logarithmic vertical scale and a categorical horizontal one.** Scaled
+error does not appear at all. It was chosen so the gases could be
 compared on one footing and does not deliver that, so removing the measure
 removes the axis a reader could misuse, which is stronger than labeling it.
 
@@ -1509,12 +1518,29 @@ forward reaches the same month the seasonal benchmark uses, so the two coincide 
 construction and the curve would appear to recover from 41.4 back to 10.5.
 Drawing that would be true and misleading at once.
 
-**Persistence leaves the top of the panel rather than being compressed into it.**
-Fitting 41.4 onto an axis that must also resolve the gap between 6.9 and 8.1
-would flatten everything the figure is about. The axis does not start at zero
-either, and the band is why it does not have to: a zero baseline exists to stop a
-reader over-reading small differences, and the band states directly which
-differences are too small to read.
+**The vertical scale is logarithmic, and that replaced an earlier device that
+did not work.** Persistence reaches 41.4 against a seasonal average of 6.9, and a
+linear axis holding both flattens the gap the figure is about. The first version
+let persistence leave the top of the panel with its value annotated, which failed
+for a reason worth recording: **the annotated number was unreachable from the
+axis**, so a reader saw a line exit the frame and a figure with no relationship to
+any scale, and the visible stub read as apparatus rather than as a series. On a
+logarithmic axis every series sits at its own value, persistence spans about half
+the panel, and no annotation has to quote a number the axis cannot show. Flatness
+survives the change, because a ratio is a fixed distance wherever it sits: the
+seasonal average occupies 7% of the panel height on either scale.
+
+**The horizontal scale is categorical.** At their true numeric positions the step
+from six months to twelve is twice the step from three to six, which stretches the
+curves for a reason that has nothing to do with the forecasts. No tick is drawn at
+nine, because nothing was evaluated there.
+
+**The panels are stacked rather than side by side, and the legend forced it.**
+Naming the benchmarks by what they do rather than by their jargon makes the
+longest label thirty-eight characters, and a half-width panel cannot hold that
+legend without putting it over the data. Stacking gives each panel the full canvas
+width. Both groups appear on both panels, in one two-column legend with bold
+headings, so either panel can be read alone.
 
 **Hue is rescoped, and the comment in `plotstyle` was amended in the same commit.**
 Hue carried support status because that was the distinction the reconstruction
