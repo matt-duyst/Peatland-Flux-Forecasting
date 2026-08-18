@@ -107,3 +107,26 @@ def boruta_select(
     needed = hit_threshold(iterations, alpha)
     kept = [name for name in candidates if wins[name] >= needed]
     return list(always_keep) + kept
+
+
+def explained_by_calendar(covariate: pd.Series, index: pd.PeriodIndex) -> float:
+    """Share of a covariate's variance the three seasonal terms already account for.
+
+    A phase-shifted annual cycle is a linear combination of the same sine and
+    cosine, so lagging a seasonal driver does not stop the calendar from restating
+    it. This is what separates a covariate that survived screening because it
+    carries the season from one that survived because it carries something else.
+    """
+    from forecast import features
+
+    terms = features.seasonal_terms(index)
+    joined = pd.concat([covariate.rename("x"), terms], axis=1).dropna()
+    if len(joined) < 12:
+        return float("nan")
+    design = np.column_stack(
+        [np.ones(len(joined)), joined[list(features.SEASONAL_TERMS)].to_numpy()]
+    )
+    values = joined["x"].to_numpy()
+    coefficients, *_ = np.linalg.lstsq(design, values, rcond=None)
+    residual = values - design @ coefficients
+    return float(1 - residual.var() / values.var())

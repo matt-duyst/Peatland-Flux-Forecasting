@@ -15,11 +15,12 @@ from collections.abc import Sequence
 import numpy as np
 import pandas as pd
 from matplotlib.figure import Figure
+from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 from matplotlib.ticker import NullFormatter, ScalarFormatter
 
-from forecast import evaluation
+from forecast import evaluation, experiment, features, screening
 from study import plotstyle as ps
 from study import windows
 
@@ -791,4 +792,172 @@ def observed_and_predicted(panels: dict[str, pd.DataFrame]) -> Figure:
         ps.even_year_ticks(ax, first.year, last.year)
         _raise_top_for_flux_legend(ax, panels[key])
         _underline_legend_headings(fig, ax)
+    return fig
+
+
+# --------------------------------------------------------------------------
+# Screening survival
+# --------------------------------------------------------------------------
+
+#: Covariates offered to the screening, in the order the rows are read.
+SCREENED_COVARIATES = (
+    ("soil_temp_f", "Soil temperature"),
+    ("atm_temp_f", "Air temperature"),
+    ("precip_in", "Precipitation"),
+    ("wte_m", "Water table"),
+)
+
+#: The flux's own past, split into the two lags that mean different things: the
+#: most recent month, and the same month a year earlier. Collapsing them would
+#: conflate two claims, and it is the annual lag that carries the result.
+FLUX_ROWS = ("The flux a month before", "The flux a year before")
+
+#: Cells above this are dark enough to need light text on them.
+DARK_CELL = 0.55
+
+
+def screening_panel(
+    exogenous: pd.DataFrame,
+    covariates: pd.DataFrame,
+    index: pd.PeriodIndex,
+    horizons: Sequence[int] = evaluation.HORIZONS,
+) -> pd.DataFrame:
+    """Share of folds each predictor survived, by horizon, with its calendar share.
+
+    A covariate offered at several lags takes its best-surviving one, since the
+    question is whether that driver survived at all rather than which lag of it
+    did. A predictor that never survived is a measured zero, not a gap, so it is
+    filled rather than left absent.
+
+    The share of each covariate the calendar already explains is carried on the
+    frame's `attrs`, because it belongs beside the row label rather than in a
+    second encoded quantity on the same geometry.
+    """
+    frequency = experiment.predictor_frequency(exogenous).set_index(
+        ["predictor", "horizon"])["share"]
+    rows: dict[str, dict[int, float]] = {name: {} for name in FLUX_ROWS}
+    rows |= {label: {} for _, label in SCREENED_COVARIATES}
+    for horizon in horizons:
+        annual = features.annual_lag(horizon)
+        rows[FLUX_ROWS[1]][horizon] = float(frequency.get((f"flux_lag{annual}", horizon), 0.0))
+        rows[FLUX_ROWS[0]][horizon] = (
+            float(frequency.get(("flux_lag1", horizon), 0.0)) if horizon == 1 else np.nan
+        )
+        for column, label in SCREENED_COVARIATES:
+            candidates = [float(frequency.get((f"{column}_lag{lag}", horizon), 0.0))
+                          for lag in range(1, 2 * evaluation.PERIOD + 2)]
+            rows[label][horizon] = max(candidates)
+    panel = pd.DataFrame(rows).T[list(horizons)]
+    panel.attrs["calendar"] = {
+        label: screening.explained_by_calendar(covariates[column], index)
+        for column, label in SCREENED_COVARIATES
+    }
+    return panel
+
+
+SCREENING_TEXT = ps.FigureText(
+    title="How often each predictor survived screening at Marcell Bog Lake Peatland",
+    subtitle=(
+        "Each model is fitted many times, on a record that grows by a month each "
+        "time. In every fit a predictor is tested against a shuffled copy of "
+        "itself and kept only if it beats that copy more often than chance would "
+        "allow; the number in each cell is the share of fits it survived. What "
+        "survives is temperature, and temperature here is 95 percent explained by "
+        "the calendar alone, so the covariates that carry signal are the season "
+        "under another name. The one covariate the calendar cannot explain, the "
+        "water table, is the one that barely survives at all."
+    ),
+    description=(
+        "The three seasonal terms are not shown: they are kept in every fit by "
+        "construction, so their row would be all ones and would say nothing. A "
+        "covariate offered at several lags takes its best-surviving one. A struck "
+        "cell is a lag that does not exist at that horizon, not a failure. At "
+        "three months on carbon dioxide, no covariate survives in a single fit, "
+        "and the flux's own value a year earlier is all that is kept."
+    ),
+)
+
+
+def _calendar_share(value: float) -> str:
+    """A share below one percent must not round to nothing: it is the finding."""
+    return f"{value * 100:.1f}%" if value < 0.01 else f"{value * 100:.0f}%"
+
+
+def _draw_screening_panel(ax, panel: pd.DataFrame, labeled: bool) -> None:
+    """One gas: predictors down, horizons across, share of folds in each cell."""
+    values = panel.to_numpy(dtype=float)
+    ramp = LinearSegmentedColormap.from_list("survival", ["#FFFFFF", ps.INK])
+    ax.imshow(np.ma.masked_invalid(values), cmap=ramp, vmin=0.0, vmax=1.0,
+              aspect="auto", interpolation="nearest")
+
+    for row in range(values.shape[0]):
+        for column in range(values.shape[1]):
+            value = values[row, column]
+            if np.isnan(value):
+                # A lag that does not exist at this horizon. Left unshaded and
+                # marked with a dash: any fill would be read as a value on the
+                # ramp, and a predictor that never survived is a measured zero.
+                ax.text(column, row, "\u2014", ha="center", va="center",
+                        fontsize=ps.LEGEND_SIZE, color=ps.MUTED, zorder=3)
+                continue
+            ax.text(column, row, f"{value:.2f}", ha="center", va="center",
+                    fontsize=ps.LEGEND_SIZE, zorder=3,
+                    color="white" if value > DARK_CELL else ps.INK)
+
+    ax.set_xticks(range(values.shape[1]))
+    ax.set_xticklabels([str(h) for h in panel.columns])
+    ax.set_xlabel(ps.axis_label("Forecast horizon", "months"))
+    ax.set_yticks(range(values.shape[0]))
+    if labeled:
+        calendar = panel.attrs.get("calendar", {})
+        ax.set_yticklabels([
+            f"{name}\n{_calendar_share(calendar[name])} calendar" if name in calendar else name
+            for name in panel.index
+        ])
+    else:
+        ax.set_yticklabels([])
+    ax.set_xticks(np.arange(values.shape[1] + 1) - 0.5, minor=True)
+    ax.set_yticks(np.arange(values.shape[0] + 1) - 0.5, minor=True)
+    ax.grid(which="minor", color="white", linewidth=1.6)
+    ax.grid(which="major", visible=False)
+    ax.tick_params(which="minor", length=0)
+    ax.tick_params(which="major", length=0)
+    for spine in ax.spines.values():
+        spine.set_edgecolor(ps.BOUNDARY)
+
+
+def screening_survival(panels: dict[str, pd.DataFrame]) -> Figure:
+    """What the per-fold screening kept, and why the survivors are the season.
+
+    Side by side rather than stacked: the rows are shared between the gases, so
+    one set of labels serves both and the eye compares along a row. A monochrome
+    ramp, because four hues already carry meaning across this figure set and a
+    fifth scale passing near any of them would be a collision; every cell prints
+    its value, so the ramp does coarse work only.
+    """
+    fig, (left, bottom, width, height) = ps.canvas_area(SCREENING_TEXT, size="standard",
+                                                        extra_left_px=152)
+    gap = 0.05
+    panel_width = (width - gap) / 2
+    # A strip below the panels for the note, and one above for the panel names.
+    note_h, name_h = 0.17 * height, 0.09 * height
+    panel_height = height - note_h - name_h
+    axes = []
+    for index, (key, gas, _) in enumerate(GAS_PANEL):
+        ax = fig.add_axes((left + index * (panel_width + gap), bottom + note_h,
+                           panel_width, panel_height))
+        _draw_screening_panel(ax, panels[key], labeled=index == 0)
+        ps.panel_name(ax, gas, y=1.0 + name_h / panel_height * 0.82)
+        axes.append(ax)
+
+    # The sharpest result on the panel is carried by absence, and absence reads as
+    # unremarkable, so it is named rather than left for a reader to notice.
+    water = list(panels[GAS_PANEL[0][0]].index).index("Water table")
+    ps.annotate(
+        axes[0],
+        "the one covariate the calendar cannot explain\n"
+        "is the one that barely survives",
+        xy=(-1.05, float(water) + 0.35), xytext=(-1.4, float(water) + 2.1),
+        ha="left", va="top", annotation_clip=False,
+    )
     return fig

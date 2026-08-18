@@ -1723,6 +1723,48 @@ and 12.7 under the worst deficiency**, and their overlap is distinct from each o
 them. The band's width was not touched, since carbon dioxide is genuinely measured
 less precisely relative to its range.
 
+### The screening figure
+
+`figures/screening_survival.png`, built by `study.figures.screening_survival`.
+
+**A heatmap and nothing more.** Six rows against four horizons, two gases side by
+side so one set of row labels serves both and the eye compares along a row. Every
+cell prints its value, which makes the ramp redundant rather than load-bearing.
+
+**Monochrome, white to `INK`.** Four hues already carry meaning across this set,
+and a sequential ramp passing near any of them would have been the third collision
+in three figures. A test asserts the colormap is achromatic at every level.
+
+**Two rows for the flux, not one.** "The flux a month before" and "the flux a year
+before" are different claims, and it is the annual lag that carries the carbon
+dioxide result. Collapsing them to a single row would have reported 1.00 at one
+month for a lag that is not the annual one.
+
+**The calendar share rides in the row label.** Soil and air temperature are 95%
+explained by the three seasonal terms, precipitation 38%, water table 0.5%. Put as
+a fifth column it would have been a second quantity on the same geometry, read as
+a fifth horizon. In the label it is unambiguous and costs no ink. The share is
+computed by `screening.explained_by_calendar` rather than written down, and the
+same function now serves `scripts/model_examinations.py`.
+
+**The water table row is named rather than left to be noticed.** It is the study's
+sharpest single result and it is carried by absence — near-zero cells — which
+reads as unremarkable on a heatmap. One annotation, planned from the start rather
+than added when the row proved quiet.
+
+**A share below one percent is printed to one decimal.** At the figure's usual
+rounding the water table would have read "0% calendar", which is the one number on
+the panel that must not round away.
+
+**What was left out.** The autoregressive family, whose rows would be flux lags
+only. Individual lags, collapsed to each covariate's best-surviving one. The three
+seasonal terms, which are kept in every fit by construction and would be a row of
+ones. The partial correlations against the deseasonalized flux, which are the
+quantitative backing for "the survivors are the season" and stay in these notes.
+Significance marks, since the binomial threshold is the published rule rather than
+a calibrated error rate and stars would imply otherwise. A colorbar, since every
+cell is printed.
+
 ### Observed against predicted, and two results that came out of drawing it
 
 `figures/observed_and_predicted.png`, built by
