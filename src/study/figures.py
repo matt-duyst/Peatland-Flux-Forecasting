@@ -361,7 +361,7 @@ FORECAST_TEXT = ps.FigureText(
     ),
     description=(
         "Methane is measured in nanomoles and carbon dioxide in micromoles, so "
-        "the two panels cannot be compared by eye. The blue region spans all "
+        "the two panels cannot be compared by eye. The green region spans all "
         "eight fitted models. Its lower edge dips below the seasonal average at "
         "one month on both gases, and at six months on methane, though never by "
         "more than the band. Its upper edge rises above the band at three, six "
@@ -627,7 +627,7 @@ FLUX_TEXT = ps.FigureText(
         "uncertainty in that average, drawn as two standard errors. Two "
         "predictions are drawn against it, both made a "
         "month in advance: the seasonal average, which uses the mean of that month "
-        "across previous years, and a blue band spanning the highest and lowest of "
+        "across previous years, and a green band spanning the highest and lowest of "
         "eight fitted models. Neither is available for most of the record, since "
         "the models need several years of history before they can forecast at all. "
         "The shaded years mark where predictions exist."
@@ -642,7 +642,7 @@ FLUX_TEXT = ps.FigureText(
         "models miss is not when the season happens but how large it will be in a "
         "weak year. 2021, the weakest summer, lies outside the evaluated window "
         "and was never forecast. On carbon dioxide the eight models disagree by "
-        "less than half the uncertainty in the measurement, which is why the blue "
+        "less than half the uncertainty in the measurement, which is why the green "
         "band sits inside the black one."
     ),
 )

@@ -1650,24 +1650,37 @@ against fitted contrast instead. The alternative, an entirely achromatic panel,
 was rejected because it carries two filled regions and a gray envelope beside a
 gray inferential band would be the one genuine confusion on it.
 
-| candidate | worst separation under simulated deficiency | against |
+| candidate | pure hue, worst separation under deficiency | against |
 |---|---|---|
-| **Sky blue `#56B4E9`** | **25.0** | `INSIDE`, deuteranopia |
-| Bluish green `#009E73` | 11.7 | gray `#767676`, deuteranopia |
+| **Bluish green `#009E73`** | **20.9** | `INSIDE`, deuteranopia |
+| Sky blue `#56B4E9` | 25.0 | `INSIDE`, deuteranopia |
 | Orange `#E69F00` | 14.9 | `OUTSIDE`, tritanopia |
 | Reddish purple `#CC79A7` | **0.9** | `OUTSIDE`, tritanopia |
 
-Two colors become distinguishable at about 2.3. **Reddish purple would have been
+Two colors become distinguishable at about 2.3. **Reddish purple would be
 invisible against the support orange for a tritanope**, which is the same failure
 as the tab10 orange against green in Irvin et al. (2021) figure 9, measured here
-at 5.6 under protanopia. Sky blue's worst case against any gray on its own panel
-is 33.0, and against either support hue 25.0. A test asserts every one of those
-separations.
+at 5.6 under protanopia. The band edges and the legend patch are drawn in the
+pure hue, so that collision would be on the page rather than hypothetical.
 
-The two filled regions also had to separate without hue. At the chosen fill alpha
-the envelope sits at 0.680 relative luminance against the band's 0.823, a gap of
-0.143, with the subject darker than the apparatus. A test asserts both the gap and
-its direction.
+**Sky blue was used first and was replaced.** It measured well against the greys
+in the abstract, but blue at `INSIDE` already means inside or retained across the
+water table figure, the site map and the reconstruction, and a second blue meaning
+something unrelated is the collision these rules exist to prevent. Re-measured
+against what is actually on these two panels rather than against a generic
+palette, it also failed in grayscale where it had not been checked: its fill sat
+**0.014 in relative luminance from the grid and 0.006 from the window edge**, all
+but invisible without color. Bluish green clears every gray on the panel by 12.1
+and by 0.197 in luminance, at a heavier fill weight of 0.55 chosen for that
+reason.
+
+The two filled regions also had to separate without hue. A test asserts the gap
+and its direction on the forecast figure, and on the flux figure the observed
+uncertainty band was lightened from 0.28 to 0.16 so the black series reads through
+it on carbon dioxide: the two fills then separate by **0.215 in relative luminance
+and 12.7 under the worst deficiency**, and their overlap is distinct from each of
+them. The band's width was not touched, since carbon dioxide is genuinely measured
+less precisely relative to its range.
 
 ### Observed against predicted, and two results that came out of drawing it
 
@@ -1711,7 +1724,7 @@ spread across the eight fitted models against the width of that band:
 **On carbon dioxide the eight models disagree with each other by less than half
 the uncertainty in the quantity they are predicting.** That is the non-separation
 finding arriving from a direction the error measures cannot reach, and it is
-visible on the panel without a number: the blue band sits inside the black one.
+visible on the panel without a number: the green band sits inside the black one.
 On methane the relationship inverts. The contrast is what the second panel is for.
 
 **A count in the description was wrong and is corrected.** The measured flux falls

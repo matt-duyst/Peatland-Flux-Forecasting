@@ -41,25 +41,28 @@ from ingest import paths
 INSIDE = "#0072B2"
 OUTSIDE = "#D55E00"
 
-#: The fitted models in the forecast comparison. Okabe-Ito sky blue, chosen by
-#: measurement rather than by taste: its worst separation from either support
-#: hue is 25.0 under simulated deficiency, and from every gray on its own panel
-#: at least 33.0, against the 2.3 at which two colors become distinguishable.
-#: Reddish purple was rejected at 0.9 against `OUTSIDE` under tritanopia, which
-#: is the same failure as the tab10 orange against green in Irvin et al. (2021)
-#: figure 9, measured here at 5.6 under protanopia.
-FITTED = "#56B4E9"
-#: Alpha for the fitted envelope. Set so the filled region separates from the
-#: significance band in grayscale as well as in hue: 0.680 against 0.823 in
-#: relative luminance, with a color difference of 15.5 under the worst deficiency.
-FITTED_FILL_ALPHA = 0.45
+#: The fitted models in the two forecast figures. Okabe-Ito bluish green, chosen
+#: by measurement. Sky blue was used first and had to go: blue at `INSIDE` means
+#: inside or retained across the finished figures, and a second blue meaning
+#: something unrelated is the collision these rules exist to prevent. Bluish green
+#: clears `INSIDE` by 20.9 and `OUTSIDE` by 35.9 under the worst simulated
+#: deficiency. Reddish purple was measured and rejected at **0.9 against
+#: `OUTSIDE` under tritanopia**: the band edges and the legend patch are drawn in
+#: the pure hue, so a reader would meet the same color carrying two meanings.
+FITTED = "#009E73"
+#: Alpha for the fitted fill. Heavier than the sky blue it replaces, because a
+#: pale green sits close to the apparatus grays: at this weight the fill clears
+#: every gray on the panel by 12.1 and by 0.197 in relative luminance, where sky
+#: blue cleared the grid by 0.014 and was all but invisible in grayscale.
+FITTED_FILL_ALPHA = 0.55
 
 #: The uncertainty in an observed monthly mean, drawn as a band in the line's own
-#: ink rather than as error bars, following Deventer et al. (2019) figure 10. The
-#: alpha is measured, not chosen: it separates from the fitted fill by 0.160 in
-#: relative luminance and 17.8 under the worst simulated deficiency, and where the
-#: two overlap the result is distinct from each of them.
-OBSERVED_BAND_ALPHA = 0.28
+#: ink rather than as error bars, following Deventer et al. (2019) figure 10.
+#: Light enough that the series reads through it on carbon dioxide, where the band
+#: is wide: it separates from the fitted fill by 0.215 in relative luminance and
+#: 12.7 under the worst simulated deficiency, and where the two overlap the result
+#: is distinct from each of them.
+OBSERVED_BAND_ALPHA = 0.16
 
 #: The region within which a method is not distinguishable from the benchmark.
 #: Apparatus rather than a category, so it is achromatic and lighter than the
