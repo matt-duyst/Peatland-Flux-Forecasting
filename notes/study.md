@@ -1541,7 +1541,7 @@ correction, so it reflects effective sample size: 35.6 rather than 57 at methane
 one-month horizon. **The best fitted method is inside the band at every horizon on
 both gases**, which is the figure's whole claim, drawn rather than asserted.
 
-**The fitted methods are a range, not eight curves.** Four of the sixteen method
+**The fitted models are a range, not eight curves.** Four of the sixteen method
 comparisons reach nominal significance and none survives correction, so drawing an
 order would assert a ranking the evidence cannot support. The envelope's lower
 edge dips below climatology at one month on both gases and at six on methane, in
@@ -1735,6 +1735,44 @@ horizon but one; a residual panel; markers on the observed series, which at 150
 monthly points over sixteen years crowd where the line alone carries it; and an
 annotation naming 2015 on the panel, which could not be placed without crossing a
 series or the legend, so the description names it instead.
+
+**A claim about the direction of the misses was cut back.** A draft description
+said that when the predictions miss they almost always predict too much. They do
+not: on methane 31 of 57 months are over-predictions and on carbon dioxide 43 of
+85, both near a coin flip. What is true is an asymmetry in size rather than in
+frequency. On methane the over-predictions carry 292 of the 447 units of total
+absolute error, and ten of the largest fifteen misses are over-predictions; on
+carbon dioxide there is no such asymmetry, with nine of the largest fifteen falling
+the other way. The figure now says only that methane's largest misses are usually
+over-predictions.
+
+**The eight fitted things are called models throughout.** Four methods, each run
+with and without lagged covariates, make eight models. "Four fitted methods"
+naming the four algorithms is the one correct use of the other word and is left
+alone. Swept across both figures and these notes, with a test pinning it.
+
+**Both legends sit on the right, which costs the carbon dioxide panel a little.**
+Placed on whichever side each panel left clear, they landed on opposite sides and
+the eye had to relocate between panels. Holding both to the right means carbon
+dioxide's legend must clear its right-hand months, which run higher than its
+left-hand ones, and the panel's data now fills 72% of its height rather than 80%.
+That is the price of not moving the key.
+
+**Two things about the panel that cannot be improved without distorting them.**
+The carbon dioxide uncertainty band is wide in summer, which reads as noise. It
+is not: the eight widest bands all rest on the full 48 half-hour-of-day cells and
+400 to 750 half-hours, and the correlation between band width and how many
+half-hours support a month is −0.09. The band is wide because carbon dioxide flux
+genuinely varies within a summer month. It exceeds the seasonal amplitude in only
+2 of 192 months; the median band is a fifth of that amplitude. Narrowing it would
+misstate how well the measurement is known.
+
+The methane panel's right fifth is empty because the record ends in 2021 while the
+shared axis runs to 2025. The alternatives are worse: separate axes would put the
+same year in different places in two stacked time series, and clipping the axis at
+2021 would delete 36 months of carbon dioxide observations, including three of the
+widest uncertainty bands, to tidy a gap. The gap is information — it is why the
+two evaluated windows differ in length — and it stays.
 
 ### What the forecasting half concludes
 

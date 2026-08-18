@@ -41,7 +41,7 @@ from ingest import paths
 INSIDE = "#0072B2"
 OUTSIDE = "#D55E00"
 
-#: The fitted methods in the forecast comparison. Okabe-Ito sky blue, chosen by
+#: The fitted models in the forecast comparison. Okabe-Ito sky blue, chosen by
 #: measurement rather than by taste: its worst separation from either support
 #: hue is 25.0 under simulated deficiency, and from every gray on its own panel
 #: at least 33.0, against the 2.3 at which two colors become distinguishable.
@@ -400,6 +400,27 @@ def five_year_ticks(ax: plt.Axes, first_year: int, last_year: int) -> None:
     years = list(range(first_year, last_year + 1, 5))
     if last_year not in years:
         years.append(last_year)
+    ax.xaxis.set_major_locator(FixedLocator([date2num(_dt.date(y, 1, 1)) for y in years]))
+    ax.xaxis.set_major_formatter(DateFormatter("%Y"))
+    ax.xaxis.set_minor_locator(YearLocator(1))
+
+
+def even_year_ticks(ax: plt.Axes, first_year: int, last_year: int) -> None:
+    """Major ticks evenly spaced from the first year to the last, annual minors.
+
+    `five_year_ticks` appends the endpoint when it does not fall on a multiple of
+    five, which leaves a short final gap against long ones elsewhere. Here the
+    step is chosen so the last label lands on the end of the axis and every gap
+    is the same.
+    """
+    import datetime as _dt
+
+    from matplotlib.dates import DateFormatter, YearLocator, date2num
+    from matplotlib.ticker import FixedLocator
+
+    span = last_year - first_year
+    step = next((s for s in (5, 4, 3, 2, 1) if span % s == 0), 1)
+    years = list(range(first_year, last_year + 1, step))
     ax.xaxis.set_major_locator(FixedLocator([date2num(_dt.date(y, 1, 1)) for y in years]))
     ax.xaxis.set_major_formatter(DateFormatter("%Y"))
     ax.xaxis.set_minor_locator(YearLocator(1))

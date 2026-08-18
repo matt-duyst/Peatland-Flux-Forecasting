@@ -230,3 +230,55 @@ def test_where_the_two_bands_overlap_the_result_is_distinct_from_each():
     both = _over(ps.FITTED, ps.FITTED_FILL_ALPHA, base=grey)
     for other in (grey, blue):
         assert np.linalg.norm(both - other) > 0.04
+
+
+def test_both_legends_sit_on_the_same_side():
+    """A legend that moves between panels makes the eye relocate."""
+    fig = figures.observed_and_predicted(real_panels())
+    fig.canvas.draw()
+    corners = set()
+    for ax in fig.axes:
+        box = ax.get_legend().get_window_extent().transformed(ax.transAxes.inverted())
+        corners.add(round((box.x0 + box.x1) / 2) )
+    assert len(corners) == 1
+    ps.plt.close(fig)
+
+
+def test_the_year_ticks_are_evenly_spaced_and_reach_the_end_of_the_axis():
+    import matplotlib.dates as mdates
+
+    fig = figures.observed_and_predicted(real_panels())
+    for ax in fig.axes:
+        years = [mdates.num2date(t).year for t in ax.get_xticks()]
+        gaps = {b - a for a, b in zip(years, years[1:])}
+        assert len(gaps) == 1, f"uneven year gaps: {years}"
+        assert years[-1] == mdates.num2date(ax.get_xlim()[1]).year
+        assert len(ax.xaxis.get_minor_locator()() ) > len(years), "annual minors missing"
+    ps.plt.close(fig)
+
+
+def test_the_legend_names_what_the_band_is_not_what_it_is_for():
+    fig = figures.observed_and_predicted(real_panels())
+    labels = [t.get_text() for t in fig.axes[0].get_legend().get_texts()]
+    assert "Two standard errors on that mean" in labels
+    assert "Highest and lowest of the eight fitted models" in labels
+    assert not any("precisely" in label for label in labels)
+    ps.plt.close(fig)
+
+
+def test_the_eight_are_called_models_wherever_they_are_named():
+    """Four methods, each run two ways, are eight models.
+
+    "Four fitted methods" naming the four algorithms is the one correct use of the
+    word and is left alone; what is forbidden is calling the eight fitted things
+    methods.
+    """
+    for text in (figures.FLUX_TEXT, figures.FORECAST_TEXT):
+        words = text.subtitle + text.description
+        assert "eight fitted methods" not in words
+        assert "fitted method disagrees" not in words
+    fig = figures.observed_and_predicted(real_panels())
+    for ax in fig.axes:
+        for label in (t.get_text() for t in ax.get_legend().get_texts()):
+            assert "fitted methods" not in label
+    ps.plt.close(fig)

@@ -362,11 +362,11 @@ FORECAST_TEXT = ps.FigureText(
     description=(
         "Methane is measured in nanomoles and carbon dioxide in micromoles, so "
         "the two panels cannot be compared by eye. The blue region spans all "
-        "eight fitted methods. Its lower edge dips below the seasonal average at "
+        "eight fitted models. Its lower edge dips below the seasonal average at "
         "one month on both gases, and at six months on methane, though never by "
         "more than the band. Its upper edge rises above the band at three, six "
-        "and twelve months: some fitted methods are distinguishably worse than "
-        "the average. The band is wide where the closest fitted method disagrees "
+        "and twelve months: some fitted models are distinguishably worse than "
+        "the average. The band is wide where the closest fitted model disagrees "
         "with the average erratically from month to month, not where the average "
         "is least certain."
     ),
@@ -434,7 +434,7 @@ def forecast_error_by_horizon(panels: dict[str, pd.DataFrame]) -> Figure:
     error that would put them on a common axis is not comparable between them.
     Removing the measure removes the temptation.
 
-    The fitted methods appear as a range rather than as eight labeled curves.
+    The fitted models appear as a range rather than as eight labeled curves.
     Four of the sixteen method comparisons reach nominal significance and none
     survives correction for multiple testing, so drawing an order would assert a
     ranking the evidence does not support.
@@ -461,7 +461,7 @@ def forecast_error_by_horizon(panels: dict[str, pd.DataFrame]) -> Figure:
         last = len(table) - 1
         ps.annotate(
             ax,
-            "above the band,\nsome fitted methods are\ndistinguishably worse",
+            "above the band,\nsome fitted models are\ndistinguishably worse",
             xy=(float(last), float(table["fitted_high"].iloc[last])),
             xytext=(0.988, 0.97), textcoords="axes fraction", ha="right", va="top",
         )
@@ -539,7 +539,7 @@ def _forecast_legend(ax) -> None:
     entries += [
         (blank, r"$\bf{Shaded\ regions}$"),
         (Patch(facecolor=ps.FITTED, alpha=ps.FITTED_FILL_ALPHA, edgecolor=ps.FITTED,
-               linewidth=0.9), "Range across the eight fitted methods"),
+               linewidth=0.9), "Highest and lowest of the eight fitted models"),
         (Patch(facecolor=ps.NOT_DISTINGUISHABLE, edgecolor="none"),
          "Margin needed to differ from the average"),
     ]
@@ -580,7 +580,7 @@ GAS_OBSERVED = {
 }
 
 #: The horizon this figure draws. One month is the horizon most favorable to the
-#: fitted methods, so showing that they do not follow the observations even there
+#: fitted models, so showing that they do not follow the observations even there
 #: is a stronger claim than showing it a year out.
 FLUX_HORIZON = 1
 
@@ -623,8 +623,9 @@ FLUX_TEXT = ps.FigureText(
     title="Observed and predicted monthly flux at Marcell Bog Lake Peatland",
     subtitle=(
         "Each month's flux is measured as an average of the half-hourly readings "
-        "taken that month, drawn here in black with a band showing how precisely "
-        "that average is known. Two predictions are drawn against it, both made a "
+        "taken that month, drawn here in black with a shaded band showing the "
+        "uncertainty in that average, drawn as two standard errors. Two "
+        "predictions are drawn against it, both made a "
         "month in advance: the seasonal average, which uses the mean of that month "
         "across previous years, and a blue band spanning the highest and lowest of "
         "eight fitted models. Neither is available for most of the record, since "
@@ -632,14 +633,16 @@ FLUX_TEXT = ps.FigureText(
         "The shaded years mark where predictions exist."
     ),
     description=(
-        "Every method puts the seasonal rise and fall in the right months. None "
-        "gets the size of the season right. In 12 of the 57 evaluated methane "
-        "months the measured flux falls below every fitted model, and in nine of "
-        "those below the seasonal average as well. The summers of 2015 are the "
-        "clearest case. 2021, the weakest summer in the "
-        "record, lies outside the evaluated window and was never forecast. On "
-        "carbon dioxide the eight models disagree with each other by less than "
-        "half the uncertainty in the observation itself, which is why the blue "
+        "The predictions follow the seasonal cycle, rising and falling in step "
+        "with the measurements. On methane their largest misses are usually "
+        "over-predictions. In 12 of the 57 evaluated methane months the flux came "
+        "in below every fitted model, and in nine of those below the seasonal "
+        "average too. 2015 is the clearest example: the seasonal average "
+        "predicted 94 nanomoles for July and the tower measured 40. What the "
+        "models miss is not when the season happens but how large it will be in a "
+        "weak year. 2021, the weakest summer, lies outside the evaluated window "
+        "and was never forecast. On carbon dioxide the eight models disagree by "
+        "less than half the uncertainty in the measurement, which is why the blue "
         "band sits inside the black one."
     ),
 )
@@ -686,26 +689,25 @@ def _draw_flux_panel(ax, panel: pd.DataFrame, unit: str, labeled: bool) -> None:
 def _flux_legend(ax, panel: pd.DataFrame) -> str:
     """Two columns, measured on the left and predicted on the right.
 
-    Placed on whichever side of the panel the series leave clear. The two records
-    peak at opposite ends, so a fixed corner would sit on the data in one panel or
-    the other.
+    Both panels put it on the right so a reader's eye does not relocate between
+    them. Methane's peaks are all in the first half of its record, and carbon
+    dioxide's right-hand months need a little more headroom than its left-hand
+    ones, which the fitting loop supplies.
     """
-    highest = panel["observed"] + OBSERVED_BAND_SIGMAS * panel["se"]
-    middle = len(panel) // 2
-    side = "upper right" if highest[:middle].max() > highest[middle:].max() else "upper left"
+    side = "upper right"
     blank = Line2D([], [], linestyle="none", marker="none")
     entries = [
         (blank, r"$\bf{Measured}$"),
         (Line2D([], [], color=ps.INK, linewidth=1.5), "Monthly mean flux"),
         (Patch(facecolor=ps.INK, alpha=ps.OBSERVED_BAND_ALPHA, edgecolor="none"),
-         "How precisely that mean is known"),
+         "Two standard errors on that mean"),
         (blank, r"$\bf{Predicted\ a\ month\ ahead}$"),
         (Line2D([], [], color="#767676", linestyle=(0, (7, 2, 2, 2)), linewidth=1.6),
          "The average of that month in previous years"),
         (Patch(facecolor=ps.FITTED, alpha=ps.FITTED_FILL_ALPHA, edgecolor=ps.FITTED,
-               linewidth=0.9), "Range across the eight fitted models"),
+               linewidth=0.9), "Highest and lowest of the eight fitted models"),
     ]
-    anchor = (0.985, 0.975) if side == "upper right" else (0.015, 0.975)
+    anchor = (0.985, 0.975)
     ps.legend(ax, handles=[h for h, _ in entries], labels=[label for _, label in entries],
               loc=side, bbox_to_anchor=anchor, ncol=2, borderpad=0.6,
               labelspacing=0.3, columnspacing=1.8, handlelength=2.0,
@@ -764,8 +766,8 @@ def observed_and_predicted(panels: dict[str, pd.DataFrame]) -> Figure:
         row = bottom + (1 - index) * (panel_height + gap)
         ax = fig.add_axes((left, row, width, panel_height))
         _draw_flux_panel(ax, panels[key], unit, labeled=index == len(GAS_PANEL) - 1)
-        side = _flux_legend(ax, panels[key])
-        ps.panel_name(ax, gas, align="right" if side == "upper left" else "left")
+        _flux_legend(ax, panels[key])
+        ps.panel_name(ax, gas, align="left")
         axes.append(ax)
 
     # One time axis for both panels, so a year sits at the same place in each.
@@ -775,7 +777,7 @@ def observed_and_predicted(panels: dict[str, pd.DataFrame]) -> Figure:
     last = (max(panel.index.max() for panel in panels.values()) + 1).to_timestamp()
     for ax, (key, _, _) in zip(axes, GAS_PANEL):
         ax.set_xlim(first, last)
-        ps.five_year_ticks(ax, first.year, last.year)
+        ps.even_year_ticks(ax, first.year, last.year)
         _raise_top_for_flux_legend(ax, panels[key])
         _underline_legend_headings(fig, ax)
     return fig
