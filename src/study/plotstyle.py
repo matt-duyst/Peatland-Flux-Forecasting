@@ -32,21 +32,41 @@ from ingest import paths
 # Ink
 # --------------------------------------------------------------------------
 
-#: Support status, in the reconstruction figures. Hue carries the one distinction
-#: a figure is about, and there it is whether a month lies inside the fitted
-#: range. The forecast comparison carries no such distinction, so it scopes hue
-#: to the benchmark against fitted contrast instead and uses `FITTED` below;
-#: nothing draws both conventions at once, and the two sets of hues are measured
-#: clear of each other so a reader moving between figures cannot conflate them.
+# --- What each hue means, and why none of them is free ------------------------
+#
+# Three hues carry meaning across the figure set, and each carries exactly one.
+#
+#   INSIDE  #0072B2  inside, or retained
+#   OUTSIDE #D55E00  outside, or discarded
+#
+# These two are the support encoding. They appear on the reconstruction figures
+# for whether a month lies inside the fitted range, and on the site map for
+# whether a wind sector is retained or discarded and for whether the site is in
+# the FLUXNET-CH4 network. They are the strongest separation in the set, 111.7
+# apart under deuteranopia and 93.3 under protanopia.
+#
+#   FITTED  #009E73  the range across the eight fitted models
+#
+# Scoped to the two forecast figures only. It exists because the study's halves
+# ask different questions: the reconstruction figures are about support and the
+# forecast figures are about method, so neither set needs the other's encoding.
+# A second blue was tried here and removed, because blue already means retained.
+#
+# Anything else carrying a hue is cartography rather than encoding, is local to
+# the panel it appears on, and is not a general-purpose accent. The mapped
+# wetland boundary on the site map is the only such case.
+#
+# **None of these is available for reuse on a new figure without first checking
+# what it already means.** That check has failed twice: sky blue was introduced
+# for the fitted range beside a blue that meant retained, and the support orange
+# was borrowed for the wetland boundary beside an orange that meant discarded.
+# Both were caught after the figure was built rather than before.
 INSIDE = "#0072B2"
 OUTSIDE = "#D55E00"
 
-#: The fitted models in the two forecast figures. Okabe-Ito bluish green, chosen
-#: by measurement. Sky blue was used first and had to go: blue at `INSIDE` means
-#: inside or retained across the finished figures, and a second blue meaning
-#: something unrelated is the collision these rules exist to prevent. Bluish green
-#: clears `INSIDE` by 20.9 and `OUTSIDE` by 35.9 under the worst simulated
-#: deficiency. Reddish purple was measured and rejected at **0.9 against
+#: The fitted models in the two forecast figures, per the convention above.
+#: Okabe-Ito bluish green, chosen by measurement: it clears `INSIDE` by 20.9 and
+#: `OUTSIDE` by 35.9 under the worst simulated deficiency. Reddish purple was measured and rejected at **0.9 against
 #: `OUTSIDE` under tritanopia**: the band edges and the legend patch are drawn in
 #: the pure hue, so a reader would meet the same color carrying two meanings.
 FITTED = "#009E73"
