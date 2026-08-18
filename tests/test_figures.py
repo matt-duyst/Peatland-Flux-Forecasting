@@ -147,5 +147,22 @@ def test_support_is_shown_by_degree_as_well_as_by_verdict():
     fig = figures.reconstruction_series(annual_frame())
     heights = sorted(round(p.get_height(), 1) for p in fig.axes[1].patches)
     assert 25.0 in heights and 67.0 in heights
-    assert heights.count(0.0) == 2          # the two inside years
+    ps.plt.close(fig)
+
+
+def test_a_year_with_no_months_outside_is_marked_in_the_bars_own_ink():
+    """A measured zero is not a missing bar, and must not read as a second series.
+
+    It was a blue dot among orange bars once, which read as a different quantity
+    rather than as the bottom of the same one.
+    """
+    from matplotlib.colors import to_rgba
+
+    fig = figures.reconstruction_series(annual_frame())
+    strip = fig.axes[1]
+    flat = [line for line in strip.lines if line.get_marker() == "_"]
+    assert flat, "the inside years are not marked at all"
+    assert len(flat[0].get_xdata()) == 2
+    assert to_rgba(flat[0].get_color()) == to_rgba(ps.OUTSIDE)
+    assert all(y == 0 for y in flat[0].get_ydata())
     ps.plt.close(fig)
