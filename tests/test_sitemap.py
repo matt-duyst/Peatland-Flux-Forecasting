@@ -68,12 +68,23 @@ def test_a_two_hundred_meter_radius_is_a_circle_on_the_metric_grid():
     ps.plt.close(fig)
 
 
-def test_the_tower_polygon_is_distinguished_from_its_neighbors():
+def test_the_tower_polygon_is_distinguished_by_weight_not_by_a_study_hue():
+    """The boundary is cartography, so it must not borrow the support encoding.
+
+    It took the support orange once, beside a wind rose where orange meant
+    discarded, which is the collision the palette convention exists to prevent.
+    Emphasis now comes from line weight against the other mapped polygons.
+    """
+    from matplotlib.colors import to_rgba
+
     fig = sitemap.site_overview(image(), wetlands(), states(), sites(), shares())
     ax = fig.axes[0]
-    edges = [p.get_edgecolor() for p in ax.patches if type(p).__name__ == "Polygon"]
-    from matplotlib.colors import to_rgba
-    assert to_rgba(ps.OUTSIDE) in edges
+    polygons = [p for p in ax.patches if type(p).__name__ == "Polygon"]
+    widths = sorted(p.get_linewidth() for p in polygons)
+    assert widths[-1] >= 2 * widths[0], "the mapped wetland is not heavier than its neighbors"
+    for polygon in polygons:
+        assert polygon.get_edgecolor() != to_rgba(ps.OUTSIDE)
+        assert polygon.get_edgecolor() != to_rgba(ps.INSIDE)
     ps.plt.close(fig)
 
 
@@ -158,3 +169,49 @@ def test_the_wind_record_is_restricted_to_the_study_window():
     counts = sitemap.wind_shares().attrs
     assert counts["half_hours"] == 192816       # 2009-01 to 2019-12
     assert counts["with_wind_direction"] == 172639
+
+
+def test_the_site_is_yellow_in_both_panels_so_the_star_means_one_thing():
+    """A reader meeting a star in both panels assumes it means the same thing."""
+    from matplotlib.colors import to_rgba
+
+    fig = sitemap.site_overview(image(), wetlands(), states(), sites(), shares())
+    site_panel, network = fig.axes[0], fig.axes[1]
+    stars = [l for ax in (site_panel, network) for l in ax.lines if l.get_marker() == "*"]
+    assert len(stars) >= 2
+    for star in stars:
+        assert to_rgba(star.get_markerfacecolor()) == to_rgba(ps.SITE)
+        assert to_rgba(star.get_markeredgecolor()) == to_rgba(ps.INK), "needs a dark casing"
+    ps.plt.close(fig)
+
+
+def test_orange_now_means_only_discarded_on_this_figure():
+    """It marked the wetland boundary and the site star as well, which it no longer does."""
+    from matplotlib.colors import to_rgba
+
+    fig = sitemap.site_overview(image(), wetlands(), states(), sites(), shares())
+    orange = to_rgba(ps.OUTSIDE)
+    for ax in (fig.axes[0], fig.axes[1]):
+        for line in ax.lines:
+            assert to_rgba(line.get_markerfacecolor()) != orange
+            assert to_rgba(line.get_markeredgecolor()) != orange
+        for patch in ax.patches:
+            assert to_rgba(patch.get_facecolor()) != orange
+            assert to_rgba(patch.get_edgecolor()) != orange
+    # The wind rose is the one place it survives, where it does mean discarded.
+    rose = fig.axes[2]
+    assert any(to_rgba(p.get_facecolor()) == orange for p in rose.patches)
+    ps.plt.close(fig)
+
+
+def test_a_white_casing_would_vanish_on_the_network_panel():
+    """Why the star is cased dark: the states behind it are near-white."""
+    def luminance(value: str) -> float:
+        rgb = np.array([int(value[i:i + 2], 16) / 255 for i in (1, 3, 5)])
+        linear = np.where(rgb <= 0.04045, rgb / 12.92, ((rgb + 0.055) / 1.055) ** 2.4)
+        return float(np.dot(linear, [0.2126, 0.7152, 0.0722]))
+
+    # A white casing is a tenth of the scale from the ground it would sit on; the
+    # dark one is nine tenths of it away.
+    assert abs(luminance("#FFFFFF") - luminance("#F4F4F4")) < 0.10
+    assert abs(luminance(ps.INK) - luminance("#F4F4F4")) > 0.85

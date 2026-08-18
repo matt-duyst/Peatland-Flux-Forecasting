@@ -25,6 +25,8 @@ from matplotlib.lines import Line2D
 from matplotlib.patches import Circle, Patch, Polygon
 
 from ingest import paths, site
+import matplotlib.patheffects as pe
+
 from study import plotstyle as ps
 
 #: Extent of the imagery crop, degrees, matching the file stored under geodata/.
@@ -47,8 +49,16 @@ EXCLUDED_SECTOR = (30.0, 200.0)
 #: The tower, drawn the same way on the map and in the legend.
 #: White fill with a dark edge, so the tower reads the same over dark forest,
 #: over light peat, and on the legend's white ground.
-TOWER_MARKER = dict(marker="*", markersize=15, markerfacecolor="white",
-                    markeredgecolor=ps.INK, markeredgewidth=1.1, linestyle="none")
+#: The tower: the one point a reader needs to find first on this panel, so it
+#: takes the emphasis the boundary used to. Cased dark, because the ground beside
+#: it runs from luminance 0.04 under the forest to 0.54 on the bare peat.
+TOWER_MARKER = dict(marker="*", markersize=15, markerfacecolor=ps.SITE,
+                    markeredgecolor=ps.INK, markeredgewidth=1.3, linestyle="none")
+
+#: The same site among the network, in the panel beside it. Same color, same
+#: meaning; cased dark because the states behind it are pale.
+SITE_MARKER = dict(marker="*", markersize=15, markerfacecolor=ps.SITE,
+                   markeredgecolor=ps.INK, markeredgewidth=1.1, linestyle="none")
 
 
 SITEMAP_TEXT = ps.FigureText(
@@ -143,6 +153,17 @@ def to_meters(lon, lat, origin: tuple[float, float]) -> tuple[np.ndarray, np.nda
 # --------------------------------------------------------------------------
 
 
+#: The mapped wetland's boundary: cartography on this panel, not a study
+#: encoding. It took the support orange once, beside a wind rose where orange
+#: meant discarded. Heavy white over a dark casing separates it from the 48 thin
+#: white outlines by weight rather than by hue, and holds against a scene whose
+#: brightest tone is luminance 0.31. Yellow was measured as a fallback at 68.8
+#: from its nearest scene tone and was not needed.
+BOUNDARY_STYLE = {"edgecolor": "white", "linewidth": 2.4,
+                  "path_effects": [pe.Stroke(linewidth=4.2, foreground=ps.INK),
+                                   pe.Normal()]}
+
+
 def draw_site(ax, image, wetlands: dict, origin: tuple[float, float]) -> None:
     """Imagery, the mapped wetland, the tower, and the homogeneity radius."""
     west, south, east, north = IMAGE_BOUNDS
@@ -162,8 +183,8 @@ def draw_site(ax, image, wetlands: dict, origin: tuple[float, float]) -> None:
             if holds_tower:
                 tower_ring = feature["properties"]
                 ax.add_patch(Polygon(np.column_stack([ex, ny]), closed=True,
-                                     facecolor="none", edgecolor=ps.OUTSIDE,
-                                     linewidth=1.8, zorder=3))
+                                     facecolor="none", zorder=3,
+                                     **BOUNDARY_STYLE))
             else:
                 ax.add_patch(Polygon(np.column_stack([ex, ny]), closed=True,
                                      facecolor="none", edgecolor="white",
@@ -191,8 +212,10 @@ def draw_site(ax, image, wetlands: dict, origin: tuple[float, float]) -> None:
                **{**TOWER_MARKER, "markersize": 12}),
         Line2D([], [], color=ps.INSIDE, linestyle=(0, (6, 3)), linewidth=1.6,
                label=f"{SURFACE_HOMOGENEITY_M:.0f} m uniform surface"),
-        Patch(facecolor="none", edgecolor=ps.OUTSIDE, linewidth=1.8,
-              label=f"Mapped wetland, {acres * 0.4047:.0f} ha"),
+        Line2D([], [], linestyle="-", color=BOUNDARY_STYLE["edgecolor"],
+               linewidth=BOUNDARY_STYLE["linewidth"],
+               path_effects=BOUNDARY_STYLE["path_effects"],
+               label=f"Mapped wetland, {acres * 0.4047:.0f} ha"),
     ]
     key = ps.legend(ax, handles=handles, labels=[h.get_label() for h in handles],
                     loc="upper left", fontsize=7.6, borderpad=0.4, labelspacing=0.3,
@@ -231,8 +254,7 @@ def draw_network(ax, states: dict, sites: pd.DataFrame,
     inside = sites[sites.LON.between(-128, -65) & sites.LAT.between(24, 50)]
     ax.plot(inside.LON, inside.LAT, linestyle="none", marker="o", markersize=4.0,
             color=ps.MUTED, markeredgecolor="white", markeredgewidth=0.4, zorder=3)
-    ax.plot(here[0], here[1], marker="*", markersize=15, color=ps.OUTSIDE,
-            markeredgecolor="white", markeredgewidth=1.2, zorder=5)
+    ax.plot(here[0], here[1], **SITE_MARKER, zorder=5)
 
     ax.set_xlim(-127, -66); ax.set_ylim(23.5, 50.5)
     ax.set_aspect(1 / math.cos(math.radians(38)))
@@ -242,7 +264,7 @@ def draw_network(ax, states: dict, sites: pd.DataFrame,
         spine.set_edgecolor(ps.BOUNDARY)
 
     handles = [
-        Line2D([], [], marker="*", color=ps.OUTSIDE, linestyle="none", markersize=12,
+        Line2D([], [], **{**SITE_MARKER, "markersize": 12},
                label=f"{site.SITE_NAME} (not in FLUXNET-CH4)"),
         Line2D([], [], marker="o", color=ps.MUTED, linestyle="none", markersize=4,
                label=f"FLUXNET-CH4 sites in the lower 48 states ({len(inside)})"),

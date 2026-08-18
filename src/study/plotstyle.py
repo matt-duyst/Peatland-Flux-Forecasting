@@ -46,15 +46,23 @@ from ingest import paths
 # apart under deuteranopia and 93.3 under protanopia.
 #
 #   FITTED  #009E73  the range across the eight fitted models
+#   SITE    #F0E442  the site, and the tower on it
 #
-# Scoped to the two forecast figures only. It exists because the study's halves
+# `FITTED` is scoped to the two forecast figures only. It exists because the study's halves
 # ask different questions: the reconstruction figures are about support and the
 # forecast figures are about method, so neither set needs the other's encoding.
 # A second blue was tried here and removed, because blue already means retained.
 #
+# `SITE` marks the flux tower in the site panel and the same site among the
+# network in the panel beside it. A reader meeting a star in both panels assumes
+# it means the same thing, and it does. It carries a dark casing in both, because
+# it measures 0.161 in luminance from the pale state fill and 0.207 from the
+# brightest ground near the tower, and a white casing would vanish on the first.
+#
 # Anything else carrying a hue is cartography rather than encoding, is local to
 # the panel it appears on, and is not a general-purpose accent. The mapped
-# wetland boundary on the site map is the only such case.
+# wetland boundary is the only such case: heavy white over a dark casing, which
+# separates from its thin white neighbors by weight rather than by hue.
 #
 # **None of these is available for reuse on a new figure without first checking
 # what it already means.** That check has failed twice: sky blue was introduced
@@ -63,6 +71,11 @@ from ingest import paths
 # Both were caught after the figure was built rather than before.
 INSIDE = "#0072B2"
 OUTSIDE = "#D55E00"
+
+#: The site and its tower, on the site map only. Okabe-Ito yellow, measured
+#: against the imagery it sits on: 41.3 from the light peat beside the tower and
+#: 101.5 from the dark forest, under the worst simulated deficiency.
+SITE = "#F0E442"
 
 #: The fitted models in the two forecast figures, per the convention above.
 #: Okabe-Ito bluish green, chosen by measurement: it clears `INSIDE` by 20.9 and

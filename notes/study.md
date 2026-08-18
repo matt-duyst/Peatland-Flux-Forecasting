@@ -973,6 +973,47 @@ Vector output is not produced. These are read in a README, which will not displa
 one, and every figure is regenerable from its function if a document ever needs
 one.
 
+## The palette convention, and the two collisions that produced it
+
+Recorded in `src/study/plotstyle.py`. Three hues carry meaning across the set and
+each carries exactly one:
+
+| | | |
+|---|---|---|
+| `INSIDE` | `#0072B2` | inside, or retained |
+| `OUTSIDE` | `#D55E00` | outside, or discarded |
+| `FITTED` | `#009E73` | the range across the eight fitted models |
+| `SITE` | `#F0E442` | the site, and the tower on it |
+
+The first two are the support encoding, and they are the strongest separation in
+the set: 111.7 apart under deuteranopia and 93.3 under protanopia. `FITTED` is
+scoped to the two forecast figures, and exists because the study's halves ask
+different questions. `SITE` is the site map only.
+
+The mapped wetland boundary is cartography rather than an encoding: heavy white
+over a dark casing, separating from its 48 thin white neighbors by weight. Yellow
+was measured as a fallback at 68.8 from its nearest scene tone and was not needed.
+
+**None of these is available for reuse without checking what it already means,
+and that check has failed twice.** Sky blue was introduced for the fitted range
+beside a blue that already meant retained. The support orange was borrowed for
+the wetland boundary beside a wind rose where orange meant discarded, and it also
+marked the site in the network panel, so one hue was doing three jobs on one
+figure. Both were caught after the figure was built.
+
+**What the contrast checks established.** The imagery was sampled rather than
+assumed: the scene is uniformly dark, six dominant tones from `#2D3939` to
+`#8A8B6F`, median luminance 0.114 and only 0.02% of pixels above 0.5. Against the
+ground beside the tower, which runs from 0.04 under the forest to 0.54 on bare
+peat, yellow measures 41.3 from the light peat and 101.5 from the dark forest
+under the worst simulated deficiency. It is cased dark in both panels, because on
+the network panel it sits 0.161 in luminance from the pale state fill and a white
+casing would be 0.095 from it, effectively invisible.
+
+Emphasis was also moved. The boundary had been loud and the tower quiet, which
+had it backwards: the tower is one point and the subject of the panel, the
+boundary is context.
+
 ## Data caveats beyond the study windows
 
 **The water table series steps by about 2 m at 2020-01 and never returns.** Every
