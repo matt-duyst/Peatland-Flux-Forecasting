@@ -169,9 +169,9 @@ RECONSTRUCTION_TEXT = ps.FigureText(
     ),
     description=(
         "Each marker is one year's emission in grams of carbon per square meter, "
-        "from relationships fitted on 2009 to 2019. The three lines each assume "
-        "something different about the water table beyond the range it was fitted "
-        "on, and they agree only where it stays inside that range. The strip below "
+        "from relationships fitted on 2009 to 2019. The three lines agree closely "
+        "where the water table stays inside its fitted range and fan apart where "
+        "it does not. The strip below "
         "gives the share of each year's months that fall outside it. Measurement at "
         "this peatland stopped in 1992 and did not resume until 2007, so eighteen "
         "of these twenty years can never be checked against one. Only 1991 and 1992 "
@@ -212,7 +212,8 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
                        inside=True, label=r"Year $\bf{inside}$ the fitted range",
                        markersize=6.5)
     ps.support_scatter(ax, years[~inside], frame["clamped"].to_numpy()[~inside],
-                       inside=False, label=r"Year $\bf{outside}$ it", markersize=7.0)
+                       inside=False, label=r"Year $\bf{outside}$ the fitted range",
+                       markersize=7.0)
 
     check = frame[frame["year"].isin(MEASURED_YEARS)]
     # Drawn large enough to encircle its point, but entered in the legend at the
@@ -222,7 +223,8 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
             markeredgewidth=1.2, zorder=3)
     measured_key = Line2D([], [], linestyle="none", marker="o", markersize=6.8,
                           markerfacecolor="none", markeredgecolor=ps.INK,
-                          markeredgewidth=1.2, label="The only measured years")
+                          markeredgewidth=1.2,
+                          label="Year with a published measurement to check against")
 
     # The circled years are two of these four, so one set of labels serves both.
     for _, row in frame[frame["support"] == "inside"].iterrows():
@@ -240,23 +242,31 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
     ax.xaxis.set_minor_locator(MultipleLocator(1))
     ax.tick_params(labelbottom=False)
     ps.mirror_ticks(ax)
-    handles, labels = ax.get_legend_handles_labels()
-    handles.append(measured_key)
-    labels.append(measured_key.get_label())
-    ps.legend(ax, handles=handles, labels=labels, loc="lower left", fontsize=8.2,
-              borderpad=0.36, labelspacing=0.3, handlelength=1.9, handletextpad=0.5,
-              ncols=2, columnspacing=0.9, bbox_to_anchor=(0.015, 0.02))
+    # Two columns, one group each: the lines are assumptions about the model and
+    # the markers are properties of a year, which are different kinds of thing.
+    collected = dict(zip(*reversed(ax.get_legend_handles_labels())))
+    blank = Line2D([], [], linestyle="none", marker="none")
+    entries = [(blank, r"$\bf{Assumption\ beyond\ the\ fitted\ range}$")]
+    entries += [(collected[label], label) for label in WATER_TABLE_ASSUMPTIONS.values()]
+    entries += [(blank, r"$\bf{Property\ of\ the\ year}$")]
+    entries += [(collected[label], label) for label in
+                (r"Year $\bf{inside}$ the fitted range",
+                 r"Year $\bf{outside}$ the fitted range")]
+    entries += [(measured_key, measured_key.get_label())]
+    ps.legend(ax, handles=[h for h, _ in entries], labels=[label for _, label in entries],
+              loc="lower left", fontsize=8.2, borderpad=0.5, labelspacing=0.3,
+              handlelength=1.9, handletextpad=0.5, ncols=2, columnspacing=1.6,
+              bbox_to_anchor=(0.015, 0.02))
 
     share = frame["pct_months_outside"].to_numpy()
-    # A year wholly inside has a bar of zero height. Marking those years on the
-    # baseline distinguishes a measured zero from a year with nothing plotted.
-    strip.bar(years[inside], share[inside], width=0.7, color=ps.INSIDE,
-              edgecolor="white", linewidth=0.4)
-    strip.plot(years[inside], np.zeros(inside.sum()), linestyle="none",
-               marker=ps.INSIDE_MARKER, markersize=4.6, color=ps.INSIDE,
-               markeredgecolor="white", markeredgewidth=0.5, clip_on=False, zorder=4)
     strip.bar(years[~inside], share[~inside], width=0.7, color=ps.OUTSIDE,
               edgecolor="white", linewidth=0.4, hatch=ps.OUTSIDE_HATCH)
+    # A year wholly inside has a bar of zero height, which is a measured zero and
+    # not a missing one. It is marked flat and in the bars' own ink, so it reads
+    # as the bottom of that series rather than as a second quantity.
+    strip.plot(years[inside], np.zeros(inside.sum()), linestyle="none", marker="_",
+               markersize=5.2, markeredgewidth=1.8, color=ps.OUTSIDE,
+               clip_on=False, zorder=4)
     strip.set_ylim(0, 108)
     strip.set_yticks([0, 50, 100])
     strip.set_ylabel(ps.axis_label("Months outside", "%"))
@@ -265,15 +275,8 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
     strip.xaxis.set_minor_locator(MultipleLocator(1))
     ps.mirror_ticks(strip)
 
-    # Set under the fan rather than led to it: a leader from clear space to the
-    # middle of the spread would cross every line it is describing.
-    fan = frame.loc[(frame["unclamped"] - frame["reduced"]).idxmax(), "year"]
-    ax.annotate(
-        "The three assumptions agree inside the fitted range and fan apart outside it",
-        xy=(float(fan) + 1.0, 13.8), ha="center", va="center",
-        fontsize=ps.ANNOTATION_SIZE, style="italic", color=ps.INK, zorder=5,
-        path_effects=[ps._outline()],
-    )
+    _underline_legend_headings(fig, ax)
+
     return fig
 
 
