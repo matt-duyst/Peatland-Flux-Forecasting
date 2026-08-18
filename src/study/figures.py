@@ -170,15 +170,15 @@ RECONSTRUCTION_TEXT = ps.FigureText(
     ),
     description=(
         "Each marker is one year's emission in grams of carbon per square meter, "
-        "from relationships fitted on 2009 to 2019. The three lines agree closely "
-        "where the water table stays inside its fitted range and fan apart where "
-        "it does not. The strip below "
-        "gives the share of each year's months that fall outside it. Measurement at "
-        "this peatland stopped in 1992 and did not resume until 2007, so eighteen "
-        "of these twenty years can never be checked against one. Only 1991 and 1992 "
-        "were measured, by Shurpali et al. (1993) and Shurpali and Verma (1998). "
-        "Their published totals have not been obtained; this reconstruction "
-        "predicts 9.29 and 8.49 g C for May to October."
+        "from relationships fitted on the measured years (2009 to 2019). Where the "
+        "water table stays inside the range those years covered, the three "
+        "assumptions agree closely; where it moves beyond, they fan apart, and the "
+        "strip below shows how much of each year fell outside. Very little of this "
+        "can be verified, because measurement stopped in 1992 and did not resume "
+        "until 2007, leaving eighteen of these twenty years with nothing to compare "
+        "against. The exceptions are 1991 and 1992, measured by Shurpali and "
+        "colleagues, for which this reconstruction predicts 9.29 and 8.49 grams of "
+        "carbon from May to October; their published totals have not been obtained."
     ),
     emphasize=("flat", "linear", "absent"),
 )
@@ -268,6 +268,22 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
     strip.plot(years[inside], np.zeros(inside.sum()), linestyle="none", marker="_",
                markersize=5.2, markeredgewidth=1.8, color=ps.OUTSIDE,
                clip_on=False, zorder=4)
+
+    # The strip carries two marks a reader cannot otherwise name: the hatching,
+    # and a flat mark that means a measured zero rather than a missing year.
+    strip_key = [
+        Patch(facecolor=ps.OUTSIDE, edgecolor="white", hatch=ps.OUTSIDE_HATCH,
+              label="Share of the year outside the range"),
+        Line2D([], [], linestyle="none", marker="_", markersize=5.2,
+               markeredgewidth=1.8, color=ps.OUTSIDE,
+               label="No months outside that year"),
+    ]
+    # Placed in the gap above the strip: its bars reach the top of the panel in
+    # nine of nineteen years, so there is no corner inside it that stays clear.
+    ps.legend(strip, handles=strip_key, labels=[h.get_label() for h in strip_key],
+              loc="upper right", ncols=2, fontsize=7.4, borderpad=0.34,
+              labelspacing=0.24, handlelength=1.5, handletextpad=0.5,
+              columnspacing=1.1, framealpha=1.0, bbox_to_anchor=(0.995, 1.30))
     strip.set_ylim(0, 108)
     strip.set_yticks([0, 50, 100])
     strip.set_ylabel(ps.axis_label("Months outside", "%"))

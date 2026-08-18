@@ -20,7 +20,7 @@ Panel a is the peatland around the tower, with the wetland polygon the National 
 
 **The water table coefficient drifts as its range narrows: flat, linear, or absent (the three give 10 to 30 g C per square meter)**
 
-Each marker is one year's emission in grams of carbon per square meter, from relationships fitted on 2009 to 2019. The three lines agree closely where the water table stays inside its fitted range and fan apart where it does not. The strip below gives the share of each year's months that fall outside it. Measurement at this peatland stopped in 1992 and did not resume until 2007, so eighteen of these twenty years can never be checked against one. Only 1991 and 1992 were measured, by Shurpali et al. (1993) and Shurpali and Verma (1998). Their published totals have not been obtained; this reconstruction predicts 9.29 and 8.49 g C for May to October.
+Each marker is one year's emission in grams of carbon per square meter, from relationships fitted on the measured years (2009 to 2019). Where the water table stays inside the range those years covered, the three assumptions agree closely; where it moves beyond, they fan apart, and the strip below shows how much of each year fell outside. Very little of this can be verified, because measurement stopped in 1992 and did not resume until 2007, leaving eighteen of these twenty years with nothing to compare against. The exceptions are 1991 and 1992, measured by Shurpali and colleagues, for which this reconstruction predicts 9.29 and 8.49 grams of carbon from May to October; their published totals have not been obtained.
 
 ### Monthly methane and carbon dioxide forecast error at Marcell Bog Lake Peatland
 

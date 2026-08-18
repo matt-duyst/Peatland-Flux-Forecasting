@@ -166,3 +166,23 @@ def test_a_year_with_no_months_outside_is_marked_in_the_bars_own_ink():
     assert to_rgba(flat[0].get_color()) == to_rgba(ps.OUTSIDE)
     assert all(y == 0 for y in flat[0].get_ydata())
     ps.plt.close(fig)
+
+
+def test_the_strip_names_both_of_its_marks():
+    """The hatching and the flat mark are otherwise unexplained."""
+    fig = figures.reconstruction_series(annual_frame())
+    labels = [t.get_text() for t in fig.axes[1].get_legend().get_texts()]
+    assert any("outside the range" in label for label in labels)
+    assert any("No months outside" in label for label in labels)
+    ps.plt.close(fig)
+
+
+def test_the_strip_legend_sits_clear_of_the_bars():
+    """Its bars reach the top of the panel in half the years, so it sits above."""
+    fig = figures.reconstruction_series(annual_frame())
+    fig.canvas.draw()
+    main, strip = fig.axes[0], fig.axes[1]
+    legend = strip.get_legend().get_window_extent()
+    assert legend.y0 >= strip.get_window_extent().y1, "the legend is over the bars"
+    assert legend.y1 <= main.get_window_extent().y0, "the legend is over the panel above"
+    ps.plt.close(fig)
