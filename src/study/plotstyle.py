@@ -419,6 +419,10 @@ def mirror_ticks(ax: plt.Axes) -> None:
     for which in ("major", "minor"):
         ax.tick_params(which=which, top=True, right=True,
                        labeltop=False, labelright=False)
+    # Minor ticks are what a reader counts along to find an unlabeled year, so
+    # they are given enough weight to be countable rather than left hairline.
+    ax.tick_params(which="minor", width=0.9, length=3.2)
+    ax.tick_params(which="major", width=1.0, length=5.0)
 
 
 def five_year_ticks(ax: plt.Axes, first_year: int, last_year: int) -> None:

@@ -215,16 +215,21 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
                        inside=False, label=r"Year $\bf{outside}$ it", markersize=7.0)
 
     check = frame[frame["year"].isin(MEASURED_YEARS)]
+    # Drawn large enough to encircle its point, but entered in the legend at the
+    # size of the other two markers: a 13 pt sample crowds the column.
     ax.plot(check["year"], check["clamped"], linestyle="none", marker="o",
             markersize=13, markerfacecolor="none", markeredgecolor=ps.INK,
-            markeredgewidth=1.2, zorder=3, label="The only measured years")
+            markeredgewidth=1.2, zorder=3)
+    measured_key = Line2D([], [], linestyle="none", marker="o", markersize=6.8,
+                          markerfacecolor="none", markeredgecolor=ps.INK,
+                          markeredgewidth=1.2, label="The only measured years")
 
     # The circled years are two of these four, so one set of labels serves both.
     for _, row in frame[frame["support"] == "inside"].iterrows():
         ax.annotate(f"{int(row['year'])}", xy=(row["year"], row["clamped"]),
-                    xytext=(0, 17), textcoords="offset points", ha="center",
-                    va="bottom", fontsize=7.8, color=ps.INSIDE, zorder=6,
-                    path_effects=[ps._outline()])
+                    xytext=(0, 9), textcoords="offset points", ha="center",
+                    va="bottom", fontsize=7.8, fontweight="bold", color=ps.INSIDE,
+                    zorder=6, path_effects=[ps._outline()])
 
     ax.set_ylabel(ps.axis_label("Annual emission", "g C m$^{-2}$ yr$^{-1}$"))
     ax.set_ylim(0, frame[list(WATER_TABLE_ASSUMPTIONS)].to_numpy().max() * 1.18)
@@ -235,9 +240,12 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
     ax.xaxis.set_minor_locator(MultipleLocator(1))
     ax.tick_params(labelbottom=False)
     ps.mirror_ticks(ax)
-    ps.legend(ax, loc="lower left", fontsize=8.2, borderpad=0.36, labelspacing=0.3,
-              handlelength=1.9, handletextpad=0.5, ncols=2, columnspacing=0.9,
-              bbox_to_anchor=(0.015, 0.02))
+    handles, labels = ax.get_legend_handles_labels()
+    handles.append(measured_key)
+    labels.append(measured_key.get_label())
+    ps.legend(ax, handles=handles, labels=labels, loc="lower left", fontsize=8.2,
+              borderpad=0.36, labelspacing=0.3, handlelength=1.9, handletextpad=0.5,
+              ncols=2, columnspacing=0.9, bbox_to_anchor=(0.015, 0.02))
 
     share = frame["pct_months_outside"].to_numpy()
     # A year wholly inside has a bar of zero height. Marking those years on the
