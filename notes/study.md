@@ -2066,29 +2066,38 @@ to the right of everything, two and a half times wider than the whole experiment
 with nothing drawn inside it. The share dropped is annotated above each point, so
 the experimental knob is still legible.
 
-**One key for both panels, naming every mark.** The first build had a legend in
-panel a naming the two treatments and nothing else, which left a reader with five
-unexplained marks and panel b with no key at all. The key now sits below the
-figure, outside both panels, in the two-column ruled-heading form used across the
-set: the treatments in one column, and in the other the interval bars, the
-carried-across starting value, the shaded region and the bracket.
+**One key for both panels, in the ground the fill used to cover.** The first
+build named the two treatments and nothing else, leaving five unexplained marks
+and panel b with no key at all; the second put the key below the axis, which
+nothing else in this set does. It now sits in the upper right of the water table
+panel, in the two-column ruled-heading form: the treatments in one column, and in
+the other the interval bars, the carried-across starting value, the rule at the
+edge of the fitted range and the bracket.
 
-**The shading was reduced.** Two blocks at panel height and 0.10 alpha gave a
-region marker more weight than the data. The fill is now 0.05 with a dashed rule
-at the edge of the evidence, which is the boundary a reader actually crosses.
+**Both panel names moved off the data** to the upper right, for the same reason
+and into the same freed space.
 
 **The two axes were reading in opposite directions.** The row above the panels ran
 40%, 30%, 20%, 10%, none from left to right while the axis below ran negative to
 positive. Reversing either would have put the extrapolation on the left, where it
-reads as the past. The row now gives the **months left in the fit** — 69, 81, 92,
-103, 115 — which increases in the same direction as the axis, sits in the strip
-rather than above the panels where a title would, and adds the sample size each
-point rests on, which the first design left out.
+reads as the past. The row is now a proper top axis carrying the **months left in
+the fit** — 69, 81, 92, 103, 115 — which increases in the same direction as the
+axis, sits with the fits it describes, and adds the sample size each point rests
+on. The percentages are gone rather than doubled up: two rows of numbers running
+opposite ways is the thing being fixed.
 
-**The control panel says on the panel what it is for.** A nearly flat line in a
-tall axis with no caption was the hardest mark on the figure to read. It now
-carries one line in the empty half: the same five fits, on the coefficient the
-season already accounts for.
+**The control panel says plainly what it is for**: the control, the same
+experiment on a coefficient that barely moves. The earlier wording named the
+mechanism instead of the role and was opaque.
+
+**The band beneath the panels now carries one thing**, the 0.05 m the wettest
+months held out actually reached, with its label beside it rather than over it.
+Everything else it held has moved to where it belongs.
+
+**The axis names are seated by measurement.** One panel's ticks read 7 and the
+other's 0.12, so a fixed inset either collided with the second or stranded the
+first far to the left. `_seat_axis_names` measures the widest tick label across
+both panels and sets both names just clear of it.
 
 **The holdout bracket sits against the shaded region.** The wettest-decile test
 trained to 413.41 and reached 413.46, so it demonstrated transfer over 0.05 m
@@ -2134,8 +2143,8 @@ and the nuclear verification study. The wettest-decile tie instability. And any
 curve through the shaded region, which is the one thing the figure exists to
 refuse.
 
-**A shortened axis name.** "Coefficient, as a percentage of its value on the whole
-range" was doing the work the subtitle should do. The axes now read "Per meter of
+**A shortened axis name.** "Coefficient, as a percentage of its value on the
+whole range" was doing the work the subtitle should do. The axes now read "Per meter of
 water table" and "Per °C of soil temperature", and what a coefficient is belongs
 to the subtitle.
 

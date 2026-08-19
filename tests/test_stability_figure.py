@@ -57,24 +57,42 @@ def drawn(fig, term: int) -> dict[str, np.ndarray]:
 
 
 def strip_of(fig):
-    """The band of distances under the panels, found by what it carries."""
+    """The band under the panels, found by the one distance it carries."""
     for ax in fig.axes:
-        if any(figures.REQUIRED_LABEL in text.get_text() for text in ax.texts):
+        if any(figures.TESTED_LABEL in text.get_text() for text in ax.texts):
             return ax
-    raise AssertionError("the strip of distances is missing")
+    raise AssertionError("the band of distances is missing")
+
+
+def counts_axis_of(fig):
+    """The axis above the panels, which is a child of the first rather than a peer."""
+    for child in fig.axes[0].child_axes:
+        if child.get_xlabel() == figures.COUNT_AXIS:
+            return child
+    raise AssertionError("the months axis is missing")
 
 
 # --- the two spans the figure exists to put side by side ----------------------
 
 
-def test_the_region_the_reconstruction_needs_is_shaded_on_both_panels():
-    """Bartley et al. (2019) shade where a model is asked to extrapolate; here it
-    is shaded to show that no refit reaches it."""
+def test_the_edge_of_the_evidence_is_ruled_on_both_panels():
+    """Bartley et al. (2019) shade where a model is asked to extrapolate. A block
+    at panel height across two thirds of the canvas outweighed everything
+    measured, so the region is a rule at its edge and an arrow along its length."""
     fig = figures.coefficient_stability(paths(), required=0.29, tested=0.05)
     for index in (0, 1):
-        spans = [p for p in fig.axes[index].patches if p.get_width() == pytest.approx(0.29)]
-        assert spans, "the required region is missing from a panel"
-        assert spans[0].get_x() == pytest.approx(0.0)
+        ruled = [line for line in fig.axes[index].lines
+                 if len(line.get_xdata()) == 2 and np.allclose(line.get_xdata(), 0.0)]
+        assert ruled, "the edge of the fitted range is missing from a panel"
+        assert not fig.axes[index].patches, "the region has been filled again"
+    ps.plt.close(fig)
+
+
+def test_the_arrow_says_how_far_beyond_the_evidence_the_reconstruction_reaches():
+    fig = figures.coefficient_stability(paths(), required=0.29, tested=0.05)
+    said = " ".join(note.get_text() for note in fig.axes[0].texts)
+    assert "0.29 m beyond" in said and "2.4 times the 0.12 m" in said
+    assert any(note.arrow_patch is not None for note in fig.axes[0].texts)
     ps.plt.close(fig)
 
 
@@ -96,17 +114,18 @@ def test_nothing_is_drawn_inside_the_region_that_was_never_measured():
 def test_the_tested_span_is_drawn_against_the_required_one_in_the_same_units():
     """The qualification is a ratio of two lengths, so it is drawn as two lengths."""
     fig = figures.coefficient_stability(paths(), required=0.29, tested=0.05)
-    labels = [t.get_text() for t in strip_of(fig).texts]
-    assert any(figures.TESTED_LABEL in text and "0.05" in text for text in labels)
-    assert any(figures.REQUIRED_LABEL in text and "0.29" in text for text in labels)
+    assert any(figures.TESTED_LABEL in text.get_text() and "0.05" in text.get_text()
+               for text in strip_of(fig).texts)
+    assert any("0.29 m beyond" in note.get_text() for note in fig.axes[0].texts)
     ps.plt.close(fig)
 
 
 def test_the_spans_come_from_the_caller_rather_than_from_the_module():
     """Both are properties of the windows in use and would go stale if pinned."""
     fig = figures.coefficient_stability(paths(), required=0.4, tested=0.1)
-    labels = " ".join(t.get_text() for t in strip_of(fig).texts)
-    assert "0.40" in labels and "0.10" in labels
+    said = " ".join(text.get_text() for text in strip_of(fig).texts)
+    said += " ".join(note.get_text() for note in fig.axes[0].texts)
+    assert "0.40" in said and "0.10" in said
     ps.plt.close(fig)
 
 
@@ -155,7 +174,25 @@ def test_the_control_panel_says_on_the_panel_what_it_is_for():
     """A nearly flat line with no caption is the hardest mark on the figure."""
     fig = figures.coefficient_stability(paths(), required=0.29, tested=0.05)
     said = " ".join(note.get_text() for note in fig.axes[1].texts)
-    assert "same five fits" in said
+    assert "control" in said and "barely moves" in said
+    ps.plt.close(fig)
+
+
+def test_the_key_sits_where_the_fill_used_to_be_rather_than_below_the_axis():
+    """Nothing in this set puts a legend under the panels."""
+    fig = figures.coefficient_stability(paths(), required=0.29, tested=0.05)
+    key = fig.axes[0].get_legend()
+    assert key is not None
+    box = key.get_window_extent().transformed(fig.axes[0].transAxes.inverted())
+    assert box.x0 > 0.4 and box.y1 > 0.7          # the freed upper right
+    ps.plt.close(fig)
+
+
+def test_the_month_counts_sit_with_the_fits_they_describe():
+    """They were at the foot of the figure, away from the points they belong to."""
+    fig = figures.coefficient_stability(paths(), required=0.29, tested=0.05)
+    assert [text.get_text() for text in counts_axis_of(fig).get_xticklabels()] == \
+        [f"{n:.0f}" for n in paths()["weighted"]["n_months"]]
     ps.plt.close(fig)
 
 
@@ -165,7 +202,8 @@ def test_one_key_serves_both_panels_and_names_every_mark():
     keys = [ax.get_legend() for ax in fig.axes if ax.get_legend()]
     assert len(keys) == 1
     labels = [text.get_text() for text in keys[0].get_texts()]
-    for mark in ("resamples", "carried across", "reconstruction needs", "distance in meters"):
+    for mark in ("resamples", "carried across", "wettest month the model",
+                 "distance in meters"):
         assert any(mark in label for label in labels)
     assert sum(label.startswith("$") for label in labels) == 2      # two headings
     ps.plt.close(fig)
