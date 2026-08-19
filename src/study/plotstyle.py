@@ -317,14 +317,21 @@ def wrap_subtitle(text: str, width_px: int) -> str:
     return textwrap.fill(" ".join(text.split()), width=width)
 
 
-def wrap_description(text: str, width_px: int, terms: tuple[str, ...] = ()) -> str:
-    """Wrap a description to the canvas width, refusing text that will not fit."""
+def wrap_description(text: str, width_px: int, terms: tuple[str, ...] = (),
+                     block_px: int = DESCRIPTION_BLOCK_PX) -> str:
+    """Wrap a description to the canvas width, refusing text that will not fit.
+
+    `block_px` is the allocation the text has to fit in. It is a parameter rather
+    than the constant alone so a figure carrying an unusually long description can
+    declare the room it needs and be sized around it, instead of the shared
+    default drifting upward and every other figure changing shape with it.
+    """
     width = _wrap_width(width_px) - (2 if terms else 0)
     wrapped = textwrap.fill(" ".join(text.split()), width=width)
     lines = wrapped.count("\n") + 1
     line_px = DESCRIPTION_SIZE * 1.45 / 72.0 * DPI
-    if lines * line_px > DESCRIPTION_BLOCK_PX:
-        allowed = int(DESCRIPTION_BLOCK_PX / line_px)
+    if lines * line_px > block_px:
+        allowed = int(block_px / line_px)
         raise DescriptionOverflow(
             f"description wraps to {lines} lines at this width; the fixed "
             f"allocation holds {allowed}. Shorten it rather than enlarging the block."
@@ -332,8 +339,9 @@ def wrap_description(text: str, width_px: int, terms: tuple[str, ...] = ()) -> s
     return emphasize(wrapped, terms)
 
 
-def canvas_area(text: FigureText, size: str = "wide",
-                extra_left_px: int = 0) -> tuple[Figure, tuple[float, float, float, float]]:
+def canvas_area(text: FigureText, size: str = "wide", extra_left_px: int = 0,
+                description_px: int | None = None
+                ) -> tuple[Figure, tuple[float, float, float, float]]:
     """A figure carrying its text blocks, and the rectangle left for drawing.
 
     Callers that need one axes use `canvas`; callers laying out several panels
@@ -344,7 +352,9 @@ def canvas_area(text: FigureText, size: str = "wide",
     width_px, height_px = SIZES[size]
     fig = plt.figure(figsize=(width_px / DPI, height_px / DPI), dpi=DPI)
 
-    body = wrap_description(text.description, width_px, text.emphasize)
+    description_block_px = DESCRIPTION_BLOCK_PX if description_px is None else description_px
+    body = wrap_description(text.description, width_px, text.emphasize,
+                            description_block_px)
     heading = wrap_subtitle(text.subtitle, width_px)
 
     subtitle_line_px = SUBTITLE_SIZE * 1.5 / 72.0 * DPI
@@ -360,7 +370,7 @@ def canvas_area(text: FigureText, size: str = "wide",
     right = 1 - MARGIN_PX["right"] / width_px
     axes_top = 1 - (MARGIN_PX["top"] + title_block_px) / height_px
     axes_bottom = (
-        MARGIN_PX["bottom"] + DESCRIPTION_BLOCK_PX + XAXIS_BLOCK_PX
+        MARGIN_PX["bottom"] + description_block_px + XAXIS_BLOCK_PX
     ) / height_px
 
     middle = (left + right) / 2
@@ -369,7 +379,7 @@ def canvas_area(text: FigureText, size: str = "wide",
     fig.text(middle, 1 - (MARGIN_PX["top"] + TITLE_SIZE * 1.9 / 72 * DPI) / height_px,
              emphasize(heading, text.emphasize), ha="center", va="top",
              fontsize=SUBTITLE_SIZE, color=INK, linespacing=1.5)
-    fig.text(left, (MARGIN_PX["bottom"] + DESCRIPTION_BLOCK_PX) / height_px,
+    fig.text(left, (MARGIN_PX["bottom"] + description_block_px) / height_px,
              body, ha="left", va="top", fontsize=DESCRIPTION_SIZE, color=MUTED,
              linespacing=1.45)
     return fig, (left, axes_bottom, right - left, axes_top - axes_bottom)
@@ -630,16 +640,19 @@ def panel_letter(ax: plt.Axes, letter: str, label: str | None = None,
                 color=INK, zorder=8, path_effects=[_outline()])
 
 
-def panel_name(ax: plt.Axes, name: str, y: float = 0.952, align: str = "left") -> None:
+def panel_name(ax: plt.Axes, name: str, y: float = 0.952, align: str = "left",
+               x: float | None = None) -> None:
     """Name a panel in a bordered box, which carries the emphasis size otherwise would.
 
     Used where the panels differ in what they show rather than in which step of an
     argument they carry, so the name is the label and no letter is needed. Seated
     below the top of the axes rather than against it: the padded box is drawn
     outside the text extent, so an anchor that measures as inside can still cross
-    the spine.
+    the spine. `x` overrides the inset for a panel whose corner is not free, so a
+    name can sit outside the axes without a second way of drawing the same box.
     """
-    x = 0.016 if align == "left" else 0.984
+    if x is None:
+        x = 0.016 if align == "left" else 0.984
     ax.annotate(name, xy=(x, y), xycoords="axes fraction", ha=align, va="top",
                 fontsize=LEGEND_SIZE + 1.6, fontweight="bold", color=INK, zorder=9,
                 bbox=dict(boxstyle="round,pad=0.42", facecolor="white",

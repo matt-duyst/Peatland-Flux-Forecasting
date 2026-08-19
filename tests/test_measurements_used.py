@@ -1,4 +1,4 @@
-"""Predictor usage: the panel data, the two results it must carry, the bars."""
+"""Measurements used: the panel data, the two results it must carry, the bars."""
 
 from __future__ import annotations
 
@@ -118,7 +118,7 @@ def test_the_water_table_is_the_mirror_image():
 
 def test_the_figure_names_the_water_table_rather_than_leaving_it_to_be_noticed():
     """Absence reads as unremarkable, so the sharpest result is said in words."""
-    said = figures.USAGE_TEXT.subtitle
+    said = figures.MEASUREMENTS_TEXT.subtitle
     assert "water table" in said and "the date cannot predict" in said
 
 
@@ -129,7 +129,7 @@ def test_one_row_order_holds_across_every_panel():
     """Small multiples only work if a row sits in the same place everywhere."""
     panels = real_panels()
     order = figures.usage_order(panels)
-    fig = figures.predictor_usage(panels)
+    fig = figures.measurements_used(panels)
     named = [ax for ax in fig.axes if any(t.get_text() for t in ax.get_yticklabels())]
     assert len(named) == len(figures.GAS_PANEL)      # named once per gas, not per panel
     for ax in named:
@@ -148,16 +148,16 @@ def test_the_rows_are_ordered_by_use_with_the_flux_at_the_top():
 
 def test_the_two_quantities_are_named_in_headings_rather_than_in_a_key():
     """A legend would repeat what the column heading already says where it is read."""
-    fig = figures.predictor_usage(real_panels())
+    fig = figures.measurements_used(real_panels())
     assert not any(ax.get_legend() for ax in fig.axes)
     said = [t.get_text() for t in fig.texts]
-    assert figures.USAGE_HEADING in said and figures.DATE_HEADING in said
+    assert figures.CHOSEN_HEADING in said and figures.DATE_HEADING in said
     ps.plt.close(fig)
 
 
 def test_every_bar_prints_its_share_so_length_is_not_the_only_reading():
     panels = real_panels()
-    fig = figures.predictor_usage(panels)
+    fig = figures.measurements_used(panels)
     drawn = sum(int(np.isfinite(v)) for panel in panels.values()
                 for v in panel.to_numpy(dtype=float).ravel())
     drawn += len(figures.SCREENED_COVARIATES) * len(panels)      # the date column
@@ -169,7 +169,7 @@ def test_every_bar_prints_its_share_so_length_is_not_the_only_reading():
 
 def test_a_share_below_one_percent_is_not_printed_as_a_zero():
     """Rounding would show what the date barely predicts as what it cannot."""
-    fig = figures.predictor_usage(real_panels())
+    fig = figures.measurements_used(real_panels())
     date_column = fig.axes[0]
     assert "0.5" in [text.get_text() for text in date_column.texts]
     ps.plt.close(fig)
@@ -179,7 +179,7 @@ def test_the_date_column_is_achromatic_and_the_usage_columns_are_not():
     """The two answer different questions, and only one of them is a result."""
     from matplotlib.colors import to_rgb
 
-    fig = figures.predictor_usage(real_panels())
+    fig = figures.measurements_used(real_panels())
     grey = to_rgb(ps.DATE_SHARE)
     assert grey[0] == pytest.approx(grey[1]) == pytest.approx(grey[2])
     used = {bar.get_facecolor()[:3] for ax in fig.axes for bar in ax.patches}
@@ -189,8 +189,10 @@ def test_the_date_column_is_achromatic_and_the_usage_columns_are_not():
 
 def test_the_figure_asks_no_reader_to_know_the_method():
     """Plain terms or nothing: none of the working vocabulary reaches the page."""
-    text = figures.USAGE_TEXT
-    said = " ".join([text.title, text.subtitle, text.description]).lower()
+    text = figures.MEASUREMENTS_TEXT
+    said = " ".join([text.title, text.subtitle, text.description, figures.DATE_HEADING,
+                     figures.CHOSEN_HEADING, figures.NOT_ASKED,
+                     figures.NOT_AVAILABLE]).lower()
     for jargon in ("boruta", "fold", "shadow", "survival", "survived", "lag",
                    "exogenous", "ridge", "screening", "covariate", "predictor"):
         assert jargon not in said
@@ -198,10 +200,41 @@ def test_the_figure_asks_no_reader_to_know_the_method():
 
 def test_the_description_states_what_the_order_is_built_from():
     """A sorted figure that does not say what it sorted on invites the wrong reading."""
-    assert "ordered by how often the models used" in figures.USAGE_TEXT.description
+    assert "ordered by how often the models chose" in figures.MEASUREMENTS_TEXT.description
 
 
 def test_the_seasonal_terms_are_not_a_row():
     """Kept in every fit by construction, so a row of ones would say nothing."""
     panel = real_panels()["methane"]
     assert not any("sin" in name or "seasonal term" in name.lower() for name in panel.index)
+
+
+def test_the_two_kinds_of_empty_cell_are_told_apart():
+    """One is a question that does not apply; the other is a value a model cannot
+    have. Drawn alike they would both read as data that went missing."""
+    fig = figures.measurements_used(real_panels())
+    marks = [text.get_text() for ax in fig.axes for text in ax.texts]
+    assert marks.count(figures.NOT_ASKED) == 2 * len(figures.FLUX_ROWS)
+    assert marks.count(figures.NOT_AVAILABLE) == 2 * 3      # one-month lag, three horizons
+    assert figures.NOT_ASKED != figures.NOT_AVAILABLE
+    ps.plt.close(fig)
+
+
+def test_the_description_says_what_each_empty_cell_means():
+    said = figures.MEASUREMENTS_TEXT.description
+    assert "does not apply to the flux's own past values" in said
+    assert "unavailable to a" in said and "three months or more ahead" in said
+
+
+def test_both_column_groups_carry_the_axis_they_are_read_against():
+    fig = figures.measurements_used(real_panels())
+    assert [t.get_text() for t in fig.texts].count(figures.AXIS_LABEL) == 2
+    ps.plt.close(fig)
+
+
+def test_the_gases_are_named_in_the_bordered_box_the_other_figures_use():
+    fig = figures.measurements_used(real_panels())
+    boxed = [note for ax in fig.axes for note in ax.texts if note.get_bbox_patch()]
+    assert sorted(note.get_text() for note in boxed) == \
+        sorted(gas for _, gas, _ in figures.GAS_PANEL)
+    ps.plt.close(fig)

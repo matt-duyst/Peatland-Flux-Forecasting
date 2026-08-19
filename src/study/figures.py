@@ -874,34 +874,55 @@ def screening_panel(
     return panel
 
 
-USAGE_TEXT = ps.FigureText(
-    title="Which measurements the models used, and how much of each is the date",
+MEASUREMENTS_TEXT = ps.FigureText(
+    title="Which measurements the models used at each forecast horizon",
     subtitle=(
         "Each model was rebuilt every month as the record grew, and each time it "
-        "chose which measurements to use. The green bars show how often each was "
-        "chosen, from never to every time. The grey bars show how much of that "
-        "measurement the date alone predicts. The measurements the models chose "
-        "are the ones the date already predicts. The water table is the one thing "
-        "the date cannot predict, and the models almost never chose it."
+        "chose which of the measurements to use. The green bars show how often "
+        "each was chosen, from never to every rebuild. The grey bars show "
+        "something different: how much of that measurement can be predicted from "
+        "the date alone. Temperature scores high there because every July is warm "
+        "and every January cold, while the water table scores near zero because "
+        "how wet the peatland is depends on that year's rain rather than on the "
+        "month. Reading the two together, what the models chose most often are the "
+        "measurements the date already predicts, and the one thing the date cannot "
+        "predict is the one they chose least."
     ),
     description=(
-        "Rows are ordered by how often the models used each measurement, averaged "
-        "over both gases and all four horizons; the date column happens to fall in "
-        "the same order. For carbon dioxide three months ahead, not one of the four "
-        "measurements was chosen in a single rebuild, and only the flux's own value "
-        "from a year earlier was kept. Soil and air temperature are 95% predictable "
-        "from the date, so what the models chose is the season under another name. "
-        "The water table is 0.5% predictable from the date and so carries something "
-        "nothing else does, yet it correlates with nothing left in the flux once the "
-        "season is taken out. The same pattern has been found across other wetland "
-        "sites, where temperature dominated wherever the water table varied least."
+        "Rows are ordered by how often the models chose each measurement, averaged "
+        "across both gases and all four horizons. The date column was not sorted, "
+        "yet it falls in the same order, and three things follow from that. Three "
+        "seasonal terms account for 95% of soil and air temperature, so a model "
+        "that uses temperature gains almost nothing the date had not already given "
+        "it. Those same terms account for 0.5% of the water table, which means it "
+        "carries information nothing else does, but once the seasonal cycle is "
+        "removed from the flux, the water table explains almost nothing that "
+        "remains. For carbon dioxide three months ahead the models chose none of "
+        "the four measurements in any rebuild, keeping only the flux's own value "
+        "from a year earlier. The same pattern appears at other wetland sites, "
+        "where temperature dominated wherever the water table varied least. Two "
+        "rows are marked rather than left blank: the date question does not apply "
+        "to the flux's own past values, which are not measurements taken at the "
+        "site, and last month's flux is unavailable to a model forecasting three "
+        "months or more ahead."
     ),
 )
 
-#: Heading over the four horizon columns, and over the column that answers a
-#: different question. Matched in register: both begin "How ... it".
-USAGE_HEADING = "How often the models used it"
-DATE_HEADING = "How much of it the date predicts"
+#: Room the description above needs. It runs past the shared allocation, and the
+#: canvas is sized around it rather than the shared default being raised, which
+#: would change the proportions of every other figure in the set.
+MEASUREMENTS_DESCRIPTION_PX = 240
+
+#: Headings over the two column groups, each centered on the columns it covers and
+#: broken before the parenthetical so the pair reads in the same register.
+CHOSEN_HEADING = "Chosen by the models\n(% of rebuilds)"
+DATE_HEADING = "Predictable from the date\n(% of variation)"
+AXIS_LABEL = "Percent"
+
+#: The two reasons a cell is empty, which are not the same reason and so are not
+#: drawn the same way. Neither is missing data.
+NOT_ASKED = "does not apply"
+NOT_AVAILABLE = "not available"
 
 
 def usage_order(panels: dict[str, pd.DataFrame]) -> list[str]:
@@ -921,8 +942,15 @@ def _draw_usage_panel(
     colour: str,
     ticked: bool,
     rule_after: int | None,
+    blank: str,
 ) -> None:
-    """One column of bars: a share from nothing to everything, per predictor."""
+    """One column of bars: a share from nothing to everything, per measurement.
+
+    `blank` is what an empty cell means on this column, written into the cell.
+    A blank on the date column is a question that does not apply; a blank on a
+    horizon column is a value a model at that horizon cannot have. Left unmarked
+    they would look alike, and both would look like missing data.
+    """
     positions = np.arange(len(order))
     heights = np.array([values.get(name, np.nan) for name in order], dtype=float)
     drawn = ~np.isnan(heights)
@@ -935,6 +963,9 @@ def _draw_usage_panel(
         ax.text(share + 4.0, position, f"{share:.1f}" if 0 < share < 1 else f"{share:.0f}",
                 va="center", ha="left", fontsize=ps.TICK_SIZE - 1.5,
                 color=ps.MUTED, zorder=3)
+    for position in positions[~drawn]:
+        ax.text(3.0, position, blank, va="center", ha="left", style="italic",
+                fontsize=ps.TICK_SIZE - 2.0, color=ps.MUTED, zorder=3)
 
     if rule_after is not None:
         ax.axhline(rule_after + 0.5, color=ps.GRID, linewidth=1.0, zorder=1)
@@ -943,7 +974,7 @@ def _draw_usage_panel(
     ax.set_yticks(positions)
     ax.set_yticklabels([])
     ax.set_xticks([0, 50, 100])
-    ax.set_xticklabels(["0", "50", "100%"] if ticked else [])
+    ax.set_xticklabels(["0", "50", "100"] if ticked else [])
     ax.tick_params(length=0, labelsize=ps.TICK_SIZE - 1.5, colors=ps.MUTED)
     ax.grid(axis="x", color=ps.GRID, linewidth=0.6, zorder=0)
     ax.set_axisbelow(True)
@@ -959,12 +990,12 @@ def _draw_usage_panel(
 LABEL_PX = 258
 LEAD_PX = 44
 COLUMN_GAP_PX = 20
-HEADING_PX = 56
+HEADING_PX = 64
 COLUMN_TITLE_PX = 30
-GAS_LABEL_PX = 38
+GAS_LABEL_PX = 40
 
 
-def predictor_usage(panels: dict[str, pd.DataFrame]) -> Figure:
+def measurements_used(panels: dict[str, pd.DataFrame]) -> Figure:
     """What the models chose, beside how much of each choice is simply the date.
 
     Ranked bars in small multiples rather than a grid of shaded cells: with fifty
@@ -973,8 +1004,9 @@ def predictor_usage(panels: dict[str, pd.DataFrame]) -> Figure:
     The leading column answers a different question from the four beside it, so
     it is set apart by a gap and drawn achromatic.
     """
-    fig, (left, bottom, width, height) = ps.canvas_area(USAGE_TEXT, size="standard")
-    width_px, height_px = ps.SIZES["standard"]
+    fig, (left, bottom, width, height) = ps.canvas_area(
+        MEASUREMENTS_TEXT, size="tall", description_px=MEASUREMENTS_DESCRIPTION_PX)
+    width_px, height_px = ps.SIZES["tall"]
     order = usage_order(panels)
     # The flux's own past is not a measurement from the site, so it is ruled off
     # from the four that are. Drawn only where those rows fall together, which is
@@ -999,14 +1031,18 @@ def predictor_usage(panels: dict[str, pd.DataFrame]) -> Figure:
         base = bottom + (1 - row) * (row_height + GAS_LABEL_PX / height_px)
         date = fig.add_axes((date_left, base, column, row_height))
         _draw_usage_panel(date, panel.attrs.get("calendar", {}), order,
-                          ps.DATE_SHARE, bottom_row, rule_after)
+                          ps.DATE_SHARE, bottom_row, rule_after, NOT_ASKED)
         date.set_yticklabels(order, fontsize=ps.TICK_SIZE, color=ps.INK)
-        fig.text(left, base + row_height + 9 / height_px, gas, ha="left", va="bottom",
-                 fontsize=ps.LABEL_SIZE, fontweight="bold", color=ps.INK)
+        # Named in the same bordered box as the other figures, seated above the
+        # panel rather than in its corner: the corner holds the first row, which
+        # here is a marked cell rather than the empty space the box needs.
+        ps.panel_name(date, gas, x=-LABEL_PX / (column * width_px),
+                      y=1 + 30 / (row_height * height_px))
 
         for index, horizon in enumerate(horizons):
             ax = fig.add_axes((first + index * (column + gap), base, column, row_height))
-            _draw_usage_panel(ax, panel[horizon], order, ps.FITTED, bottom_row, rule_after)
+            _draw_usage_panel(ax, panel[horizon], order, ps.FITTED, bottom_row,
+                              rule_after, NOT_AVAILABLE)
             if row == 0:
                 fig.text(first + index * (column + gap) + column / 2,
                          base + row_height + 8 / height_px,
@@ -1016,11 +1052,13 @@ def predictor_usage(panels: dict[str, pd.DataFrame]) -> Figure:
     # Two headings rather than a legend: they name the two quantities the two
     # colors stand for, so a key repeating them would say nothing the columns do
     # not already say in the place a reader is looking.
-    heading_base = top - (HEADING_PX - 6) / height_px
-    fig.text(date_left + column / 2, heading_base, DATE_HEADING,
-             ha="center", va="bottom", fontsize=ps.LABEL_SIZE, fontweight="bold",
-             color=ps.INK)
-    fig.text(first + (left + width - first) / 2, heading_base, USAGE_HEADING,
-             ha="center", va="bottom", fontsize=ps.LABEL_SIZE, fontweight="bold",
-             color=ps.INK)
+    date_middle = date_left + column / 2
+    chosen_middle = first + (left + width - first) / 2
+    heading_base = top - (HEADING_PX - 8) / height_px
+    for middle, heading in ((date_middle, DATE_HEADING), (chosen_middle, CHOSEN_HEADING)):
+        fig.text(middle, heading_base, heading, ha="center", va="bottom",
+                 fontsize=ps.LABEL_SIZE, fontweight="bold", color=ps.INK,
+                 linespacing=1.4)
+        fig.text(middle, bottom - 34 / height_px, AXIS_LABEL, ha="center", va="top",
+                 fontsize=ps.LABEL_SIZE, color=ps.MUTED)
     return fig

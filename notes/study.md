@@ -1524,15 +1524,37 @@ This is replication rather than a standalone result, and it belongs here because
 it says what condition makes this site behave the way it does. Knox et al. (2021),
 *Global Change Biology* **27**, 3582-3604, identified the dominant environmental
 predictors of freshwater wetland methane flux across 23 sites and found
-temperature dominant wherever seasonal water table variation was small. This site
-meets that condition: the water table's month-of-year means span **0.333 m**,
-and the three seasonal terms fitted to it span **0.139 m**, against a full
-observed range of **2.380 m** over the 141 months with a reading. The water
-table here moves, and moves a great deal, but almost none of that movement is
-seasonal — which is the same fact as its 0.5% calendar share, seen in metres
-rather than as a variance share. So the finding that the models reach for
-temperature and not for the water table is what the multi-site work predicts for
-a site like this one, not an anomaly of this record.
+temperature dominant wherever seasonal water table variation was small.
+
+**Their condition is testable, not qualitative.** Sites where the water table
+dominates tend to have a greater ratio in the variation of the water table
+relative to the variation in air temperature. This site sits at the other end of
+that ratio. Its water table's month-of-year means span **0.333 m** and the three
+seasonal terms fitted to it span **0.139 m**, against a full observed range of
+**2.380 m** over the 141 months with a reading; air temperature's month-of-year
+means span **32.8 °C**. Put as each variable's seasonal swing relative to its own
+full range, the water table is **0.140** and air temperature is **0.813**, a ratio
+of about one to six. The water table here moves, and moves a great deal, but
+almost none of that movement is seasonal — which is the same fact as its 0.5%
+calendar share, seen in metres rather than as a variance share. **This is the
+regime their synthesis predicts temperature dominance in**, so the finding that
+the models reach for temperature and not for the water table is what the
+multi-site work expects of a site like this one, not an anomaly of this record.
+
+**How much any single driver carries, for scale.** At site level they report a
+top predictor generally explaining between 10 and 50 percent of variance. That is
+the range a dominant driver occupies in this literature, and it is worth holding
+beside the 7% of non-seasonal flux variance the two significant temperature
+partial correlations account for here.
+
+**Consistent, not identical, and the difference matters.** Their result ranks
+which drivers matter. This one shows that the driver that matters is collinear
+with the seasonal cycle — 94.7% to 95.4% of every surviving temperature lag is
+recoverable from three seasonal terms. A ranking cannot say that, because a
+driver can rank first while being a restatement of the calendar, and it can rank
+first while being independent of it. The two results agree on which variable comes
+out on top and answer different questions about what that means. Nothing here
+should be written as reproducing their finding.
 
 **A limit of this study's resolution, stated as such.** A 2024 synthesis reports
 seasonal methane flux changes lagging the water table by about 17 days across 23
@@ -1748,9 +1770,12 @@ and 12.7 under the worst deficiency**, and their overlap is distinct from each o
 them. The band's width was not touched, since carbon dioxide is genuinely measured
 less precisely relative to its range.
 
-### The predictor usage figure, and the heatmap it replaced
+### The measurements-used figure, and the heatmap it replaced
 
-`figures/predictor_usage.png`, built by `study.figures.predictor_usage`.
+`figures/measurements_used_across_forecast_horizons.png`, built by
+`study.figures.measurements_used`. The file was first named `predictor_usage`,
+which used on disk the vocabulary that had just been taken off the panel; the
+name now says what the figure shows.
 
 **The first version was a heatmap and it was wrong.** Six rows against four
 horizons in two blocks of shaded cells, every cell printing its value. It failed
@@ -1773,6 +1798,33 @@ temperature, air temperature, precipitation, water table. The description states
 the sort basis, because a sorted figure that does not say what it sorted on
 invites the reader to assume the wrong quantity.
 
+**Two kinds of empty cell, drawn differently.** A blank meant two things at once
+in the first build. On the date column the two flux rows are empty because the
+question does not apply: the flux's own past is not a measurement taken at the
+site. On the horizon columns the one-month row is empty at three, six and twelve
+months because a model forecasting that far ahead cannot have last month's flux.
+The first is marked *does not apply* and the second *not available*, both in the
+cell, and the description says what each means. Left blank they read alike, and
+both read as data that went missing.
+
+**The axis is labeled and the headings carry the unit.** "Predictable from the
+date (% of variation)" over the leading column and "Chosen by the models (% of
+rebuilds)" over the four horizons, each broken before its parenthetical so the
+pair reads in the same register, with "Percent" under each group. The tick at
+full scale reads 100 rather than 100%, since the unit is now said twice above it.
+
+**The gases are named in the same bordered box as the other figures**, seated
+above each panel rather than in its corner: the corner holds the first row, which
+here is a marked cell rather than the empty space the box needs. `panel_name`
+took an `x` override for this rather than the box being redrawn a second way.
+
+**The description outruns the shared allocation, and the canvas is sized around
+it.** It wraps to eight lines where the fixed block holds five. `wrap_description`
+and `canvas_area` took a `description_px` parameter so this one figure can declare
+the room it needs on a taller canvas; the shared default is untouched, because
+raising it would change the proportions of every other figure in the set. This is
+the only figure that uses the override.
+
 **The calendar share is a fifth column, not a row label.** Drawn as a leading
 column of bars to the left, separated by a gap: soil temperature 95%, air
 temperature 95%, precipitation 38%, water table 0.5%. That column happens to fall
@@ -1782,6 +1834,18 @@ predicts. It is a coincidence of the usage sort rather than its cause, and the
 description says so. These are the unlagged covariates over each gas's evaluated
 index, which is why the column is identical on both gas rows; the per-lag values
 in the table above differ slightly and are the ones to quote for a specific lag.
+
+**The date column repeats between the two gas panels, and that was left alone.**
+Its four values are properties of the measurements, not of either gas, so they
+are identical on both rows: four bars carrying two facts. Drawing it once was
+considered and rejected. A single column would have to sit in the gutter between
+the two panels, aligned with neither one's rows, and the alignment is the whole
+point — the reader compares the grey bar against the green bars on its own line.
+The only layout that removes the repetition is a single six-row grid with the two
+gases as paired bars inside each row, which collapses the four horizon panels
+into one and gives up the small multiples. The repetition is cheap, achromatic,
+and lets the carbon dioxide ranking be read against the date without travelling
+back up the figure.
 
 **Two hues, and the grey was measured rather than guessed.** Green `FITTED` for
 usage, achromatic `DATE_SHARE` for the calendar share, because the latter is a
