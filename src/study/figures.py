@@ -263,27 +263,30 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
     strip.bar(years[~inside], share[~inside], width=0.7, color=ps.OUTSIDE,
               edgecolor="white", linewidth=0.4, hatch=ps.OUTSIDE_HATCH)
     # A year wholly inside has a bar of zero height, which is a measured zero and
-    # not a missing one. It is marked flat and in the bars' own ink, so it reads
-    # as the bottom of that series rather than as a second quantity.
+    # not a missing one. Flat rather than round, so it reads as a bar of no height
+    # rather than as a point from another series, and blue because these are the
+    # same four years the panel above marks blue. Orange would say outside the
+    # range, which is the opposite of what the mark means.
     strip.plot(years[inside], np.zeros(inside.sum()), linestyle="none", marker="_",
-               markersize=5.2, markeredgewidth=1.8, color=ps.OUTSIDE,
+               markersize=5.2, markeredgewidth=1.8, color=ps.INSIDE,
                clip_on=False, zorder=4)
 
     # The strip carries two marks a reader cannot otherwise name: the hatching,
     # and a flat mark that means a measured zero rather than a missing year.
     strip_key = [
         Patch(facecolor=ps.OUTSIDE, edgecolor="white", hatch=ps.OUTSIDE_HATCH,
-              label="Share of the year outside the range"),
+              label="Share of the year outside"),
         Line2D([], [], linestyle="none", marker="_", markersize=5.2,
-               markeredgewidth=1.8, color=ps.OUTSIDE,
-               label="No months outside that year"),
+               markeredgewidth=1.8, color=ps.INSIDE,
+               label="No months outside"),
     ]
-    # Placed in the gap above the strip: its bars reach the top of the panel in
-    # nine of nineteen years, so there is no corner inside it that stays clear.
+    # Inside the frame, in the block the last six years leave clear. The strip is
+    # a secondary element and should not gain height to carry its own key, so the
+    # key is made small enough to fit what the bars already leave.
     ps.legend(strip, handles=strip_key, labels=[h.get_label() for h in strip_key],
-              loc="upper right", ncols=2, fontsize=7.4, borderpad=0.34,
-              labelspacing=0.24, handlelength=1.5, handletextpad=0.5,
-              columnspacing=1.1, framealpha=1.0, bbox_to_anchor=(0.995, 1.30))
+              loc="upper right", ncols=1, fontsize=6.4, borderpad=0.3,
+              labelspacing=0.2, handlelength=1.3, handletextpad=0.4,
+              framealpha=1.0, bbox_to_anchor=(0.995, 0.97))
     strip.set_ylim(0, 108)
     strip.set_yticks([0, 50, 100])
     strip.set_ylabel(ps.axis_label("Months outside", "%"))

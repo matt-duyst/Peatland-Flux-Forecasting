@@ -150,11 +150,13 @@ def test_support_is_shown_by_degree_as_well_as_by_verdict():
     ps.plt.close(fig)
 
 
-def test_a_year_with_no_months_outside_is_marked_in_the_bars_own_ink():
-    """A measured zero is not a missing bar, and must not read as a second series.
+def test_a_year_with_no_months_outside_is_marked_flat_and_in_blue():
+    """A measured zero is not a missing bar, and its ink must not contradict itself.
 
-    It was a blue dot among orange bars once, which read as a different quantity
-    rather than as the bottom of the same one.
+    Flat rather than round, so it reads as a bar of no height rather than as a
+    point from another series. Blue rather than orange, because orange means
+    outside the fitted range across this set and the mark means none outside;
+    these are the same years the panel above marks blue.
     """
     from matplotlib.colors import to_rgba
 
@@ -163,7 +165,8 @@ def test_a_year_with_no_months_outside_is_marked_in_the_bars_own_ink():
     flat = [line for line in strip.lines if line.get_marker() == "_"]
     assert flat, "the inside years are not marked at all"
     assert len(flat[0].get_xdata()) == 2
-    assert to_rgba(flat[0].get_color()) == to_rgba(ps.OUTSIDE)
+    assert to_rgba(flat[0].get_color()) == to_rgba(ps.INSIDE)
+    assert to_rgba(flat[0].get_color()) != to_rgba(ps.OUTSIDE)
     assert all(y == 0 for y in flat[0].get_ydata())
     ps.plt.close(fig)
 
@@ -172,17 +175,21 @@ def test_the_strip_names_both_of_its_marks():
     """The hatching and the flat mark are otherwise unexplained."""
     fig = figures.reconstruction_series(annual_frame())
     labels = [t.get_text() for t in fig.axes[1].get_legend().get_texts()]
-    assert any("outside the range" in label for label in labels)
+    assert any("Share of the year outside" in label for label in labels)
     assert any("No months outside" in label for label in labels)
     ps.plt.close(fig)
 
 
-def test_the_strip_legend_sits_clear_of_the_bars():
-    """Its bars reach the top of the panel in half the years, so it sits above."""
+def test_the_strip_legend_fits_inside_the_frame_without_covering_a_bar():
+    """The strip is secondary and must not gain height to carry its own key."""
     fig = figures.reconstruction_series(annual_frame())
     fig.canvas.draw()
-    main, strip = fig.axes[0], fig.axes[1]
+    strip = fig.axes[1]
+    frame = strip.get_window_extent()
     legend = strip.get_legend().get_window_extent()
-    assert legend.y0 >= strip.get_window_extent().y1, "the legend is over the bars"
-    assert legend.y1 <= main.get_window_extent().y0, "the legend is over the panel above"
+    assert legend.y1 <= frame.y1 and legend.y0 >= frame.y0, "the legend leaves the frame"
+    box = legend.transformed(strip.transData.inverted())
+    under = [bar.get_height() for bar in strip.patches
+             if box.x0 <= bar.get_x() + bar.get_width() / 2 <= box.x1]
+    assert box.y0 > max(under, default=0.0), "the legend covers a bar"
     ps.plt.close(fig)
