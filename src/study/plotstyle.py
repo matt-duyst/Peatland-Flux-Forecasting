@@ -303,6 +303,19 @@ def emphasize(text: str, terms: tuple[str, ...]) -> str:
     return text
 
 
+def wrap_title(text: str, width_px: int) -> str:
+    """Wrap a title to the canvas width.
+
+    Titles are one line in this set and the block is sized for one, but a title
+    naming both the site and what is being varied can outrun the canvas. It wraps
+    rather than being cut or shrunk: the size carries the hierarchy, and a title
+    that runs off the edge is the one failure a reader cannot work around.
+    """
+    drawable_points = (width_px - MARGIN_PX["left"] - MARGIN_PX["right"]) / DPI * 72.0
+    width = max(20, int(drawable_points / (_CHAR_WIDTH * 1.09 * TITLE_SIZE)))
+    return textwrap.fill(" ".join(text.split()), width=width)
+
+
 def wrap_subtitle(text: str, width_px: int) -> str:
     """Wrap a subtitle to the canvas width.
 
@@ -346,11 +359,13 @@ def canvas_area(text: FigureText, size: str = "wide",
 
     body = wrap_description(text.description, width_px, text.emphasize)
     heading = wrap_subtitle(text.subtitle, width_px)
+    title = wrap_title(text.title, width_px)
 
     subtitle_line_px = SUBTITLE_SIZE * 1.5 / 72.0 * DPI
+    title_px = (title.count("\n") + 1) * TITLE_SIZE * 1.9 / 72.0 * DPI
     title_block_px = max(
         TITLE_BLOCK_PX,
-        TITLE_SIZE * 1.9 / 72.0 * DPI + (heading.count("\n") + 1) * subtitle_line_px + 18,
+        title_px + (heading.count("\n") + 1) * subtitle_line_px + 18,
     )
 
     # Wider tick labels need a wider margin, or a two-line axis name runs off the
@@ -364,9 +379,9 @@ def canvas_area(text: FigureText, size: str = "wide",
     ) / height_px
 
     middle = (left + right) / 2
-    fig.text(middle, 1 - MARGIN_PX["top"] / height_px, text.title,
-             ha="center", va="top", fontsize=TITLE_SIZE, fontweight="bold", color=INK)
-    fig.text(middle, 1 - (MARGIN_PX["top"] + TITLE_SIZE * 1.9 / 72 * DPI) / height_px,
+    fig.text(middle, 1 - MARGIN_PX["top"] / height_px, title, ha="center", va="top",
+             fontsize=TITLE_SIZE, fontweight="bold", color=INK, linespacing=1.35)
+    fig.text(middle, 1 - (MARGIN_PX["top"] + title_px) / height_px,
              emphasize(heading, text.emphasize), ha="center", va="top",
              fontsize=SUBTITLE_SIZE, color=INK, linespacing=1.5)
     fig.text(left, (MARGIN_PX["bottom"] + DESCRIPTION_BLOCK_PX) / height_px,

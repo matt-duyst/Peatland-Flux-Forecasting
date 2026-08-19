@@ -294,9 +294,10 @@ unweighted and 2.43 weighted, with holdout ranges of 2.33 to 3.10 and 2.33 to
 under both estimators and across all four holdouts, and the whole holdout range
 also sits inside the 2.3 to 3.1 the paper reports across its own years. The
 agreement therefore does not depend on which estimator is used or on which block
-of the record is withheld. Q10 is the one coefficient in this model that behaves
-as a property of the site rather than of the sample, which is the contrast the
-water table result below draws.
+of the record is withheld. Q10 is the coefficient in this model that behaves most
+nearly as a property of the site rather than of the sample, which is the contrast
+the water table result below draws. Most nearly rather than entirely: narrowing
+the fitted range moves it 16% under weighting, against the water table's 51%.
 
 Water table enters clamped to the range seen in training: beyond that range the
 term holds at its edge value. Deventer et al. (2019) report that the water table
@@ -431,8 +432,19 @@ the share removed of +1.00 at p below 0.0001.
 
 **The verdict is unchanged on both windows and under both weightings**: the
 coefficient drifts by more than a quarter of its full-range value and trends
-monotonically as the range narrows. The Q10 stays stable across every path, so
-the instability remains specific to water table.
+monotonically as the range narrows.
+
+**The Q10 along the same path is a contrast of degree under weighting and of kind
+only without it, and this note previously said it stays stable across every
+path.** Weighted, it runs 2.412, 2.438, 2.656, 2.757, 2.785 across the five
+steps: monotone like the water table, a **16%** rise on the coefficient scale
+against the water table's 51%, and a final value that sits **above the upper
+bound of its own full-range interval**, 2.785 against 2.700. Unweighted it is
+genuinely flat, running 2.565 to 2.580 with a 2.1% spread and no monotone trend.
+So the control does its job — a third of the movement, and none at all under the
+plainer estimator — but "stable across every path" overstated it, and the
+coefficient stability figure is drawn and captioned as 51 against 16 rather than
+as movement against none.
 
 A criterion requiring only that each step stay inside the full-range interval
 and keep its sign does not discriminate here. That interval spans 2.064 to 4.245
@@ -1023,12 +1035,32 @@ transition is a single step of −2.25 m between 2019-12 and 2020-01, with no
 intervening values, and the series afterwards is as smooth as it was before.
 That is the signature of a change of datum or of gauge, not of hydrology.
 
-Nothing in this study touches it. The fit window ends 2019-12 and the
-reconstruction ends 2009-03, so no fitted coefficient, holdout or reconstructed
-year draws on a post-2019 value. It is recorded because it falls just outside
-both windows and will be the first thing anyone extending this study meets: the
-2020 and 2021 methane months cannot be added without resolving the datum first,
-and a naive extension would read the step as a two-meter drawdown.
+**This paragraph used to say that nothing in the study touched it. That was
+true of the reconstruction half and false of the forecasting half.** The fit
+window ends 2019-12 and the reconstruction ends 2009-03, so no fitted
+coefficient, holdout or reconstructed year draws on a post-2019 value. The
+forecasting half runs to 2021, and `forecast_models.load_covariates` read the
+water table column straight through the step until this was caught.
+
+**What it reached, and what it did not.** The models were untouched. Air
+temperature and precipitation are absent for every month from 2020-01, so every
+design row needing them was already dropped, and rerunning both gases end to end
+after the cut reproduced all six forecast files byte for byte. What the step did
+reach was every quantity computed from the water table column on its own, where
+nothing else forced those months out: the share of the water table the calendar
+accounts for, which read **0.5% with the step and 3.8% to 6.0% without it**, and the
+partial correlations, which changed sign. Both are corrected above and in the
+figure. Twelve months in 141, all at one end of the record and all two metres
+out, moved a headline number by a factor of ten.
+
+**The cut is now in the code rather than in a caveat.**
+`ingest.covariates.before_datum_break` masks the water table from 2020-01 onward,
+and the forecasting half and the figure that reports calendar shares both apply
+it. The reconstruction half is unaffected either way, since no month after the
+break carries a complete covariate set. It is still worth knowing for anyone
+extending this study: the 2020 and 2021 methane months cannot be added without
+resolving the datum first, and a naive extension would read the step as a
+two-metre drawdown.
 
 The same series carries the two 2019 months described under support, which are
 treated as missing there.
@@ -1481,10 +1513,12 @@ lag on the three seasonal terms:
 | methane | soil temperature, lag 12 | 0.954 | 0.174 | 0.049 |
 | methane | air temperature, lag 12 | 0.954 | 0.032 | 0.729 |
 | methane | precipitation, lag 12 | 0.397 | 0.152 | 0.100 |
+| methane | water table, lag 1 | 0.042 | **0.245** | 0.0075 |
+| methane | water table, lag 2 | 0.044 | 0.220 | 0.017 |
 | carbon dioxide | air temperature, lag 6 | 0.950 | **0.277** | 0.0015 |
 | carbon dioxide | soil temperature, lag 12 | 0.953 | 0.099 | 0.236 |
 | carbon dioxide | air temperature, lag 12 | 0.950 | 0.139 | 0.115 |
-| carbon dioxide | water table, lag 12 | 0.005 | −0.157 | 0.063 |
+| carbon dioxide | water table, lag 12 | 0.045 | **0.250** | 0.0042 |
 | carbon dioxide | precipitation, lag 12 | 0.382 | −0.038 | 0.667 |
 
 **Every temperature lag that survived screening is between 94.7% and 95.4%
@@ -1498,17 +1532,30 @@ lag 1 (r = 0.268) and carbon dioxide against air temperature at lag 6 (r = 0.277
 about 7% of the flux's non-seasonal variance in the two cases where it exists at
 all, and none elsewhere.
 
-Water table is the mirror image and is worth stating separately. It is the one
-covariate the calendar cannot explain, at **0.2% for methane** and **0.5% for
-carbon dioxide**, so it is genuinely non-seasonal information. An earlier version
-of this line gave 0.5% for both, and a draft writeup carried that error forward;
-the values come from `scripts/model_examinations.py`, which reports 0.002 for
-methane at lags 1 and 2 and 0.005 for carbon dioxide at lag 12. It is also the one that
-correlates least with what is left of the flux: r = 0.006 for methane at lag 1
-and −0.157 for carbon dioxide at lag 12, neither significant. **The covariate
-that carries independent information carries no usable signal, and the covariates
-that carry signal are the season.** That is the same wall the reconstruction work
-hit from the other side.
+Water table is the one covariate the calendar cannot explain, at **4.2% for
+methane at lag 1** and **4.5% for carbon dioxide at lag 12**, against 95% for
+temperature, so it is genuinely non-seasonal information.
+
+**These water table figures are corrections, and they change what this section
+concludes.** The values published here before were 0.2% and 0.5% for the calendar
+share and r = 0.006 and −0.157 for the partial correlation, and all four were
+artifacts of the 2020 datum step described under data caveats: twelve months
+sitting two metres below the rest of the record, read as hydrology. Cut at the
+break, the water table's partial correlation with the deseasonalized flux is
+**+0.245 for methane at lag 1 (p = 0.0075)** and **+0.250 for carbon dioxide at
+lag 12 (p = 0.0042)** — the same sign, and very nearly the same size, as the two
+temperature terms that do clear the threshold. Neither water table term clears
+the Bonferroni threshold of 0.0029, so neither is claimed as established; but the
+earlier statement that **the covariate carrying independent information carries no
+usable signal is withdrawn.** It carried a signal of ordinary size and a fitted
+error was hiding it.
+
+What survives, and it is the sharper claim, is this. The water table is not
+disqualified by an absence of correlation. It is disqualified by the coefficient
+stability result: the term does carry signal inside the fitted range, and its
+coefficient still moves by half its own value as that range narrows, so it cannot
+be projected past the range's edge. Correlation was never the obstacle. Support
+was.
 
 Two cautions on reading the survival counts. Boruta is all-relevant rather than
 minimal-optimal, so two predictors carrying the same information both survive and
@@ -1529,17 +1576,49 @@ temperature dominant wherever seasonal water table variation was small.
 **Their condition is testable, not qualitative.** Sites where the water table
 dominates tend to have a greater ratio in the variation of the water table
 relative to the variation in air temperature. This site sits at the other end of
-that ratio. Its water table's month-of-year means span **0.333 m** and the three
-seasonal terms fitted to it span **0.139 m**, against a full observed range of
-**2.380 m** over the 141 months with a reading; air temperature's month-of-year
-means span **32.8 °C**. Put as each variable's seasonal swing relative to its own
-full range, the water table is **0.140** and air temperature is **0.813**, a ratio
-of about one to six. The water table here moves, and moves a great deal, but
-almost none of that movement is seasonal — which is the same fact as its 0.5%
-calendar share, seen in metres rather than as a variance share. **This is the
-regime their synthesis predicts temperature dominance in**, so the finding that
-the models reach for temperature and not for the water table is what the
-multi-site work expects of a site like this one, not an anomaly of this record.
+that ratio. Over the whole clean record, 1990-01 to 2019-12 less the two months
+established as instrument error, the water table's month-of-year means span
+**0.135 m** and the three seasonal terms fitted to it span **0.101 m**, against a
+full observed span of **0.680 m**, from 413.07 to 413.75. Air temperature's
+month-of-year means span **32.65 °C** against a full span of 42.47 °C. Put as each
+variable's seasonal swing relative to its own full span, the water table is
+**0.199** and air temperature **0.769**, a ratio of about one to four. The water
+table here moves, and most of that movement is not seasonal, which is the same
+fact as its small calendar share seen in metres rather than as a variance share.
+**This is the regime their synthesis predicts temperature dominance in**, so the
+finding that the models reach for temperature and not for the water table is what
+the multi-site work expects of a site like this one, not an anomaly of this
+record.
+
+**An earlier version of this paragraph was wrong twice over, and both errors are
+worth keeping visible.** It reported a full observed range of **2.380 m**, which
+is the 2020 datum step described under data caveats: the series was read across a
+change of gauge, and two metres of instrument became two metres of hydrology. It
+then reported a month-of-year span of **0.333 m**, computed on the same
+contaminated series. Neither figure survives. The conclusion does, at 0.199
+against 0.769 rather than 0.140 against 0.813, which is the useful part: the
+ratio is robust to the error that produced it, and that is luck rather than
+method.
+
+### Three water table spans, and which is which
+
+Three different quantities in these notes are the "range" of the water table, two
+of them printed **0.33** at some point, and they have been used interchangeably.
+They are not the same thing and no argument should move between them.
+
+| quantity | value | what it is |
+|---|---|---|
+| Full observed span | **0.680 m** | 413.07 to 413.75, 1990-2019, less the two instrument-artifact months. The site's whole hydrological range. |
+| Seasonal swing | **0.135 m** | The span of the month-of-year means. What the calendar accounts for. |
+| Fitted seasonal cycle | **0.101 m** | The span of the three seasonal terms fitted to it. The same idea, estimated rather than binned. |
+| Fit window span | **0.330 m** | 413.13 to 413.46 over the 115 months the model was fitted on. The evidence the water table coefficient rests on. |
+
+The **0.33 m cited throughout as "the fitted water table range" is the fourth
+row**, the span of the fit window, and it is the right number for any statement
+about extrapolation or coefficient support. The **0.333 m** that appeared in the
+Knox paragraph was the second row computed on the contaminated series; corrected,
+that row is 0.135 m and the resemblance disappears. Two quantities printing the
+same digits is why the conflation went unnoticed.
 
 **How much any single driver carries, for scale.** At site level they report a
 top predictor generally explaining between 10 and 50 percent of variance. That is
@@ -1857,7 +1936,7 @@ It reached eight lines, longer than any other figure in the set, and needed a
 Cut, it fits the shared allocation, and the override has been removed from
 `plotstyle` rather than left behind unused. What stays is what a reader needs
 while looking at the panel: the two blank-cell meanings, which are marks on the
-panel; the 95% and 0.5%, which are what the grey bars mean; and the carbon
+panel; the 95% and 5%, which are what the grey bars mean; and the carbon
 dioxide three-month result, which is the panel's most visible feature. A test
 asserts it fits the block every other figure has.
 
@@ -1871,27 +1950,33 @@ them up.
    the figure and not for reading it, and it is the mechanism behind the ordering
    rather than something the ordering shows.
 2. **That the water table explains almost nothing left in the flux once the
-   seasonal cycle is removed.** This is the partial correlation analysis in the
-   section above (r = 0.006 for methane at lag 1, −0.157 for carbon dioxide at
-   lag 12, neither significant). The panel does not display it, and a description
-   that asserts it asks the reader to take a second analysis on trust.
+   seasonal cycle is removed.** Cut from the description because the panel does
+   not display it and a description asserting it asks the reader to take a second
+   analysis on trust. **It then turned out to be false**: on the corrected series
+   the partial correlations are +0.245 and +0.250, and the claim is withdrawn in
+   the section above rather than carried into the writeup. Cutting it from the
+   panel for a presentational reason is the only thing that kept it off a figure.
 3. **That the same pattern appears at other wetland sites.** Knox et al. (2021),
    recorded above with the ratio that makes this site fit. It is context for what
    the figure means in the field, which is the writeup's job.
 
 **The calendar share is a fifth column, not a row label.** Drawn as a leading
 column of bars to the left, separated by a gap: soil temperature 95%, air
-temperature 95%, precipitation 38%, water table 0.5%. That column happens to fall
-in the same order as the usage column, which is the figure's whole argument put
-in one glance — the measurements the models chose are the ones the date already
-predicts. It is a coincidence of the usage sort rather than its cause, and the
-description says so. These are the unlagged covariates over each gas's evaluated
-index, which is why the column is identical on both gas rows; the per-lag values
-in the table above differ slightly and are the ones to quote for a specific lag.
+temperature 95%, precipitation 40% and 38%, water table 3.8% for methane and 6.0%
+for carbon dioxide. That column happens to fall in the same order as the usage column, which
+is the figure's whole argument put in one glance — the measurements the models
+chose are the ones the date already predicts. It is a coincidence of the usage
+sort rather than its cause, and the description says so. These are the unlagged
+covariates over each gas's evaluated index, so the two gas rows differ slightly;
+the per-lag values in the table above are the ones to quote for a specific lag.
+**The water table figures here were 0.5% on both rows until the datum step was
+cut out.** The argument is unchanged, 95 against 5 saying what 95 against 0.5
+said, but the number a reader takes away is ten times different.
 
-**The date column repeats between the two gas panels, and that was left alone.**
-Its four values are properties of the measurements, not of either gas, so they
-are identical on both rows: four bars carrying two facts. Drawing it once was
+**The date column nearly repeats between the two gas panels, and that was left
+alone.** Its four values are properties of the measurements rather than of either
+gas, and differ between the rows only because each gas is evaluated over a
+different set of months: four bars carrying two facts. Drawing it once was
 considered and rejected. A single column would have to sit in the gutter between
 the two panels, aligned with neither one's rows, and the alignment is the whole
 point — the reader compares the grey bar against the green bars on its own line.
@@ -1929,10 +2014,11 @@ study, and an empty panel would read as a figure that failed rather than as a
 finding. A light rule separates them from the four site measurements, since the
 flux's own past is not something measured at the site alongside the others.
 
-**A share below one percent is printed to one decimal.** At the figure's usual
-rounding the water table's calendar share would read "0", which is the one number
-on the page that must not round away: 0.5% is the reason it is the one covariate
-carrying independent information.
+**A rounding rule was added and then removed.** Shares below one percent were
+printed to one decimal, so the water table's 0.5% would not round to "0". With
+the datum step cut out the smallest share on the panel is 1.2%, the rule became
+unreachable, and it went along with its test rather than sitting in the module
+against a case that no longer arises.
 
 **No internal vocabulary anywhere on the figure.** Not Boruta, not fold, not
 survival, not lag, not screening, not covariate. A test asserts their absence
@@ -1955,6 +2041,72 @@ methane at lag 1 and −0.157 for carbon dioxide at lag 12, neither significant 
 and which stay in these notes. Significance marks, since the binomial threshold
 is the published rule rather than a calibrated error rate and stars would imply
 otherwise. A colorbar, since every bar prints its value.
+
+### The coefficient stability figure
+
+`figures/coefficient_stability.png`, built by `study.figures.coefficient_stability`
+from `data/processed/coefficient_stability.csv`, which `scripts/reconstruct.py`
+now writes for both treatments.
+
+**There is no standard figure for this experiment.** A search found none. The
+sensitivity analysis literature varies model inputs to see how outputs respond,
+which is a different question; the extrapolation literature concerns prediction
+accuracy beyond the training range rather than coefficient stability within it.
+The design is from first principles, with one device adopted: Bartley et al.
+(2019), *PLOS One*, shade regions of extrapolation in darker grey beside
+prediction intervals, using leverage to set the boundary. Here the shaded region
+is what the reconstruction requires the coefficient to hold across.
+
+**The axis is the water table, not the experiment.** Metres from the wettest
+month in the full fit, so zero is the wet edge of the evidence and the five
+refits fall at 0.00, −0.05, −0.07, −0.10 and −0.12. That one decision is what
+makes the qualification visible rather than asserted: every refit occupies
+**0.12 m** on the left, and the region the reconstruction needs runs **0.29 m**
+to the right of everything, two and a half times wider than the whole experiment,
+with nothing drawn inside it. The share dropped is annotated above each point, so
+the experimental knob is still legible.
+
+**The holdout bracket sits against the shaded region.** The wettest-decile test
+trained to 413.41 and reached 413.46, so it demonstrated transfer over 0.05 m
+against the 0.29 m required. Drawn as two lengths on one axis, the 17% is a thing
+a reader measures by eye rather than a number to be taken on trust.
+
+**Both panels carry one y-axis, each coefficient as a percentage of its own value
+on the whole range.** Scaled to their own data instead, a 16% drift and a 51%
+drift would draw the same picture and the control panel would prove nothing. The
+cost is that the soil temperature panel sits in the lower half of a window set by
+the water table's widest interval, and that emptiness is the finding.
+
+**Two treatments, achromatic, separated by line style.** They are one analysis run
+twice and the finding is that neither survives, so hue would have made them read
+as two methods with a winner. The description says so in as many words.
+
+**The criterion is not on the panel.** It takes four clauses to state, and a
+figure carrying it would imply the verdict was obvious. The description says
+instead that every step's interval overlaps the first, so no single step is
+decisive and the evidence is that the coefficient climbs at all four steps and
+never once falls. A test asserts that none of the criterion's vocabulary reaches
+the figure.
+
+**What was left out.** The rank correlation of +1.00 at p = 1.4 × 10⁻²⁴, which is
+a correlation on five points and would read as more than it is. The month counts
+per step, 115 down to 69. The three reconstruction variants. Knox et al. (2021)
+and the nuclear verification study. The wettest-decile tie instability. And any
+curve through the shaded region, which is the one thing the figure exists to
+refuse.
+
+**A title that outran the canvas.** This is the longest title in the set and it
+overflowed the drawing area. `plotstyle.wrap_title` now wraps a title and sizes
+the block from what it wraps to, as the subtitle block already did. No other
+figure's title wraps, so nothing else changed shape.
+
+**Independent support for the general case.** A nuclear verification study runs
+structurally the same experiment, retraining on deliberately narrowed parameter
+ranges and finding that models trained on narrow ranges struggle beyond them
+while wider ranges do not diverge. Their conclusion, that this favours broader
+training ranges, is this study's finding in the general case. Recorded as evidence
+that the result is not peculiar to this site; the citation is not pinned and must
+be before a writeup carries it.
 
 ### Observed against predicted, and two results that came out of drawing it
 
@@ -2109,8 +2261,9 @@ Two of the sharper numbers this study once reported did not survive its own
 check. Backward-transfer coverage of 62.5% and a water table coefficient never
 distinguishable from zero were both substantially artifacts of two months of
 instrument error, and both dissolve on the 115-month window. **The conclusion
-does not depend on either.** Q10 is stable and inside the published interval on
-every window, weighting and holdout; the water table coefficient is unstable and
+does not depend on either.** Q10 is inside the published interval of 1.9 to 4.3
+on every window, weighting and holdout, and moves a third as far as the water
+table when the fitted range is narrowed; the water table coefficient is unstable and
 monotone on every one; the reconstruction moves by at most 4.1% between windows;
 and roughly half the reconstruction period lies outside the fitted range either
 way. What changed is the strength of two supporting claims, not the finding.

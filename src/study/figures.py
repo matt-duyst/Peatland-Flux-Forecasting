@@ -893,7 +893,7 @@ MEASUREMENTS_TEXT = ps.FigureText(
         "not apply to the flux's own past values, which are not measurements taken "
         "at the site. Last month's flux is unavailable to a model forecasting three "
         "or more months ahead. Where a grey bar does stand, it is what three "
-        "seasonal terms account for: 95% of soil and air temperature, and 0.5% of "
+        "seasonal terms account for: 95% of soil and air temperature, and about 5% of "
         "the water table. The sharpest case is carbon dioxide three months ahead, "
         "where the models chose none of the four measurements in any rebuild and "
         "kept only the flux's own value from a year earlier."
@@ -956,11 +956,8 @@ def _draw_usage_panel(
             edgecolor="none", zorder=2)
     for position, height in zip(positions[drawn], heights[drawn]):
         share = 100 * height
-        # A tenth only where rounding would otherwise print a share that never
-        # happened as one that never could: the water table is 0.5, not 0.
-        ax.text(share + 4.0, position, f"{share:.1f}" if 0 < share < 1 else f"{share:.0f}",
-                va="center", ha="left", fontsize=ps.TICK_SIZE - 1.5,
-                color=ps.MUTED, zorder=3)
+        ax.text(share + 4.0, position, f"{share:.0f}", va="center", ha="left",
+                fontsize=ps.TICK_SIZE - 1.5, color=ps.MUTED, zorder=3)
     for position in positions[~drawn]:
         ax.text(3.0, position, blank, va="center", ha="left", style="italic",
                 fontsize=ps.TICK_SIZE - 2.0, color=ps.MUTED, zorder=3)
@@ -1061,4 +1058,199 @@ def measurements_used(panels: dict[str, pd.DataFrame]) -> Figure:
                  linespacing=1.4)
         fig.text(middle, bottom - 34 / height_px, axis, ha="center", va="top",
                  fontsize=ps.LABEL_SIZE, color=ps.MUTED)
+    return fig
+
+
+STABILITY_TEXT = ps.FigureText(
+    title=("How the water table coefficient at Marcell Bog Lake Peatland moves "
+           "as its supporting range narrows"),
+    subtitle=(
+        "The model was fitted again and again, each time on a drier slice of its "
+        "own record: first all 115 months, then the same months with the wettest "
+        "tenth taken away, and on to the wettest two fifths. The water table "
+        "coefficient is how much predicted emission changes per metre of water "
+        "table, and each point is what that coefficient came out as, drawn against "
+        "the wettest month still left in the fit. It climbs at every step, while "
+        "the soil temperature coefficient beside it moves a third as far. A "
+        "coefficient that moves as its supporting range narrows is describing the "
+        "months it was fitted on rather than the peatland, which is why it cannot "
+        "be carried into the shaded region, where the reconstruction needs it."
+    ),
+    description=(
+        "The same analysis is drawn twice, once weighting each month by how well it "
+        "was measured and once not. Both fail and neither is the better treatment. "
+        "Weighted, the coefficient rises from 2.704 to 4.077, half again what it "
+        "started at; unweighted, from 2.385 to 3.299. Every step's range overlaps "
+        "the first, so no single step is decisive: the evidence is that it climbs "
+        "at all four and never once falls. The soil temperature coefficient moves "
+        "16% along the same path against the water table's 51%, and only without "
+        "weighting is it flat. The bracket is how far the wettest months held out "
+        "of the fit reached, 0.05 m against the 0.29 m the reconstruction requires."
+    ),
+)
+
+#: The two treatments, achromatic and separated by line style. Hue would make them
+#: read as two methods being compared, and they are one analysis run twice: the
+#: finding is that neither survives, not that one of them does.
+TREATMENTS = (
+    ("weighted", "with weighting", {"color": ps.INK, "linestyle": "-", "linewidth": 1.8,
+                                    "marker": "o", "markersize": 6.0}),
+    ("unweighted", "without weighting", {"color": "#767676", "linestyle": (0, (7, 2, 2, 2)),
+                               "linewidth": 1.5, "marker": "^", "markersize": 6.2}),
+)
+
+#: The two terms, and the columns each is carried in. Soil temperature is here as
+#: the control: it is fitted on exactly the same narrowing months, so whatever it
+#: does is what refitting does on its own.
+STABILITY_TERMS = (
+    ("Water table", "water_table_coef", "water_table_lo", "water_table_hi"),
+    ("Soil temperature", "q10", "q10_lo", "q10_hi"),
+)
+
+STABILITY_AXIS = "Coefficient, as a percentage of its value on the whole range"
+STABILITY_X_AXIS = "Water table, in metres from the wettest month the model was fitted on"
+REQUIRED_LABEL = "what the reconstruction requires"
+TESTED_LABEL = "held out and tested"
+REFIT_LABEL = "every refit"
+
+
+def stability_paths(frame: pd.DataFrame) -> dict[str, pd.DataFrame]:
+    """The coefficient table split by treatment, each ordered driest last."""
+    return {
+        treatment: part.sort_values("dropped_wettest_pct").reset_index(drop=True)
+        for treatment, part in frame.groupby("treatment")
+    }
+
+
+#: Pixel allocations for the stability figure. The strip is the measuring device
+#: under the panels: it carries the three spans in metres, which is where the
+#: qualification lives, and keeps the panels free of anything but the paths.
+STABILITY_STRIP_PX = 78
+STABILITY_GAP_PX = 30
+STABILITY_HEAD_PX = 44
+
+
+def _draw_stability_panel(ax, paths, term, required, limits) -> None:
+    """One term's coefficient against the wet edge of the range it was fitted on."""
+    _, value, low, high = term
+    ax.axvspan(0.0, required, color=ps.OUTSIDE, alpha=0.10, linewidth=0, zorder=0)
+    ax.axhline(100.0, color=ps.GRID, linewidth=1.0, zorder=1)
+
+    for treatment, label, style in TREATMENTS:
+        frame = paths[treatment]
+        anchor = float(frame["wte_max"].iloc[0])   # the full fit, before any dropping
+        base = float(frame[value].iloc[0])
+        x = frame["wte_max"].to_numpy() - anchor
+        y = 100 * frame[value].to_numpy() / base
+        lower = y - 100 * frame[low].to_numpy() / base
+        upper = 100 * frame[high].to_numpy() / base - y
+        ax.errorbar(x, y, yerr=np.vstack([lower, upper]), elinewidth=1.0,
+                    capsize=3.5, ecolor=style["color"], zorder=3, label=label, **style,
+                    markerfacecolor="white", markeredgewidth=1.4)
+
+    ax.set_ylim(*limits)
+    ax.tick_params(top=False, right=False)
+    ax.grid(axis="y", color=ps.GRID, linewidth=0.6, zorder=0)
+    ax.set_axisbelow(True)
+    for side in ("top", "right"):
+        ax.spines[side].set_visible(False)
+    for side in ("left", "bottom"):
+        ax.spines[side].set_color(ps.BOUNDARY)
+
+
+def _draw_stability_strip(ax, spans, required, tested) -> None:
+    """The three spans in metres: what was fitted, what was tested, what is asked."""
+    ax.set_ylim(0, 1)
+    for name, start, end, y in spans:
+        ax.plot([start, end], [y, y], color=ps.BOUNDARY, linewidth=1.2, zorder=3)
+        for edge in (start, end):
+            ax.plot([edge, edge], [y - 0.13, y + 0.13], color=ps.BOUNDARY,
+                    linewidth=1.2, zorder=3)
+        ax.text((start + end) / 2, y + 0.22, name, ha="center", va="bottom",
+                fontsize=ps.ANNOTATION_SIZE, color=ps.MUTED, zorder=4)
+    ax.axvspan(0.0, required, color=ps.OUTSIDE, alpha=0.10, linewidth=0, zorder=0)
+    ax.set_yticks([])
+    ax.tick_params(top=False, right=False, left=False)
+    for side in ("top", "right", "left"):
+        ax.spines[side].set_visible(False)
+    ax.spines["bottom"].set_color(ps.BOUNDARY)
+
+
+def coefficient_stability(paths: dict[str, pd.DataFrame], required: float,
+                          tested: float) -> Figure:
+    """The water table coefficient as the wet end of its evidence is taken away.
+
+    Drawn against the water table itself rather than against the share of months
+    removed, so the region the reconstruction has to reach can be shaded on the
+    same axis. Every refit occupies the narrow band on the left; the shaded region
+    is what the reconstruction asks the coefficient to hold across, and nothing is
+    drawn inside it because nothing was measured there.
+
+    Both panels carry the same y-axis, each coefficient as a percentage of its own
+    value on the whole range. Scaled to their own data instead, a sixteen percent
+    drift and a fifty-one percent drift would draw the same picture.
+    """
+    fig, (left, bottom, width, height) = ps.canvas_area(STABILITY_TEXT, size="stacked")
+    width_px, height_px = ps.SIZES["stacked"]
+    strip = STABILITY_STRIP_PX / height_px
+    gap = STABILITY_GAP_PX / height_px
+    head = STABILITY_HEAD_PX / height_px
+    panel_height = (height - strip - 2 * gap - head) / 2
+
+    reference = paths[TREATMENTS[0][0]]
+    anchor = float(reference["wte_max"].iloc[0])
+    x = reference["wte_max"].to_numpy() - anchor
+    pad = 0.06 * (required - x.min())
+    span = (x.min() - pad, required + pad)
+
+    # One y-window for both panels, from the widest interval either of them holds.
+    edges = []
+    for _, value, low, high in STABILITY_TERMS:
+        for treatment, _, _ in TREATMENTS:
+            frame = paths[treatment]
+            base = float(frame[value].iloc[0])
+            edges += [100 * frame[low].min() / base, 100 * frame[high].max() / base]
+    room = 0.05 * (max(edges) - min(edges))
+    limits = (min(edges) - room, max(edges) + room)
+
+    axes = []
+    for index, term in enumerate(STABILITY_TERMS):
+        base = bottom + strip + gap + (1 - index) * (panel_height + gap)
+        ax = fig.add_axes((left, base, width, panel_height))
+        _draw_stability_panel(ax, paths, term, required, limits)
+        ax.set_xlim(*span)
+        ax.set_xticklabels([])
+        ps.panel_name(ax, term[0])
+        if index == 0:
+            # Seated in the clear ground between the paths and the shaded region,
+            # which is the one place on either panel that carries nothing.
+            ax.legend(loc="upper center", bbox_to_anchor=(0.26, 1.0), frameon=False,
+                      fontsize=ps.LEGEND_SIZE, handlelength=2.6, labelspacing=0.55,
+                      borderaxespad=0.6)
+        axes.append(ax)
+
+    # The shares that produced each point, above the top panel: the experiment is
+    # what was done, and the axis below is what it left behind.
+    top = bottom + height
+    for position, share in zip(x, reference["dropped_wettest_pct"]):
+        fig.text(left + width * (position - span[0]) / (span[1] - span[0]),
+                 top - head + 0.010, "none" if share == 0 else f"{share:.0f}%",
+                 ha="center", va="bottom", fontsize=ps.ANNOTATION_SIZE, color=ps.MUTED)
+    fig.text(left + width * (x.mean() - span[0]) / (span[1] - span[0]),
+             top - head + 0.032, "wettest months dropped from the fit",
+             ha="center", va="bottom", fontsize=ps.ANNOTATION_SIZE, color=ps.MUTED)
+
+    strip_ax = fig.add_axes((left, bottom, width, strip))
+    _draw_stability_strip(
+        strip_ax,
+        ((f"{REFIT_LABEL}, {abs(x.min()):.2f} m", x.min(), 0.0, 0.70),
+         (f"{REQUIRED_LABEL}, {required:.2f} m", 0.0, required, 0.70),
+         (f"{TESTED_LABEL}, {tested:.2f} m", -tested, 0.0, 0.18)),
+        required, tested)
+    strip_ax.set_xlim(*span)
+    strip_ax.set_xlabel(STABILITY_X_AXIS, fontsize=ps.LABEL_SIZE, color=ps.INK, labelpad=8)
+
+    fig.text(left - 52 / width_px, bottom + strip + gap + panel_height + gap / 2,
+             STABILITY_AXIS, rotation=90, ha="right", va="center",
+             fontsize=ps.LABEL_SIZE, color=ps.INK)
     return fig

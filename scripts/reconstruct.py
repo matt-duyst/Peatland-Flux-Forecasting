@@ -57,14 +57,32 @@ def main() -> None:
     iv = weighting.inverse_variance_weights(monthly).reindex(fit_months).dropna()
 
     heading("WHY THE WATER TABLE TERM CANNOT BE PROJECTED")
-    path = stability.coefficient_path(cov, monthly, fit_months, weights=iv)
-    print(path[["dropped_wettest_pct", "n_months", "wte_max", "water_table_coef",
-                "water_table_lo", "water_table_hi"]].round(3).to_string(index=False))
+    # Both treatments, because the point is that neither survives rather than
+    # that one of them does. Written out as well as printed: the figure reads the
+    # same table these numbers come from, as every other figure in the set does.
+    paths = {}
+    for treatment, w in (("weighted", iv), ("unweighted", None)):
+        paths[treatment] = stability.coefficient_path(cov, monthly, fit_months, weights=w)
+    path = paths["weighted"]
+    stacked = pd.concat(
+        [frame.assign(treatment=name) for name, frame in paths.items()], ignore_index=True
+    )
+    stacked.insert(0, "treatment", stacked.pop("treatment"))
+    stacked.to_csv(paths_out := (Path(__file__).resolve().parents[1]
+                                 / "data/processed/coefficient_stability.csv"), index=False)
+
+    for treatment, frame in paths.items():
+        print(f"\n  {treatment}")
+        print(frame[["dropped_wettest_pct", "n_months", "wte_max", "water_table_coef",
+                     "water_table_lo", "water_table_hi", "q10", "q10_lo", "q10_hi"]]
+              .round(3).to_string(index=False))
+        outcome = stability.verdict(frame)
+        print(f"    stable: {outcome['stable']}")
+        for failure in outcome["failures"]:
+            print(f"      fails because {failure}")
     result = stability.verdict(path)
     print(f"\n  seed {stability.SEED}, 500 bootstrap resamples per step")
-    print(f"  stable: {result['stable']}")
-    for failure in result["failures"]:
-        print(f"    fails because {failure}")
+    print(f"  wrote {paths_out.relative_to(Path(__file__).resolve().parents[1])}")
     print(f"  therefore {result['bracket_meaning']}")
     print("\n  The spread across variants below is a SENSITIVITY RANGE. It is not a")
     print("  confidence interval and does not bound the answer.")

@@ -37,7 +37,21 @@ def synthetic() -> tuple[pd.DataFrame, pd.DataFrame, pd.PeriodIndex]:
     return pd.DataFrame(rows), covariates, months
 
 
-def real_panels() -> dict[str, pd.DataFrame]:
+def real_covariates(cut: bool = True) -> pd.DataFrame:
+    """The covariate frame the figure is built from, cut at the datum break.
+
+    The pipeline cuts it, so the fixture cuts it: a test reading the raw column
+    would pin the artifact the figure was corrected for.
+    """
+    from ingest import covariates, paths
+
+    frame = pd.read_csv(paths.processed_dir() / "monthly_bog_lake_fen.csv")
+    frame["month"] = pd.PeriodIndex(frame["month"], freq="M")
+    frame = frame.set_index("month")
+    return covariates.before_datum_break(frame) if cut else frame
+
+
+def real_panels(cut: bool = True) -> dict[str, pd.DataFrame]:
     from ingest import paths
 
     out = {}
@@ -47,10 +61,8 @@ def real_panels() -> dict[str, pd.DataFrame]:
         filename, _, _ = figures.GAS_OBSERVED[key]
         series = pd.read_csv(paths.processed_dir() / filename)
         months = pd.PeriodIndex(series["month"], freq="M")
-        covariates = pd.read_csv(paths.processed_dir() / "monthly_bog_lake_fen.csv")
-        covariates["month"] = pd.PeriodIndex(covariates["month"], freq="M")
         out[key] = figures.screening_panel(
-            frame, covariates.set_index("month").reindex(months), months)
+            frame, real_covariates(cut).reindex(months), months)
     return out
 
 
@@ -111,7 +123,9 @@ def test_the_water_table_is_the_mirror_image():
     """It carries independent information and barely survives, which is the point."""
     panels = real_panels()
     for panel in panels.values():
-        assert panel.attrs["calendar"]["Water table"] < 0.01
+        # An order of magnitude under temperature is the contrast; the earlier
+        # bound of one percent was measuring a gauge change, not the peatland.
+        assert panel.attrs["calendar"]["Water table"] < 0.10
     methane = panels["methane"]
     assert methane.loc["Water table"].max() < methane.loc["Soil temperature"].max()
 
@@ -167,12 +181,16 @@ def test_every_bar_prints_its_share_so_length_is_not_the_only_reading():
     ps.plt.close(fig)
 
 
-def test_a_share_below_one_percent_is_not_printed_as_a_zero():
-    """Rounding would show what the date barely predicts as what it cannot."""
-    fig = figures.measurements_used(real_panels())
-    date_column = fig.axes[0]
-    assert "0.5" in [text.get_text() for text in date_column.texts]
-    ps.plt.close(fig)
+def test_the_water_table_share_is_measured_off_the_datum_step():
+    """It read 0.5% while twelve months of a gauge change were in the series, and
+    reads near five without them. The bars are drawn from the cut series."""
+    for key, panel in real_panels().items():
+        assert 0.02 < panel.attrs["calendar"]["Water table"] < 0.10
+        assert panel.attrs["calendar"]["Soil temperature"] > 0.94
+        # The number the figure printed before the cut, kept as the reason for it.
+        uncut = real_panels(cut=False)[key]
+        assert uncut.attrs["calendar"]["Water table"] < 0.01
+        assert uncut.attrs["calendar"]["Soil temperature"] > 0.94
 
 
 def test_the_date_column_is_achromatic_and_the_usage_columns_are_not():

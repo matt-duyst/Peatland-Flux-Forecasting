@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import pandas as pd
 
 from forecast import benchmarks, evaluation, experiment, models  # noqa: E402
-from ingest import paths  # noqa: E402
+from ingest import covariates, paths  # noqa: E402
 
 SERIES = {
     "methane": ("monthly_fch4_from_daily.csv", "fch4_mean", "nmol m-2 s-1"),
@@ -47,9 +47,17 @@ def load(name: str) -> pd.Series:
 
 
 def load_covariates(index: pd.PeriodIndex) -> pd.DataFrame:
+    """The environmental drivers, with the water table cut at its datum break.
+
+    This half of the study runs to 2021 and so meets the step described in
+    `ingest.covariates.before_datum_break`. Read across it, the last twelve months
+    of water table are two metres below everything before them, which is a gauge
+    change wearing the clothes of a drought.
+    """
     frame = pd.read_csv(paths.processed_dir() / "monthly_bog_lake_fen.csv")
     frame["month"] = pd.PeriodIndex(frame["month"], freq="M")
-    return frame.set_index("month")[list(COVARIATES)].reindex(index)
+    frame = covariates.before_datum_break(frame.set_index("month"))
+    return frame[list(COVARIATES)].reindex(index)
 
 
 def report(title: str, frame: pd.DataFrame, order: list[str]) -> pd.DataFrame:

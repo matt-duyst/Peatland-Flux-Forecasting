@@ -105,6 +105,29 @@ def load_water_table() -> pd.DataFrame:
     return out.sort_index()
 
 
+#: The water table series steps −2.25 m between 2019-12 and 2020-01 and never
+#: returns: every month from 1990 to 2019-12 sits between 413.07 and 413.75, and
+#: every month afterwards between 411.08 and 411.22, with no intervening values
+#: and a series as smooth on each side as the other. That is a change of datum or
+#: of gauge, not a drawdown, and reading across it turns an instrument change into
+#: two metres of hydrology.
+WATER_TABLE_DATUM_BREAK = pd.Period("2020-01", freq="M")
+
+
+def before_datum_break(frame: pd.DataFrame, column: str = "wte_m") -> pd.DataFrame:
+    """The same frame with the water table masked from the datum break onward.
+
+    Masked rather than dropped, so the other covariates in those months are
+    unaffected and the caller's index does not change under its feet. The
+    reconstruction half never meets these months, since no month after the break
+    carries a complete covariate set; the forecasting half runs to 2021 and does.
+    """
+    out = frame.copy()
+    if column in out.columns:
+        out.loc[out.index >= WATER_TABLE_DATUM_BREAK, column] = float("nan")
+    return out
+
+
 def load_all() -> pd.DataFrame:
     """Join every covariate on the month index."""
     parts = [

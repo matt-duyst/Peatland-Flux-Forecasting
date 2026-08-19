@@ -17,8 +17,8 @@ import pandas as pd
 
 from ingest import covariates
 from forecast import evaluation
-from study import (bias, figures, plotstyle, reconstruct, sitemap, targets,
-                   weights as weighting, windows)
+from study import (bias, features, figures, holdout, plotstyle, reconstruct, sitemap,
+                   targets, weights as weighting, windows)
 
 MONTHLY = "data/processed/monthly_fch4_from_daily.csv"
 
@@ -135,13 +135,32 @@ def main() -> None:
         series = pd.read_csv(root / "data/processed" / filename)
         series["month"] = pd.PeriodIndex(series["month"], freq="M")
         months = pd.PeriodIndex(series["month"], freq="M")
+        # Cut at the datum break, as the forecasting half itself is: the share of
+        # each covariate the date accounts for is measured on the same months the
+        # models saw, and two metres of gauge change would swamp the water table.
         screening_panels[key] = figures.screening_panel(
-            frame, cov.reindex(months), months)
+            frame, covariates.before_datum_break(cov).reindex(months), months)
 
     fig = figures.measurements_used(screening_panels)
     path = plotstyle.save(fig, "measurements_used_across_forecast_horizons")
     fragments.append(plotstyle.readme_block(figures.MEASUREMENTS_TEXT,
                                            "measurements_used_across_forecast_horizons"))
+    print(f"wrote {path.relative_to(plotstyle.figures_dir().parent)}")
+
+    # Coefficient stability reads the table `scripts/reconstruct.py` writes, and
+    # takes the two spans in metres from the same windows every other figure uses:
+    # what the reconstruction has to reach, and how far the holdout actually did.
+    stability = pd.read_csv(root / "data/processed/coefficient_stability.csv")
+    fitted, projected = built["fit"], built["reconstruction"]
+    wettest_fitted = float(cov.loc[fitted, features.WATER_TABLE].max())
+    required = float(cov.loc[projected, features.WATER_TABLE].max()) - wettest_fitted
+    withheld = fitted.difference(holdout.wettest_decile(cov, fitted))
+    tested = wettest_fitted - float(cov.loc[withheld, features.WATER_TABLE].max())
+
+    fig = figures.coefficient_stability(
+        figures.stability_paths(stability), required, tested)
+    path = plotstyle.save(fig, "coefficient_stability")
+    fragments.append(plotstyle.readme_block(figures.STABILITY_TEXT, "coefficient_stability"))
     print(f"wrote {path.relative_to(plotstyle.figures_dir().parent)}")
 
     target = plotstyle.figures_dir() / "README_fragments.md"
