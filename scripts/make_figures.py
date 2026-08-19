@@ -163,6 +163,65 @@ def main() -> None:
     fragments.append(plotstyle.readme_block(figures.STABILITY_TEXT, "coefficient_stability"))
     print(f"wrote {path.relative_to(plotstyle.figures_dir().parent)}")
 
+    # Availability reads every source the study draws on, and takes its two
+    # exclusions from the constants that define them, so a change to either moves
+    # the figure rather than leaving it stale.
+    legacy = pd.read_csv(root / "data/processed/monthly_bog_lake_fen.csv")
+    legacy["month"] = pd.PeriodIndex(legacy["month"], freq="M")
+    legacy = legacy.set_index("month")
+
+    def observed(filename: str, column: str) -> pd.Series:
+        frame = pd.read_csv(root / "data/processed" / filename)
+        frame["month"] = pd.PeriodIndex(frame["month"], freq="M")
+        return frame.set_index("month")[column]
+
+    measured = {
+        "Methane, site aggregate": observed(MONTHLY.split("/")[-1], "fch4_mean"),
+        "Methane, first analyzer": legacy["fch4_1_1_1_mean"],
+        "Methane, second analyzer": legacy["fch4_1_1_2_mean"],
+        "Carbon dioxide": observed("monthly_fco2_diurnally_balanced.csv", "fco2_mean"),
+        "Soil temperature": cov["soil_temp_f"],
+        "Air temperature": cov["atm_temp_f"],
+        "Precipitation": cov["precip_in"],
+        "Water table": cov[features.WATER_TABLE],
+    }
+    recorded = cov[features.WATER_TABLE].dropna().index
+    set_aside = {"Water table": (
+        (pd.PeriodIndex([m for m in recorded if m in windows.WATER_TABLE_ARTIFACTS],
+                        freq="M"), "instrument error"),
+        (pd.PeriodIndex([m for m in recorded if m >= covariates.WATER_TABLE_DATUM_BREAK],
+                        freq="M"), "gauge change"),
+    )}
+    measured_rows = figures.availability_rows(measured, set_aside)
+
+    used = [
+        {"name": "Reconstruction", "first": built["reconstruction"].min(),
+         "last": built["reconstruction"].max(), "months": len(built["reconstruction"]),
+         "lead": None},
+        {"name": "Fitting window", "first": built["fit"].min(),
+         "last": built["fit"].max(), "months": len(built["fit"]), "lead": None},
+    ]
+    for key, gas, _ in figures.GAS_PANEL:
+        frame = pd.read_csv(root / f"data/processed/forecasts_{key}_exogenous.csv")
+        frame["target"] = pd.PeriodIndex(frame["target"], freq="M")
+        scored = frame.dropna(subset=["actual"])["target"]
+        flux = measured["Carbon dioxide" if key == "carbon_dioxide"
+                        else "Methane, site aggregate"].dropna().index
+        used.append({"name": f"Forecast comparison,\n{gas.lower()}",
+                     "first": scored.min(), "last": scored.max(),
+                     "months": scored.nunique(), "lead": (flux.min(), scored.min())})
+
+    # Guides only where two rows have to be compared across a boundary: where the
+    # flux record starts, where the shortest measurements stop, and where the
+    # comparison ends while the flux itself carries on.
+    fig = figures.covariate_availability(
+        measured_rows, used,
+        (built["fit"].min(), built["fit"].max() + 1, used[-1]["last"] + 1))
+    path = plotstyle.save(fig, "covariate_availability")
+    fragments.append(plotstyle.readme_block(figures.AVAILABILITY_TEXT,
+                                            "covariate_availability"))
+    print(f"wrote {path.relative_to(plotstyle.figures_dir().parent)}")
+
     target = plotstyle.figures_dir() / "README_fragments.md"
     target.write_text("\n".join(fragments))
     print(f"wrote {target.relative_to(plotstyle.figures_dir().parent)}")

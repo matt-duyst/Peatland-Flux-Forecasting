@@ -2042,6 +2042,78 @@ and which stay in these notes. Significance marks, since the binomial threshold
 is the published rule rather than a calibrated error rate and stars would imply
 otherwise. A colorbar, since every bar prints its value.
 
+### The availability figure
+
+`figures/covariate_availability.png`, built by `study.figures.covariate_availability`
+from every source the study reads.
+
+**Why it exists.** The study's boundaries were stated in prose across three
+figures and drawn nowhere: the fitting window ends 2019-12 because air
+temperature and precipitation do, the forecast cannot begin until 48 months have
+accumulated, 2021 was never compared, the water table is cut at the 2020 datum
+break, two months of 2019 are excluded as instrument error, and the
+reconstruction covers the years where drivers exist and flux does not. All six
+are one alignment problem, and one timeline shows them together.
+
+**No standard form exists for this.** Dataset papers describe gap-filling rather
+than drawing where the gaps are. The one adjacent convention is the fingerprint
+plot, an hour-of-day against day-of-year grid, which Deventer et al. (2019) use
+in the same form; it suits one series at high resolution, not eight across 426
+months. Delwiche et al. (2021) was checked and carries nothing on the question.
+Designed from first principles.
+
+**Two blocks, not one panel with bands.** The upper block is what was measured,
+one row per series; the lower is what each piece of work used. Shading the
+windows across the series would have drawn them as a property of the data, and
+they are choices made from what was available. As rows with their own names they
+read as choices, and the largest ink on the panel never gets drawn.
+
+**Four kinds of month, three marks.** Measured is a filled bar. Missing from an
+otherwise unbroken run is a hole in the bar, with a tick under it because one
+month is under four pixels across thirty-five years and a hole alone reads as
+nothing. Set aside by a decision is drawn hollow, with the reason written beside
+it: *instrument error* on 2019-06 and 2019-09, *gauge change* from 2020-01. Never
+covered is nothing at all. Because the two hollow cases carry their reasons in
+words, the key holds three marks and no reasons, which is what keeps six kinds of
+absence from becoming six keys.
+
+**The 48-month rule is a weight, not a fourth symbol.** Each comparison row runs
+as a thin line from where its flux record starts to where the comparison begins,
+then as a full bar. Methane's lead is **62 calendar months for 48 observations**,
+because of the 2013 and 2014 gaps, which is worth stating: the rule counts data
+rather than time.
+
+**Three guides, added after the build rather than designed in.** The alignments
+are the figure's whole argument and they have to be read vertically across the
+rule between blocks. At 426 months wide that did not hold by eye, so light
+verticals were added at the three boundaries that carry a claim: where the flux
+record starts and the reconstruction ends, where the shortest measurements stop
+and the fitting window with them, and where the comparison ends while methane
+carries on for another year. The second falls on the 2020 gridline already there.
+Nothing else is guided.
+
+**The month counts sit beside each bar rather than in a column**, which would
+read as a table set next to a figure. The unit is named once, on the first row.
+
+**What the alignments show without a word of annotation.** The fitting bar stops
+exactly where air temperature and precipitation stop, while methane runs 24
+months further: those are the 25 discarded months. The reconstruction bar covers
+precisely the span where drivers exist and no flux row has begun. Methane reaches
+2021-12 and its comparison bar ends 2020-12, which is 2021 never being evaluated.
+
+**What was left out.** Half-hourly and daily coverage, which is the fingerprint
+question. The day counts behind each monthly mean, which is quality rather than
+availability. Per-horizon evaluation windows, eight rows to show a few months of
+difference. Gap-filling, since none was done. Any shading across the panel. And
+the benchmark-only tail — methane compared to 2021-12 and carbon dioxide to
+2024-12 where no measurement is needed — which is one clause of the description
+rather than a fourth mark.
+
+**Nothing is pinned.** Spans, gaps and counts are computed from the committed
+sources; the two exclusions come from `windows.WATER_TABLE_ARTIFACTS` and
+`covariates.WATER_TABLE_DATUM_BREAK`, so changing either constant moves the
+figure.
+
 ### The coefficient stability figure
 
 `figures/coefficient_stability.png`, built by `study.figures.coefficient_stability`
