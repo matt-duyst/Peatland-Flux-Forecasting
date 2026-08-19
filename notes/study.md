@@ -1518,6 +1518,31 @@ only the shadow is redrawn between repeats, so the repeats are not independent.
 Measured on synthetic null data, between four and eight percent of irrelevant
 candidates survived.
 
+### The same result at twenty-three other wetlands, and a limit of monthly data
+
+This is replication rather than a standalone result, and it belongs here because
+it says what condition makes this site behave the way it does. Knox et al. (2021),
+*Global Change Biology* **27**, 3582-3604, identified the dominant environmental
+predictors of freshwater wetland methane flux across 23 sites and found
+temperature dominant wherever seasonal water table variation was small. This site
+meets that condition: the water table's month-of-year means span **0.333 m**,
+and the three seasonal terms fitted to it span **0.139 m**, against a full
+observed range of **2.380 m** over the 141 months with a reading. The water
+table here moves, and moves a great deal, but almost none of that movement is
+seasonal — which is the same fact as its 0.5% calendar share, seen in metres
+rather than as a variance share. So the finding that the models reach for
+temperature and not for the water table is what the multi-site work predicts for
+a site like this one, not an anomaly of this record.
+
+**A limit of this study's resolution, stated as such.** A 2024 synthesis reports
+seasonal methane flux changes lagging the water table by about 17 days across 23
+sites. Seventeen days is sub-monthly, so a monthly aggregation cannot represent
+it: a lag shorter than the sampling interval is aliased onto zero or onto one
+whole month, and neither is the truth. Nothing here rules out a water table
+effect operating at that lag; the monthly series simply cannot see it. This is a
+statement about the resolution of this study, not about the site. The citation is
+not yet pinned to a volume and page, and must be before any writeup carries it.
+
 ### The figure, and the palette measurement behind it
 
 `figures/forecast_error_by_horizon.png`, built by
@@ -1723,47 +1748,95 @@ and 12.7 under the worst deficiency**, and their overlap is distinct from each o
 them. The band's width was not touched, since carbon dioxide is genuinely measured
 less precisely relative to its range.
 
-### The screening figure
+### The predictor usage figure, and the heatmap it replaced
 
-`figures/screening_survival.png`, built by `study.figures.screening_survival`.
+`figures/predictor_usage.png`, built by `study.figures.predictor_usage`.
 
-**A heatmap and nothing more.** Six rows against four horizons, two gases side by
-side so one set of row labels serves both and the eye compares along a row. Every
-cell prints its value, which makes the ramp redundant rather than load-bearing.
+**The first version was a heatmap and it was wrong.** Six rows against four
+horizons in two blocks of shaded cells, every cell printing its value. It failed
+on four counts. It asked a reader to decode a shading scale to find a pattern
+that is an ordering. Its row labels carried the calendar share inside them, which
+compressed them to the point of unreadability. Its struck cells, where the
+one-month flux lag does not exist, read as missing data rather than as a
+predictor that was never offered. And its single annotation pointed at one of
+those compressed labels. The form was replaced, not restyled.
 
-**Monochrome, white to `INK`.** Four hues already carry meaning across this set,
-and a sequential ramp passing near any of them would have been the third collision
-in three figures. A test asserts the colormap is achromatic at every level.
+**Ranked horizontal bars in small multiples.** One panel per horizon, four
+horizons across, the two gases as the two rows of panels. Rows sit in the same
+order on every panel, so the eye compares along a row across horizons and down a
+column between gases. Length carries the share, and the ordering carries the
+finding without needing to be read off a scale.
 
-**Two rows for the flux, not one.** "The flux a month before" and "the flux a year
-before" are different claims, and it is the annual lag that carries the carbon
-dioxide result. Collapsing them to a single row would have reported 1.00 at one
-month for a lag that is not the annual one.
+**Rows are ordered by mean use across both gases and all four horizons.** The
+resulting order is the flux a month before, the flux a year before, soil
+temperature, air temperature, precipitation, water table. The description states
+the sort basis, because a sorted figure that does not say what it sorted on
+invites the reader to assume the wrong quantity.
 
-**The calendar share rides in the row label.** Soil and air temperature are 95%
-explained by the three seasonal terms, precipitation 38%, water table 0.5%. Put as
-a fifth column it would have been a second quantity on the same geometry, read as
-a fifth horizon. In the label it is unambiguous and costs no ink. The share is
-computed by `screening.explained_by_calendar` rather than written down, and the
-same function now serves `scripts/model_examinations.py`.
+**The calendar share is a fifth column, not a row label.** Drawn as a leading
+column of bars to the left, separated by a gap: soil temperature 95%, air
+temperature 95%, precipitation 38%, water table 0.5%. That column happens to fall
+in the same order as the usage column, which is the figure's whole argument put
+in one glance — the measurements the models chose are the ones the date already
+predicts. It is a coincidence of the usage sort rather than its cause, and the
+description says so. These are the unlagged covariates over each gas's evaluated
+index, which is why the column is identical on both gas rows; the per-lag values
+in the table above differ slightly and are the ones to quote for a specific lag.
 
-**The water table row is named rather than left to be noticed.** It is the study's
-sharpest single result and it is carried by absence — near-zero cells — which
-reads as unremarkable on a heatmap. One annotation, planned from the start rather
-than added when the row proved quiet.
+**Two hues, and the grey was measured rather than guessed.** Green `FITTED` for
+usage, achromatic `DATE_SHARE` for the calendar share, because the latter is a
+property of the measurement rather than a result of this study. `#A9A9A9` was
+chosen over three candidates: it sits **16.7 ΔE from the green under the worst
+simulated deficiency and 0.140 apart in relative luminance**, against 11.7 and
+0.076 for `#767676`, and 10.3 and 0.005 for `#8C8C8C`, which would be
+indistinguishable from the green in grayscale. `#BFBFBF` separates from the green
+better still (23.7, 0.264) but sits only 9.4 from the gridlines, where a short
+bar could merge with one. The green's relative luminance is 0.257.
+
+**No legend.** The two column headings name the two quantities in the place a
+reader is already looking, so a key repeating them would add a lookup and say
+nothing new.
+
+**No annotation.** One was planned for the water table row and held in reserve.
+Built, the row reads on its own: it is last in the order, its calendar bar is the
+only one at zero, and the subtitle names it. The heatmap needed the annotation
+because absence reads as unremarkable in a grid of pale cells; a bar chart makes
+the shortest bar the most conspicuous row on the panel.
+
+**Two rows for the flux, ruled off from the four measurements.** "The flux a
+month before" and "the flux a year before" are different claims, and it is the
+annual lag that carries the carbon dioxide result. They are kept so the carbon
+dioxide three-month panel is not empty — that panel is the sharpest result in the
+study, and an empty panel would read as a figure that failed rather than as a
+finding. A light rule separates them from the four site measurements, since the
+flux's own past is not something measured at the site alongside the others.
 
 **A share below one percent is printed to one decimal.** At the figure's usual
-rounding the water table would have read "0% calendar", which is the one number on
-the panel that must not round away.
+rounding the water table's calendar share would read "0", which is the one number
+on the page that must not round away: 0.5% is the reason it is the one covariate
+carrying independent information.
+
+**No internal vocabulary anywhere on the figure.** Not Boruta, not fold, not
+survival, not lag, not screening, not covariate. A test asserts their absence
+from the title, subtitle and description. "How often the models used it" is what
+a survival share is in plain terms, and the flux rows are named in words rather
+than as lags.
+
+**No citations on the figure.** The last sentence of the description says the
+same pattern has been found across other wetland sites without naming Knox et al.
+(2021); the reference is in these notes and belongs in the writeup. A figure
+states what its data shows.
 
 **What was left out.** The autoregressive family, whose rows would be flux lags
-only. Individual lags, collapsed to each covariate's best-surviving one. The three
-seasonal terms, which are kept in every fit by construction and would be a row of
+only. Individual lags, collapsed to each covariate's best-surviving one. The
+three seasonal terms, kept in every fit by construction and therefore a row of
 ones. The partial correlations against the deseasonalized flux, which are the
-quantitative backing for "the survivors are the season" and stay in these notes.
-Significance marks, since the binomial threshold is the published rule rather than
-a calibrated error rate and stars would imply otherwise. A colorbar, since every
-cell is printed.
+quantitative backing for the description's claim that the water table correlates
+with nothing left in the flux once the season is taken out — r = 0.006 for
+methane at lag 1 and −0.157 for carbon dioxide at lag 12, neither significant —
+and which stay in these notes. Significance marks, since the binomial threshold
+is the published rule rather than a calibrated error rate and stars would imply
+otherwise. A colorbar, since every bar prints its value.
 
 ### Observed against predicted, and two results that came out of drawing it
 

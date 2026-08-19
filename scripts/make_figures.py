@@ -125,8 +125,8 @@ def main() -> None:
     fragments.append(plotstyle.readme_block(figures.FLUX_TEXT, "observed_and_predicted"))
     print(f"wrote {path.relative_to(plotstyle.figures_dir().parent)}")
 
-    # Screening survival reads the same scored forecasts, plus the covariates it
-    # needs to say how much of each the calendar already explains.
+    # Predictor usage reads the same scored forecasts, plus the covariates it
+    # needs to say how much of each the calendar already accounts for.
     screening_panels = {}
     for key, _, _ in figures.GAS_PANEL:
         frame = pd.read_csv(root / f"data/processed/forecasts_{key}_exogenous.csv")
@@ -138,9 +138,9 @@ def main() -> None:
         screening_panels[key] = figures.screening_panel(
             frame, cov.reindex(months), months)
 
-    fig = figures.screening_survival(screening_panels)
-    path = plotstyle.save(fig, "screening_survival")
-    fragments.append(plotstyle.readme_block(figures.SCREENING_TEXT, "screening_survival"))
+    fig = figures.predictor_usage(screening_panels)
+    path = plotstyle.save(fig, "predictor_usage")
+    fragments.append(plotstyle.readme_block(figures.USAGE_TEXT, "predictor_usage"))
     print(f"wrote {path.relative_to(plotstyle.figures_dir().parent)}")
 
     target = plotstyle.figures_dir() / "README_fragments.md"

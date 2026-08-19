@@ -1,4 +1,4 @@
-"""Screening survival: the panel data, the two results it must carry, the ramp."""
+"""Predictor usage: the panel data, the two results it must carry, the bars."""
 
 from __future__ import annotations
 
@@ -117,52 +117,91 @@ def test_the_water_table_is_the_mirror_image():
 
 
 def test_the_figure_names_the_water_table_rather_than_leaving_it_to_be_noticed():
-    """Absence reads as unremarkable on a heatmap, so the sharpest result is said."""
-    fig = figures.screening_survival(real_panels())
-    notes = [t.get_text() for t in fig.axes[0].texts]
-    assert any("calendar cannot explain" in text for text in notes)
-    said = figures.SCREENING_TEXT.subtitle
-    assert "water table" in said and "season under another name" in said
-    ps.plt.close(fig)
+    """Absence reads as unremarkable, so the sharpest result is said in words."""
+    said = figures.USAGE_TEXT.subtitle
+    assert "water table" in said and "the date cannot predict" in said
 
 
 # --- what it draws ----------------------------------------------------------
 
 
-def test_the_ramp_is_monochrome_so_it_collides_with_no_encoded_hue():
-    fig = figures.screening_survival(real_panels())
-    image = fig.axes[0].images[0]
-    for level in (0.0, 0.5, 1.0):
-        red, green, blue, _ = image.cmap(level)
-        assert red == pytest.approx(green, abs=0.02)
-        assert green == pytest.approx(blue, abs=0.02)
-    ps.plt.close(fig)
-
-
-def test_every_cell_prints_its_value_so_the_ramp_is_redundant():
+def test_one_row_order_holds_across_every_panel():
+    """Small multiples only work if a row sits in the same place everywhere."""
     panels = real_panels()
-    fig = figures.screening_survival(panels)
-    for ax, key in zip(fig.axes, [k for k, _, _ in figures.GAS_PANEL]):
-        values = panels[key].to_numpy(dtype=float)
-        printed = [t.get_text() for t in ax.texts]
-        assert sum(not np.isnan(v) for v in values.ravel()) == \
-            sum(1 for text in printed if text.replace(".", "").isdigit())
+    order = figures.usage_order(panels)
+    fig = figures.predictor_usage(panels)
+    named = [ax for ax in fig.axes if any(t.get_text() for t in ax.get_yticklabels())]
+    assert len(named) == len(figures.GAS_PANEL)      # named once per gas, not per panel
+    for ax in named:
+        assert [t.get_text() for t in ax.get_yticklabels()] == order
+    for ax in fig.axes:
+        assert len(ax.get_yticks()) == len(order)
     ps.plt.close(fig)
 
 
-def test_dark_cells_carry_light_text():
+def test_the_rows_are_ordered_by_use_with_the_flux_at_the_top():
     panels = real_panels()
-    fig = figures.screening_survival(panels)
-    for text in fig.axes[0].texts:
-        body = text.get_text()
-        if body.replace(".", "").isdigit():
-            light = text.get_color() in ("white", "#FFFFFF")
-            assert light == (float(body) > figures.DARK_CELL)
+    order = figures.usage_order(panels)
+    assert order[:len(figures.FLUX_ROWS)] == list(figures.FLUX_ROWS)
+    assert order[-1] == "Water table"
+
+
+def test_the_two_quantities_are_named_in_headings_rather_than_in_a_key():
+    """A legend would repeat what the column heading already says where it is read."""
+    fig = figures.predictor_usage(real_panels())
+    assert not any(ax.get_legend() for ax in fig.axes)
+    said = [t.get_text() for t in fig.texts]
+    assert figures.USAGE_HEADING in said and figures.DATE_HEADING in said
     ps.plt.close(fig)
+
+
+def test_every_bar_prints_its_share_so_length_is_not_the_only_reading():
+    panels = real_panels()
+    fig = figures.predictor_usage(panels)
+    drawn = sum(int(np.isfinite(v)) for panel in panels.values()
+                for v in panel.to_numpy(dtype=float).ravel())
+    drawn += len(figures.SCREENED_COVARIATES) * len(panels)      # the date column
+    printed = sum(1 for ax in fig.axes for text in ax.texts
+                  if text.get_text().replace(".", "").isdigit())
+    assert printed == drawn
+    ps.plt.close(fig)
+
+
+def test_a_share_below_one_percent_is_not_printed_as_a_zero():
+    """Rounding would show what the date barely predicts as what it cannot."""
+    fig = figures.predictor_usage(real_panels())
+    date_column = fig.axes[0]
+    assert "0.5" in [text.get_text() for text in date_column.texts]
+    ps.plt.close(fig)
+
+
+def test_the_date_column_is_achromatic_and_the_usage_columns_are_not():
+    """The two answer different questions, and only one of them is a result."""
+    from matplotlib.colors import to_rgb
+
+    fig = figures.predictor_usage(real_panels())
+    grey = to_rgb(ps.DATE_SHARE)
+    assert grey[0] == pytest.approx(grey[1]) == pytest.approx(grey[2])
+    used = {bar.get_facecolor()[:3] for ax in fig.axes for bar in ax.patches}
+    assert to_rgb(ps.FITTED) in used and grey in used
+    ps.plt.close(fig)
+
+
+def test_the_figure_asks_no_reader_to_know_the_method():
+    """Plain terms or nothing: none of the working vocabulary reaches the page."""
+    text = figures.USAGE_TEXT
+    said = " ".join([text.title, text.subtitle, text.description]).lower()
+    for jargon in ("boruta", "fold", "shadow", "survival", "survived", "lag",
+                   "exogenous", "ridge", "screening", "covariate", "predictor"):
+        assert jargon not in said
+
+
+def test_the_description_states_what_the_order_is_built_from():
+    """A sorted figure that does not say what it sorted on invites the wrong reading."""
+    assert "ordered by how often the models used" in figures.USAGE_TEXT.description
 
 
 def test_the_seasonal_terms_are_not_a_row():
     """Kept in every fit by construction, so a row of ones would say nothing."""
     panel = real_panels()["methane"]
     assert not any("sin" in name or "seasonal term" in name.lower() for name in panel.index)
-    assert "not shown" in figures.SCREENING_TEXT.description

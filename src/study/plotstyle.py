@@ -72,6 +72,14 @@ from ingest import paths
 INSIDE = "#0072B2"
 OUTSIDE = "#D55E00"
 
+#: How much of a measurement the date alone predicts, beside how often the models
+#: used it. Achromatic because it is a property of the measurement rather than a
+#: result, and lighter than `FITTED` so it reads as the quieter of the two. Chosen
+#: by measurement: 16.7 from the green under the worst simulated deficiency and
+#: 0.140 in relative luminance, against 11.7 and 0.076 for the mid gray, which is
+#: too close to it, and 17.5 from the gridlines so a bar cannot merge with one.
+DATE_SHARE = "#A9A9A9"
+
 #: The site and its tower, on the site map only. Okabe-Ito yellow, measured
 #: against the imagery it sits on: 41.3 from the light peat beside the tower and
 #: 101.5 from the dark forest, under the worst simulated deficiency.

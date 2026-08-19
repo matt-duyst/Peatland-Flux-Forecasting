@@ -874,109 +874,153 @@ def screening_panel(
     return panel
 
 
-SCREENING_TEXT = ps.FigureText(
-    title="How often each predictor survived screening at Marcell Bog Lake Peatland",
+USAGE_TEXT = ps.FigureText(
+    title="Which measurements the models used, and how much of each is the date",
     subtitle=(
-        "Each model is fitted many times, on a record that grows by a month each "
-        "time. In every fit a predictor is tested against a shuffled copy of "
-        "itself and kept only if it beats that copy more often than chance would "
-        "allow; the number in each cell is the share of fits it survived. What "
-        "survives is temperature, and temperature here is 95 percent explained by "
-        "the calendar alone, so the covariates that carry signal are the season "
-        "under another name. The one covariate the calendar cannot explain, the "
-        "water table, is the one that barely survives at all."
+        "Each model was rebuilt every month as the record grew, and each time it "
+        "chose which measurements to use. The green bars show how often each was "
+        "chosen, from never to every time. The grey bars show how much of that "
+        "measurement the date alone predicts. The measurements the models chose "
+        "are the ones the date already predicts. The water table is the one thing "
+        "the date cannot predict, and the models almost never chose it."
     ),
     description=(
-        "The three seasonal terms are not shown: they are kept in every fit by "
-        "construction, so their row would be all ones and would say nothing. A "
-        "covariate offered at several lags takes its best-surviving one. A struck "
-        "cell is a lag that does not exist at that horizon, not a failure. At "
-        "three months on carbon dioxide, no covariate survives in a single fit, "
-        "and the flux's own value a year earlier is all that is kept."
+        "Rows are ordered by how often the models used each measurement, averaged "
+        "over both gases and all four horizons; the date column happens to fall in "
+        "the same order. For carbon dioxide three months ahead, not one of the four "
+        "measurements was chosen in a single rebuild, and only the flux's own value "
+        "from a year earlier was kept. Soil and air temperature are 95% predictable "
+        "from the date, so what the models chose is the season under another name. "
+        "The water table is 0.5% predictable from the date and so carries something "
+        "nothing else does, yet it correlates with nothing left in the flux once the "
+        "season is taken out. The same pattern has been found across other wetland "
+        "sites, where temperature dominated wherever the water table varied least."
     ),
 )
 
-
-def _calendar_share(value: float) -> str:
-    """A share below one percent must not round to nothing: it is the finding."""
-    return f"{value * 100:.1f}%" if value < 0.01 else f"{value * 100:.0f}%"
-
-
-def _draw_screening_panel(ax, panel: pd.DataFrame, labeled: bool) -> None:
-    """One gas: predictors down, horizons across, share of folds in each cell."""
-    values = panel.to_numpy(dtype=float)
-    ramp = LinearSegmentedColormap.from_list("survival", ["#FFFFFF", ps.INK])
-    ax.imshow(np.ma.masked_invalid(values), cmap=ramp, vmin=0.0, vmax=1.0,
-              aspect="auto", interpolation="nearest")
-
-    for row in range(values.shape[0]):
-        for column in range(values.shape[1]):
-            value = values[row, column]
-            if np.isnan(value):
-                # A lag that does not exist at this horizon. Left unshaded and
-                # marked with a dash: any fill would be read as a value on the
-                # ramp, and a predictor that never survived is a measured zero.
-                ax.text(column, row, "\u2014", ha="center", va="center",
-                        fontsize=ps.LEGEND_SIZE, color=ps.MUTED, zorder=3)
-                continue
-            ax.text(column, row, f"{value:.2f}", ha="center", va="center",
-                    fontsize=ps.LEGEND_SIZE, zorder=3,
-                    color="white" if value > DARK_CELL else ps.INK)
-
-    ax.set_xticks(range(values.shape[1]))
-    ax.set_xticklabels([str(h) for h in panel.columns])
-    ax.set_xlabel(ps.axis_label("Forecast horizon", "months"))
-    ax.set_yticks(range(values.shape[0]))
-    if labeled:
-        calendar = panel.attrs.get("calendar", {})
-        ax.set_yticklabels([
-            f"{name}\n{_calendar_share(calendar[name])} calendar" if name in calendar else name
-            for name in panel.index
-        ])
-    else:
-        ax.set_yticklabels([])
-    ax.set_xticks(np.arange(values.shape[1] + 1) - 0.5, minor=True)
-    ax.set_yticks(np.arange(values.shape[0] + 1) - 0.5, minor=True)
-    ax.grid(which="minor", color="white", linewidth=1.6)
-    ax.grid(which="major", visible=False)
-    ax.tick_params(which="minor", length=0)
-    ax.tick_params(which="major", length=0)
-    for spine in ax.spines.values():
-        spine.set_edgecolor(ps.BOUNDARY)
+#: Heading over the four horizon columns, and over the column that answers a
+#: different question. Matched in register: both begin "How ... it".
+USAGE_HEADING = "How often the models used it"
+DATE_HEADING = "How much of it the date predicts"
 
 
-def screening_survival(panels: dict[str, pd.DataFrame]) -> Figure:
-    """What the per-fold screening kept, and why the survivors are the season.
+def usage_order(panels: dict[str, pd.DataFrame]) -> list[str]:
+    """Predictors ordered by mean use across both gases and every horizon.
 
-    Side by side rather than stacked: the rows are shared between the gases, so
-    one set of labels serves both and the eye compares along a row. A monochrome
-    ramp, because four hues already carry meaning across this figure set and a
-    fifth scale passing near any of them would be a collision; every cell prints
-    its value, so the ramp does coarse work only.
+    One order for all ten panels, which is what makes small multiples readable:
+    a row sits in the same place everywhere, so the eye compares along it.
     """
-    fig, (left, bottom, width, height) = ps.canvas_area(SCREENING_TEXT, size="standard",
-                                                        extra_left_px=152)
-    gap = 0.05
-    panel_width = (width - gap) / 2
-    # A strip below the panels for the note, and one above for the panel names.
-    note_h, name_h = 0.17 * height, 0.09 * height
-    panel_height = height - note_h - name_h
-    axes = []
-    for index, (key, gas, _) in enumerate(GAS_PANEL):
-        ax = fig.add_axes((left + index * (panel_width + gap), bottom + note_h,
-                           panel_width, panel_height))
-        _draw_screening_panel(ax, panels[key], labeled=index == 0)
-        ps.panel_name(ax, gas, y=1.0 + name_h / panel_height * 0.82)
-        axes.append(ax)
+    combined = pd.concat(list(panels.values()), axis=1)
+    return list(combined.mean(axis=1, skipna=True).sort_values(ascending=False).index)
 
-    # The sharpest result on the panel is carried by absence, and absence reads as
-    # unremarkable, so it is named rather than left for a reader to notice.
-    water = list(panels[GAS_PANEL[0][0]].index).index("Water table")
-    ps.annotate(
-        axes[0],
-        "the one covariate the calendar cannot explain\n"
-        "is the one that barely survives",
-        xy=(-1.05, float(water) + 0.35), xytext=(-1.4, float(water) + 2.1),
-        ha="left", va="top", annotation_clip=False,
-    )
+
+def _draw_usage_panel(
+    ax,
+    values,
+    order,
+    colour: str,
+    ticked: bool,
+    rule_after: int | None,
+) -> None:
+    """One column of bars: a share from nothing to everything, per predictor."""
+    positions = np.arange(len(order))
+    heights = np.array([values.get(name, np.nan) for name in order], dtype=float)
+    drawn = ~np.isnan(heights)
+    ax.barh(positions[drawn], 100 * heights[drawn], height=0.6, color=colour,
+            edgecolor="none", zorder=2)
+    for position, height in zip(positions[drawn], heights[drawn]):
+        share = 100 * height
+        # A tenth only where rounding would otherwise print a share that never
+        # happened as one that never could: the water table is 0.5, not 0.
+        ax.text(share + 4.0, position, f"{share:.1f}" if 0 < share < 1 else f"{share:.0f}",
+                va="center", ha="left", fontsize=ps.TICK_SIZE - 1.5,
+                color=ps.MUTED, zorder=3)
+
+    if rule_after is not None:
+        ax.axhline(rule_after + 0.5, color=ps.GRID, linewidth=1.0, zorder=1)
+    ax.set_xlim(0, 124)
+    ax.set_ylim(len(order) - 0.5, -0.5)
+    ax.set_yticks(positions)
+    ax.set_yticklabels([])
+    ax.set_xticks([0, 50, 100])
+    ax.set_xticklabels(["0", "50", "100%"] if ticked else [])
+    ax.tick_params(length=0, labelsize=ps.TICK_SIZE - 1.5, colors=ps.MUTED)
+    ax.grid(axis="x", color=ps.GRID, linewidth=0.6, zorder=0)
+    ax.set_axisbelow(True)
+    for side in ("top", "right", "left"):
+        ax.spines[side].set_visible(False)
+    ax.spines["bottom"].set_color(ps.BOUNDARY)
+
+
+#: Pixel allocations inside the drawing rectangle. Row names are set once at the
+#: left of both gases rather than repeated on ten panels, and the width here is
+#: what the longest of them needs; the rest divides evenly between the five
+#: columns, with the date column set apart because it answers a different question.
+LABEL_PX = 258
+LEAD_PX = 44
+COLUMN_GAP_PX = 20
+HEADING_PX = 56
+COLUMN_TITLE_PX = 30
+GAS_LABEL_PX = 38
+
+
+def predictor_usage(panels: dict[str, pd.DataFrame]) -> Figure:
+    """What the models chose, beside how much of each choice is simply the date.
+
+    Ranked bars in small multiples rather than a grid of shaded cells: with fifty
+    numbers a reader has to decode a shading scale to find the pattern, where
+    sorted bars put it in the length of the marks and in the order of the rows.
+    The leading column answers a different question from the four beside it, so
+    it is set apart by a gap and drawn achromatic.
+    """
+    fig, (left, bottom, width, height) = ps.canvas_area(USAGE_TEXT, size="standard")
+    width_px, height_px = ps.SIZES["standard"]
+    order = usage_order(panels)
+    # The flux's own past is not a measurement from the site, so it is ruled off
+    # from the four that are. Drawn only where those rows fall together, which is
+    # what the ordering gives whenever the flux is used more than the site data.
+    flux_at = sorted(order.index(name) for name in FLUX_ROWS if name in order)
+    rule_after = max(flux_at) if flux_at == list(range(len(flux_at))) else None
+
+    horizons = list(panels[GAS_PANEL[0][0]].columns)
+    label = LABEL_PX / width_px
+    lead = LEAD_PX / width_px
+    gap = COLUMN_GAP_PX / width_px
+    column = (width - label - lead - gap * (len(horizons) - 1)) / (1 + len(horizons))
+    date_left = left + label
+    first = date_left + column + lead
+
+    row_height = (height - (HEADING_PX + COLUMN_TITLE_PX + GAS_LABEL_PX) / height_px) / 2
+    top = bottom + height
+
+    for row, (key, gas, _) in enumerate(GAS_PANEL):
+        panel = panels[key]
+        bottom_row = row == len(GAS_PANEL) - 1
+        base = bottom + (1 - row) * (row_height + GAS_LABEL_PX / height_px)
+        date = fig.add_axes((date_left, base, column, row_height))
+        _draw_usage_panel(date, panel.attrs.get("calendar", {}), order,
+                          ps.DATE_SHARE, bottom_row, rule_after)
+        date.set_yticklabels(order, fontsize=ps.TICK_SIZE, color=ps.INK)
+        fig.text(left, base + row_height + 9 / height_px, gas, ha="left", va="bottom",
+                 fontsize=ps.LABEL_SIZE, fontweight="bold", color=ps.INK)
+
+        for index, horizon in enumerate(horizons):
+            ax = fig.add_axes((first + index * (column + gap), base, column, row_height))
+            _draw_usage_panel(ax, panel[horizon], order, ps.FITTED, bottom_row, rule_after)
+            if row == 0:
+                fig.text(first + index * (column + gap) + column / 2,
+                         base + row_height + 8 / height_px,
+                         f"{horizon} month" + ("s" if horizon > 1 else ""),
+                         ha="center", va="bottom", fontsize=ps.LABEL_SIZE, color=ps.INK)
+
+    # Two headings rather than a legend: they name the two quantities the two
+    # colors stand for, so a key repeating them would say nothing the columns do
+    # not already say in the place a reader is looking.
+    heading_base = top - (HEADING_PX - 6) / height_px
+    fig.text(date_left + column / 2, heading_base, DATE_HEADING,
+             ha="center", va="bottom", fontsize=ps.LABEL_SIZE, fontweight="bold",
+             color=ps.INK)
+    fig.text(first + (left + width - first) / 2, heading_base, USAGE_HEADING,
+             ha="center", va="bottom", fontsize=ps.LABEL_SIZE, fontweight="bold",
+             color=ps.INK)
     return fig
