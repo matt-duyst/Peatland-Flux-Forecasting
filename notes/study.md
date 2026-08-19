@@ -2068,6 +2068,12 @@ windows across the series would have drawn them as a property of the data, and
 they are choices made from what was available. As rows with their own names they
 read as choices, and the largest ink on the panel never gets drawn.
 
+**Row names carry their units, and no row name carries a term the panel does not
+explain.** Each row is a monthly mean, said once in the block heading rather than
+six times in the rows. "Reconstruction", "fitting window" and "scored over" are
+gone: the rows now read *fitted the model*, *projected it back*, and under
+*tested forecasts on*, the two gas names.
+
 **Four kinds of month, three marks.** Measured is a filled bar. Missing from an
 otherwise unbroken run is a hole in the bar, with a tick under it because one
 month is under four pixels across thirty-five years and a hole alone reads as
@@ -2076,6 +2082,34 @@ it: *instrument error* on 2019-06 and 2019-09, *gauge change* from 2020-01. Neve
 covered is nothing at all. Because the two hollow cases carry their reasons in
 words, the key holds three marks and no reasons, which is what keeps six kinds of
 absence from becoming six keys.
+
+**Rows ordered by where each record ends, latest first.** This is the change that
+made three others unnecessary. Ordered that way the right edges step inward —
+2024-12, 2021-12, 2021-06, 2021-01, 2019-12, 2019-12 — and the last step is the
+month the fitting window stops at, so the study's central constraint is a shape
+rather than a sentence. Ordering by span length was tried first and does not do
+it: carbon dioxide has the second-shortest span and the latest end, so it lands
+mid-block and breaks the descent.
+
+**What the ordering does not do.** Three of the six records end within twelve
+months of one another, so the middle of the descent is a slope of fifteen to
+twenty pixels per step rather than a stair. The alignment that carries the
+argument — the lowest step meeting the fitted bar at 2019-12 — reads; the shape
+as a whole is gentler than the word staircase suggests.
+
+**Three things the reorder made redundant, all cut.** The three full-height
+guides, which existed for the alignment the ordering now carries. The column of
+month counts, which a reader does not need while looking at bars whose lengths
+already carry relative magnitude; the exact figures are in the table above. And
+the two analyzer rows, which describe how the methane series was built rather
+than where the study's boundaries fall, and which have the analyzer-mixing figure
+of their own. Eight rows became six and the panel lost its right-hand column.
+
+**The lower block keeps its two groups, and the two changes do not fight.** The
+reorder is a rule about records; the groups are a rule about roles. They sit in
+different blocks and neither constrains the other. The lower rows are ordered
+within their groups by what they do rather than by span, which is right: fitting
+comes before projecting because one produces the other.
 
 **One tick per break, not per month.** The first build drew a tick under every
 missing month, and the eight months missing across 2013 and 2014 came out as an

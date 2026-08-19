@@ -28,11 +28,11 @@ ASIDE = {"Water table": (
 )}
 
 DREW_ON = [
-    {"name": "Reconstruction", "first": pd.Period("1990-01", freq="M"),
-     "last": pd.Period("2009-03", freq="M"), "months": 230, "lead": None},
-    {"name": "Fitting window", "first": pd.Period("2009-04", freq="M"),
+    {"name": "Fitted the model", "first": pd.Period("2009-04", freq="M"),
      "last": pd.Period("2019-12", freq="M"), "months": 115, "lead": None,
      "support": True},
+    {"name": "Projected it back", "first": pd.Period("1990-01", freq="M"),
+     "last": pd.Period("2009-03", freq="M"), "months": 230, "lead": None},
 ]
 SCORED = [
     {"name": "Methane", "first": pd.Period("2014-06", freq="M"),
@@ -47,11 +47,18 @@ def rows():
     return figures.availability_rows(synthetic(), ASIDE)
 
 
-def figure(guides=()):
-    return figures.covariate_availability(rows(), GROUPS, guides)
+def figure():
+    return figures.covariate_availability(rows(), GROUPS)
 
 
 # --- four kinds of month ------------------------------------------------------
+
+
+def test_rows_are_ordered_by_where_each_record_ends():
+    """The ordering is the argument: the right edges step inward and the last step
+    is where the fitting window stops."""
+    ends = [row["present"].max() for row in rows()]
+    assert ends == sorted(ends, reverse=True)
 
 
 def test_a_gap_inside_a_run_is_told_apart_from_years_the_series_never_covered():
@@ -116,6 +123,18 @@ def test_what_was_set_aside_is_drawn_hollow_and_edged_in_the_discard_hue():
     ps.plt.close(fig)
 
 
+def test_the_measured_hue_clears_the_outline_drawn_on_top_of_it():
+    """Okabe-Ito reddish purple measures 0.9 from the discard orange under
+    tritanopia, and the set-aside outlines sit on these bars."""
+    source = (ps.paths.repo_root() / "scripts/verify_palette.py").read_text()
+    helpers: dict = {}
+    exec(source.split("def report")[0], helpers)
+    worst = min(helpers["dE"](helpers["sim"](helpers["hex2rgb"](ps.MEASURED), kind),
+                              helpers["sim"](helpers["hex2rgb"](ps.OUTSIDE), kind))
+                for kind in ("deuteranopia", "protanopia", "tritanopia"))
+    assert worst > 20.0
+
+
 def test_the_fitting_window_carries_the_hue_that_means_inside_the_fitted_range():
     """It is that range, in time. The reconstruction beside it stays neutral: its
     months are half inside and half outside, and one hue would assert otherwise."""
@@ -126,6 +145,7 @@ def test_the_fitting_window_carries_the_hue_that_means_inside_the_fitted_range()
               if p.get_facecolor()[:3] != (1.0, 1.0, 1.0)]
     assert filled.count(to_rgb(ps.INSIDE)) == 1
     assert to_rgb(ps.OUTSIDE) not in filled
+    assert to_rgb(ps.MEASURED) in filled
     ps.plt.close(fig)
 
 
@@ -191,23 +211,6 @@ def test_the_training_lead_is_a_lighter_weight_of_the_same_mark():
     ps.plt.close(fig)
 
 
-def test_guides_are_drawn_only_where_the_caller_asks_for_them():
-    """They are for alignments that carry a claim, not for every boundary."""
-    plain = figure()
-    guided = figure((pd.Period("2009-04", freq="M"), pd.Period("2020-01", freq="M")))
-    assert all(line.get_linestyle() != "-" for line in guided.axes[0].lines
-               if tuple(line.get_ydata()) == (0.0, 1.0))      # dashed, not a gridline
-    def verticals(fig):
-        """Full-height rules, which are in year coordinates and axes fractions."""
-        return sum(1 for line in fig.axes[0].lines
-                   if len(line.get_xdata()) == 2
-                   and line.get_xdata()[0] == line.get_xdata()[1] > 1900
-                   and tuple(line.get_ydata()) == (0.0, 1.0))
-    assert verticals(guided) - verticals(plain) == 2
-    ps.plt.close(plain)
-    ps.plt.close(guided)
-
-
 # --- what the words carry -----------------------------------------------------
 
 
@@ -238,13 +241,20 @@ def test_the_figure_asks_no_reader_to_know_the_method():
         assert jargon not in said
 
 
-def test_the_counts_are_all_written_the_same_way():
-    """One row reading "142 months" beside seven bare numbers read as a slip."""
+def test_no_counts_are_drawn_beside_the_bars():
+    """A reader does not need them while looking at the panel, the bar lengths
+    already carry relative magnitude, and the exact figures are in the notes."""
     fig = figure()
-    numbers = [note.get_text() for note in fig.axes[0].texts
-               if note.get_text().replace(".", "").isdigit()]
-    assert len(numbers) == len(rows()) + len(WINDOWS)
+    assert not [note for note in fig.axes[0].texts
+                if note.get_text().replace(".", "").isdigit()]
     ps.plt.close(fig)
+
+
+def test_no_term_appears_as_a_row_name_without_being_explained():
+    """Reconstruction, fitting window and scored over were all internal."""
+    said = " ".join([row["name"] for row in WINDOWS] + list(figures.BLOCK_HEADINGS)).lower()
+    for term in ("reconstruction", "fitting window", "scored"):
+        assert term not in said
 
 
 def test_the_title_names_the_site():

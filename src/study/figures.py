@@ -1345,20 +1345,21 @@ def coefficient_stability(paths: dict[str, pd.DataFrame], required: float,
 # --------------------------------------------------------------------------
 
 AVAILABILITY_TEXT = ps.FigureText(
-    title=("What was measured at Marcell Bog Lake Peatland, and which months "
-           "each part of the study could use"),
+    title=("Which months each measurement and each part of the study cover at "
+           "Marcell Bog Lake Peatland"),
     subtitle=(
         "Each row in the upper block is one measurement, and the bar covers the "
-        "months it exists. The rows below are the three pieces of work and the "
-        "months each drew on. Those spans were chosen from what was available "
-        "rather than being facts about the site. The study's boundaries fall "
-        "where the shortest records end."
+        "months it exists, longest record at the top. The rows below are the three "
+        "pieces of work and the months each drew on. Those spans were chosen from "
+        "what was available rather than being facts about the site. The study's "
+        "boundaries fall where the shortest records end."
     ),
     description=(
         "Air temperature and precipitation stop at the end of 2019, which ends the "
         "fitting window and discards 25 months of methane the tower recorded and "
-        "the study could not use. The reconstruction covers the span where the "
-        "measurements exist and the flux does not. Forecasting cannot begin until "
+        "the study could not use. The model is projected back over the span where "
+        "the measurements exist and the flux does not. Forecasting cannot begin "
+        "until "
         "48 months of flux have accumulated, which took 62 calendar months for "
         "methane because of the gaps in 2013 and 2014, and it ends in 2020 where "
         "the models needing a measurement run out, though the benchmarks alone "
@@ -1368,8 +1369,8 @@ AVAILABILITY_TEXT = ps.FigureText(
     ),
 )
 
-BLOCK_HEADINGS = ("What was measured", "Months the study drew on",
-                  "Months predictions were scored over")
+BLOCK_HEADINGS = ("What was measured, as monthly means", "Fitted and projected",
+                  "Tested forecasts on")
 PRESENT_LABEL = "months measured"
 MISSING_LABEL = "a month missing"
 ASIDE_LABEL = "set aside by the study"
@@ -1428,7 +1429,11 @@ def availability_rows(
             "aside": tuple(set_aside.get(name, ())),
             "months": len(present),
         })
-    return rows
+    # Latest-ending record first, earliest-starting to break a tie. Ordered this
+    # way the right edges step inward and stop exactly where the fitting window
+    # does, which turns the study's central constraint into a shape.
+    return sorted(rows, key=lambda row: (-row["present"].max().ordinal,
+                                         row["present"].min().ordinal))
 
 
 def _draw_bar(ax, y: float, first: pd.Period, last: pd.Period, **kwargs) -> None:
@@ -1441,14 +1446,14 @@ def _draw_bar(ax, y: float, first: pd.Period, last: pd.Period, **kwargs) -> None
 def _draw_availability_row(ax, y: float, row: dict) -> None:
     """A series: what exists, where it breaks, and what was set aside in it."""
     for first, last in _runs(row["present"]):
-        _draw_bar(ax, y, first, last, facecolor=ps.INK, edgecolor="none", zorder=3)
+        _draw_bar(ax, y, first, last, facecolor=ps.MEASURED, edgecolor="none", zorder=3)
     # One tick per break, because a single missing month is four pixels wide across
     # thirty-five years and reads as nothing at all on its own.
     for first, last in _runs(row["gaps"]):
         middle = (_position(first) + _position(last) + 1 / 12.0) / 2
         ax.plot([middle] * 2,
                 [y - BAR_HEIGHT / 2 - NOTCH_TICK, y - BAR_HEIGHT / 2 - 0.02],
-                color=ps.INK, linewidth=1.4, zorder=4)
+                color=ps.MEASURED, linewidth=1.4, zorder=4)
     # Discarded, which is what the support hue means everywhere else in the set.
     for months, _ in row["aside"]:
         for first, last in _runs(months):
@@ -1477,41 +1482,32 @@ def _draw_window_row(ax, y: float, row: dict) -> None:
 #: Row spacing. The wide gap holds the two reasons a month was set aside, which
 #: are labeled where they happened rather than encoded in the key; the narrow one
 #: separates the two things the lower block holds, which are not the same thing.
-BLOCK_GAP = 3.4
-GROUP_GAP = 1.9
+BLOCK_GAP = 2.2
+GROUP_GAP = 1.5
 HEADING_OFFSET = 1.15
 
 #: Room at the left for the row names and at the top for the key, in pixels. Taken
 #: out of the drawing rectangle rather than out of the canvas, so the title and the
 #: description stay centered on the page rather than on the bars.
-NAME_GUTTER_PX = 220
+NAME_GUTTER_PX = 300
 KEY_BAND_PX = 40
 
 
-def _draw_guides(ax, guides) -> None:
-    """A dashed vertical at each boundary two rows have to be compared across.
-
-    Only where an alignment carries a claim. Thirty-five years is wide enough that
-    the eye cannot hold a month while it travels between blocks, and these are the
-    months the figure exists to line up. Drawn in the apparatus gray the rest of
-    the set rules its range boundaries with, above the gridlines rather than under
-    them, because a guide that reads as a gridline is not a guide.
-    """
-    for month in guides:
-        ax.axvline(_position(month), color=ps.BOUNDARY, linewidth=1.0,
-                   linestyle=(0, (4, 3)), alpha=0.75, zorder=2)
-
-
-def covariate_availability(rows: list[dict], groups: Sequence[tuple[str, list[dict]]],
-                           guides: Sequence[pd.Period] = ()) -> Figure:
+def covariate_availability(rows: list[dict],
+                           groups: Sequence[tuple[str, list[dict]]]) -> Figure:
     """Every series against every window the study drew, on one timeline.
 
     Two blocks rather than one: the windows are choices made from what was
     available, and shading them across the series would draw them as a property of
     the data. Drawn as their own rows with their own names, they read as what they
     are, and the alignments carry the argument — the fitting window ends where the
-    shortest measurement does, and the reconstruction covers the years the flux
-    does not reach.
+    shortest measurement does, and the projection covers the years the flux does
+    not reach.
+
+    Rows are ordered by where each record ends, latest first, so the right edges
+    step inward and the last step is the month the fitting window stops at. Three
+    full-height guides were drawn at those boundaries before the ordering did the
+    work, and went with it.
     """
     fig, (left, bottom, width, height) = ps.canvas_area(AVAILABILITY_TEXT, size="standard")
     width_px, height_px = ps.SIZES["standard"]
@@ -1519,7 +1515,6 @@ def covariate_availability(rows: list[dict], groups: Sequence[tuple[str, list[di
     key_band = KEY_BAND_PX / height_px
     ax = fig.add_axes((left + gutter, bottom, width - gutter, height - key_band))
 
-    _draw_guides(ax, guides)
     series_y = list(range(len(rows)))
     for y, row in zip(series_y, rows):
         _draw_availability_row(ax, y, row)
@@ -1538,13 +1533,6 @@ def covariate_availability(rows: list[dict], groups: Sequence[tuple[str, list[di
             window_rows.append(row)
             cursor += 1
         cursor += GROUP_GAP if index < len(groups) - 1 else 0
-
-    # The count sits just past the bar it belongs to rather than in a column of its
-    # own, which would read as a table set beside the figure.
-    for y, row in zip(series_y + window_y, rows + window_rows):
-        last = row["present"].max() if "present" in row else row["last"]
-        ax.text(_position(last) + 2 / 12.0, y, f"{row['months']}", ha="left",
-                va="center", fontsize=ps.TICK_SIZE - 2.0, color=ps.MUTED, zorder=4)
 
     first_year = min(_position(row["present"].min()) for row in rows)
     ax.set_xlim(first_year - 0.5, 2026.4)
@@ -1569,20 +1557,22 @@ def covariate_availability(rows: list[dict], groups: Sequence[tuple[str, list[di
         ax.text(outside, y, name, transform=heading_at, ha="left", va="center",
                 fontsize=ps.LABEL_SIZE, fontweight="bold", color=ps.INK)
 
-    # One reason each side of its own mark, in the band below the row, so both
-    # leaders are short and neither crosses the bar it points at. The key already
-    # says the marks are months set aside, so the labels carry only the reason.
-    for (months, reason), side in zip(rows[-1]["aside"], (-1, 1)):
-        edge = _position(months.min()) if side < 0 else _position(months.max()) + 1 / 12.0
-        ps.annotate(ax, reason, xy=(edge, series_y[-1] + 0.32),
-                    xytext=(edge + 1.1 * side, series_y[-1] + 1.25),
-                    ha="right" if side < 0 else "left", va="center", color=ps.OUTSIDE,
-                    arrowprops=dict(arrowstyle="-", color=ps.OUTSIDE, linewidth=0.9,
-                                    shrinkA=3, shrinkB=2))
+    # Both reasons stacked in the clear ground to the right of the row they belong
+    # to, half a row above and below it, so each leader is short and neither
+    # crosses a bar. The key says the marks are months set aside; these say why.
+    for y, row in zip(series_y, rows):
+        for index, (months, reason) in enumerate(row["aside"]):
+            ps.annotate(ax, reason,
+                        xy=(_position(months.max()) + 1 / 12.0, y),
+                        xytext=(_position(row["present"].max()) + 0.8,
+                                y - 0.55 + 1.1 * index),
+                        ha="left", va="center", color=ps.OUTSIDE,
+                        arrowprops=dict(arrowstyle="-", color=ps.OUTSIDE, linewidth=0.9,
+                                        shrinkA=3, shrinkB=3))
 
     entries = [
-        (Patch(facecolor=ps.INK, edgecolor="none"), PRESENT_LABEL),
-        (Line2D([], [], color=ps.INK, linestyle="none", marker="|", markersize=10,
+        (Patch(facecolor=ps.MEASURED, edgecolor="none"), PRESENT_LABEL),
+        (Line2D([], [], color=ps.MEASURED, linestyle="none", marker="|", markersize=10,
                 markeredgewidth=1.4), MISSING_LABEL),
         (Patch(facecolor="white", edgecolor=ps.OUTSIDE, linewidth=1.2), ASIDE_LABEL),
     ]
