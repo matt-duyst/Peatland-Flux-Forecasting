@@ -1364,13 +1364,16 @@ AVAILABILITY_TEXT = ps.FigureText(
         "models that use environmental measurements can run. The seasonal "
         "benchmarks alone reach 2021 and 2024. Blue marks the range the model was "
         "fitted on, as it does across this set. The two hollow marks are decisions "
-        "rather than absences: the water table set aside from January 2020 for a "
-        "gauge change, and two months of 2019 for instrument error."
+        "rather than absences. The water table is set aside from January 2020 for "
+        "a gauge change. Two months of 2019 are set aside for instrument error."
     ),
 )
 
-BLOCK_HEADINGS = ("What was measured, as monthly means", "Months the model used",
-                  "Months the forecasts were checked on")
+#: Parentheses rather than commas, and short enough that each fits inside its
+#: bordered frame without the frame reaching the plot. Measured at 9.5 pt bold:
+#: 306, 262 and 240 px against a gutter of 360 less 17 px of padding.
+BLOCK_HEADINGS = ("Measured (monthly means)", "Months the model used",
+                  "Forecasts checked on")
 TIME_AXIS = "Year"
 PRESENT_LABEL = "months covered"
 MISSING_LABEL = "a month missing"
@@ -1479,7 +1482,7 @@ def _draw_window_row(ax, y: float, row: dict) -> None:
         # a remark about the figure rather than about one row.
         ps.annotate(ax, row["note"], xy=(_position(row["last"]) + 1 / 12.0, y),
                     xytext=(_position(row["last"]) + 0.8, y), ha="left", va="center",
-                    color=ps.MUTED,
+                    color=ps.MUTED, fontsize=ps.ANNOTATION_SIZE - 1.5,
                     arrowprops=dict(arrowstyle="-", color=ps.MUTED, linewidth=0.9,
                                     shrinkA=3, shrinkB=2))
     if row.get("lead"):
@@ -1501,7 +1504,7 @@ HEADING_OFFSET = 1.15
 #: Room at the left for the row names and at the top for the key, in pixels. Taken
 #: out of the drawing rectangle rather than out of the canvas, so the title and the
 #: description stay centered on the page rather than on the bars.
-NAME_GUTTER_PX = 330
+NAME_GUTTER_PX = 360
 KEY_BAND_PX = 40
 
 
@@ -1568,9 +1571,15 @@ def covariate_availability(rows: list[dict],
                alpha=0.45, zorder=1)
     heading_at = blended_transform_factory(ax.transAxes, ax.transData)
     outside = -gutter / (width - gutter)
+    # Framed as the panel names are elsewhere in the set. They sit in the gutter
+    # rather than over the bars, so the frame is a matter of matching the set
+    # rather than of separating a name from what is behind it; the gutter is wide
+    # enough to hold every frame clear of the plot.
     for y, name in headings:
         ax.text(outside, y, name, transform=heading_at, ha="left", va="center",
-                fontsize=ps.LABEL_SIZE, fontweight="bold", color=ps.INK)
+                fontsize=ps.LABEL_SIZE, fontweight="bold", color=ps.INK,
+                bbox=dict(boxstyle="round,pad=0.42", facecolor="white",
+                          edgecolor=ps.BOUNDARY, linewidth=0.9))
 
     # Both reasons stacked in the clear ground to the right of the row they belong
     # to, half a row above and below it, so each leader is short and neither
@@ -1593,7 +1602,7 @@ def covariate_availability(rows: list[dict],
         (Patch(facecolor=ps.INSIDE, edgecolor="none"), FITTED_RANGE_LABEL),
     ]
     ps.legend(ax, handles=[h for h, _ in entries], labels=[label for _, label in entries],
-              loc="lower right", bbox_to_anchor=(1.0, 1.005), ncol=len(entries),
-              frameon=False, handlelength=1.8, handletextpad=0.7, columnspacing=2.2,
-              borderpad=0.0, fontsize=ps.LEGEND_SIZE - 1.0)
+              loc="lower center", bbox_to_anchor=(0.5, 1.012), ncol=len(entries),
+              framealpha=1.0, handlelength=1.8, handletextpad=0.7, columnspacing=2.0,
+              borderpad=0.55, fontsize=ps.LEGEND_SIZE - 1.0)
     return fig

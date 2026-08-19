@@ -2082,11 +2082,20 @@ the gutter holds 330 px. *Methane forecasts checked against measurements* needs
 part of the first moved into the block heading and the qualifier of the second
 moved to the clear ground beside its own bar.
 
-**The block headings are not boxed.** The bordered box `panel_name` draws is for
-a name sitting inside a panel, where it has data behind it and needs separating
-from it. These headings sit in the left gutter on white with nothing behind them,
-so a border would frame empty ground and would imply they name panels rather than
-groups of rows. Bold text at the gutter's left edge is enough.
+**The block headings are framed, and the argument against it did not hold.** The
+case for leaving them bare was that the bordered box exists to separate a name
+from the data behind it, and these sit in the gutter on white. That is true and it
+is not decisive: the frame also marks a level in the hierarchy, and the row names
+share that gutter, so the set's own treatment does useful work here. Framing them
+cost 30 px of timeline. Two headings were too wide to hold a frame clear of the
+plot — *What was measured, as monthly means* measures 454 px and *Months the
+forecasts were checked on* 431, against a 360 px gutter less 17 px of padding —
+so both were shortened rather than the gutter widened further. They now measure
+306, 262 and 240 px, and a test asserts every frame's right edge falls left of the
+plot. Commas in the headings became parentheses at the same time.
+
+**The key is framed and centered**, as every other legend in the set is. It had
+been running from the middle of the panel to its right edge with no frame at all.
 
 **The time axis is named and the row axis is not.** Direction is plain from the
 year labels, but an axis with no name is an axis a reader has to infer. The other

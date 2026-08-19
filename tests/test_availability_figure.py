@@ -212,6 +212,47 @@ def test_the_two_kinds_of_window_are_grouped_and_headed_separately():
     ps.plt.close(fig)
 
 
+def test_each_block_name_is_framed_and_clears_the_plot():
+    """Framed as the panel names are elsewhere in the set, and seated in a gutter
+    wide enough that no frame reaches the bars."""
+    fig = figure()
+    ax = fig.axes[0]
+    fig.canvas.draw()
+    framed = [note for note in ax.texts if note.get_bbox_patch() is not None]
+    assert sorted(note.get_text() for note in framed) == sorted(figures.BLOCK_HEADINGS)
+    edge = ax.get_window_extent().x0
+    for note in framed:
+        assert note.get_bbox_patch().get_window_extent().x1 < edge
+    ps.plt.close(fig)
+
+
+def test_no_block_name_carries_a_comma():
+    for heading in figures.BLOCK_HEADINGS:
+        assert "," not in heading
+
+
+def test_the_key_is_framed_and_centered_over_the_panel():
+    fig = figure()
+    ax = fig.axes[0]
+    fig.canvas.draw()
+    key = ax.get_legend()
+    assert key.get_frame_on()
+    box = key.get_window_extent()
+    panel = ax.get_window_extent()
+    assert abs((box.x0 + box.x1) / 2 - (panel.x0 + panel.x1) / 2) < 12
+    ps.plt.close(fig)
+
+
+def test_the_note_beside_a_bar_is_lighter_than_the_row_names():
+    """At the same size and weight it read as a second label on that row."""
+    fig = figure()
+    note = next(n for n in fig.axes[0].texts
+                if n.get_text() == "(no flux to check against)")
+    assert note.get_fontsize() < ps.TICK_SIZE - 1
+    assert note.get_style() == "italic"
+    ps.plt.close(fig)
+
+
 def test_both_blocks_are_named_on_the_panel():
     fig = figure()
     said = " ".join(note.get_text() for note in fig.axes[0].texts)
