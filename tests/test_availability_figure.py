@@ -226,6 +226,42 @@ def test_each_block_name_is_framed_and_clears_the_plot():
     ps.plt.close(fig)
 
 
+def test_each_block_name_sits_over_the_names_it_heads():
+    """Left-aligned at the margin they floated, since the widest block set the
+    gutter and the other two headings ended up far from their own rows."""
+    fig = figure()
+    ax = fig.axes[0]
+    fig.canvas.draw()
+    labels = ax.get_yticklabels()
+    framed = {note.get_text(): note for note in ax.texts
+              if note.get_bbox_patch() is not None}
+    edge = ax.get_window_extent().x0
+    start = 0
+    for heading, size in zip(figures.BLOCK_HEADINGS,
+                             [len(rows())] + [len(group) for _, group in GROUPS]):
+        extents = [label.get_window_extent() for label in labels[start:start + size]]
+        middle = (min(box.x0 for box in extents) + max(box.x1 for box in extents)) / 2
+        box = framed[heading].get_bbox_patch().get_window_extent()
+        centered = abs((box.x0 + box.x1) / 2 - middle) < 3
+        clamped = abs(box.x1 - (edge - figures.HEADING_CLEAR_PX)) < 3
+        assert centered or clamped, heading
+        start += size
+    ps.plt.close(fig)
+
+
+def test_the_first_heading_claims_nothing_about_where_things_were_measured():
+    """Only the two fluxes come from the tower: soil temperature is the forest's
+    weekly record and precipitation the average of a north and a south gauge."""
+    assert "at the site" not in figures.BLOCK_HEADINGS[0]
+    assert "measured" in figures.BLOCK_HEADINGS[0]
+
+
+def test_the_description_uses_the_panel_s_own_word_for_the_measurements():
+    said = figures.AVAILABILITY_TEXT.description
+    assert "models that use the drivers" in said
+    assert "environmental measurements" not in said
+
+
 def test_no_block_name_carries_a_comma():
     for heading in figures.BLOCK_HEADINGS:
         assert "," not in heading

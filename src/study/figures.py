@@ -1361,7 +1361,7 @@ AVAILABILITY_TEXT = ps.FigureText(
         "tower recorded. Forecasts cannot be checked until 48 months of flux have "
         "accumulated. For methane that took 62 calendar months, because of the "
         "gaps in 2013 and 2014. The check ends in 2020, which is as far as the "
-        "models that use environmental measurements can run. The seasonal "
+        "models that use the drivers can run. The seasonal "
         "benchmarks alone reach 2021 and 2024. Blue marks the range the model was "
         "fitted on, as it does across this set. The two hollow marks are decisions "
         "rather than absences. The water table is set aside from January 2020 for "
@@ -1369,11 +1369,17 @@ AVAILABILITY_TEXT = ps.FigureText(
     ),
 )
 
-#: Parentheses rather than commas, and short enough that each fits inside its
-#: bordered frame without the frame reaching the plot. Measured at 9.5 pt bold:
-#: 306, 262 and 240 px against a gutter of 360 less 17 px of padding.
-BLOCK_HEADINGS = ("Measured (monthly means)", "Months the model used",
-                  "Forecasts checked on")
+#: One register across the three, each naming what the rows below it are, with
+#: parentheses rather than commas. Measured at 9.5 pt bold: 422, 338 and 507 px,
+#: each inside a frame that clears the plot within the 580 px gutter.
+#:
+#: Not "measured at the site": only the two fluxes come from the tower. Soil
+#: temperature is the experimental forest's weekly record, and precipitation is
+#: the average of a north and a south gauge, as `covariates.load_precipitation`
+#: says. Where each series is measured is a question for the notes, not a claim to
+#: slip into a heading.
+BLOCK_HEADINGS = ("What was measured (monthly means)", "Which months the model used",
+                  "Which months the forecasts were checked on")
 TIME_AXIS = "Year"
 PRESENT_LABEL = "months covered"
 MISSING_LABEL = "a month missing"
@@ -1485,6 +1491,41 @@ def _draw_window_row(ax, y: float, row: dict) -> None:
               edgecolor="none", zorder=3)
 
 
+#: How far a block heading's frame stays clear of the plot, in pixels.
+HEADING_CLEAR_PX = 8
+
+
+def _seat_headings(fig, ax, headings, sizes) -> None:
+    """Center each block heading over the row names it heads.
+
+    Measured rather than placed: the names are right-aligned against the plot and
+    the blocks are different widths, so where the middle of a block's names falls
+    is a fact about the longest name in it.
+    """
+    fig.canvas.draw()
+    labels = ax.get_yticklabels()
+    to_axes = ax.transAxes.inverted()
+    edge = ax.get_window_extent().x0
+    start = 0
+    for (y, name), size in zip(headings, sizes):
+        extents = [label.get_window_extent() for label in labels[start:start + size]]
+        middle = (min(box.x0 for box in extents) + max(box.x1 for box in extents)) / 2
+        seated = ax.text(to_axes.transform((middle, 0))[0], y, name,
+                         transform=blended_transform_factory(ax.transAxes, ax.transData),
+                         ha="center", va="center", fontsize=ps.LABEL_SIZE,
+                         fontweight="bold", color=ps.INK,
+                         bbox=dict(boxstyle="round,pad=0.42", facecolor="white",
+                                   edgecolor=ps.BOUNDARY, linewidth=0.9))
+        # A heading wider than the names it heads would reach into the plot if it
+        # were truly centered on them. Where that happens it is pushed left until
+        # its frame clears: off center by a little beats a frame over the bars.
+        fig.canvas.draw()
+        over = seated.get_bbox_patch().get_window_extent().x1 - (edge - HEADING_CLEAR_PX)
+        if over > 0:
+            seated.set_x(to_axes.transform((middle - over, 0))[0])
+        start += size
+
+
 #: Row spacing. The wide gap holds the two reasons a month was set aside, which
 #: are labeled where they happened rather than encoded in the key; the narrow one
 #: separates the two things the lower block holds, which are not the same thing.
@@ -1567,15 +1608,10 @@ def covariate_availability(rows: list[dict],
                alpha=0.45, zorder=1)
     heading_at = blended_transform_factory(ax.transAxes, ax.transData)
     outside = -gutter / (width - gutter)
-    # Framed as the panel names are elsewhere in the set. They sit in the gutter
-    # rather than over the bars, so the frame is a matter of matching the set
-    # rather than of separating a name from what is behind it; the gutter is wide
-    # enough to hold every frame clear of the plot.
-    for y, name in headings:
-        ax.text(outside, y, name, transform=heading_at, ha="left", va="center",
-                fontsize=ps.LABEL_SIZE, fontweight="bold", color=ps.INK,
-                bbox=dict(boxstyle="round,pad=0.42", facecolor="white",
-                          edgecolor=ps.BOUNDARY, linewidth=0.9))
+    # Framed as the panel names are elsewhere in the set, and each seated over the
+    # names it heads rather than at the margin, where the widest block's labels had
+    # left the other two headings floating far from their own rows.
+    _seat_headings(fig, ax, headings, [len(rows)] + [len(group) for _, group in groups])
 
     # Both reasons stacked in the clear ground to the right of the row they belong
     # to, half a row above and below it, so each leader is short and neither

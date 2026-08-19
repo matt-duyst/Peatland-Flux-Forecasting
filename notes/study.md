@@ -2105,6 +2105,33 @@ description a sixth line, which the block does not have without dropping somethi
 else; if it is ever wanted, the sentence to trade is the one about the seasonal
 benchmarks reaching 2021 and 2024.
 
+**Where each series is measured, and why the heading does not say.** The heading
+over the upper block was going to read *what was measured at the site*, and that
+overstates it. Only methane and carbon dioxide come from the tower. Soil
+temperature is `MEF_soil_temp_weekly.csv`, the experimental forest's weekly record
+at 10 cm; air temperature is a cumulative mean over the forest's stations; and
+precipitation is the **average of a north and a south gauge**, which
+`covariates.load_precipitation` says in its own docstring. The water table is a
+gauge reading in elevation. So the heading reads *what was measured (monthly
+means)* and makes no claim about where. This is worth recording on its own
+account: three of the four drivers are forest-scale records rather than
+measurements at the peatland, which is a limit on how local any driver
+relationship in this study can be.
+
+**The three headings were put in one register.** They had been a past participle,
+a noun phrase and a passive construction; they now read *what was measured
+(monthly means)*, *which months the model used* and *which months the forecasts
+were checked on*. The last two name months, which every row in the figure is, and
+match the question in the title.
+
+**Each heading is seated over the names it heads.** Left-aligned at the margin
+they floated: the widest block set the gutter at 580 px, so the other two headings
+sat far from their own rows. Each is now centered on the horizontal extent of its
+own block's names, measured after drawing rather than placed. Where a heading is
+wider than the names it heads — the first is 422 px against 305 — true centering
+would push its frame into the plot, so it is shifted left until the frame clears
+by 8 px. Off center by a little beats a frame over the bars.
+
 **The block headings are framed, and the argument against it did not hold.** The
 case for leaving them bare was that the bordered box exists to separate a name
 from the data behind it, and these sit in the gutter on white. That is true and it
