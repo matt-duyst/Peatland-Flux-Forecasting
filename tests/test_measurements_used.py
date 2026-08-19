@@ -191,16 +191,11 @@ def test_the_figure_asks_no_reader_to_know_the_method():
     """Plain terms or nothing: none of the working vocabulary reaches the page."""
     text = figures.MEASUREMENTS_TEXT
     said = " ".join([text.title, text.subtitle, text.description, figures.DATE_HEADING,
-                     figures.CHOSEN_HEADING, figures.NOT_ASKED,
-                     figures.NOT_AVAILABLE]).lower()
+                     figures.CHOSEN_HEADING, figures.DATE_AXIS, figures.CHOSEN_AXIS,
+                     figures.NOT_ASKED, figures.NOT_AVAILABLE]).lower()
     for jargon in ("boruta", "fold", "shadow", "survival", "survived", "lag",
                    "exogenous", "ridge", "screening", "covariate", "predictor"):
         assert jargon not in said
-
-
-def test_the_description_states_what_the_order_is_built_from():
-    """A sorted figure that does not say what it sorted on invites the wrong reading."""
-    assert "ordered by how often the models chose" in figures.MEASUREMENTS_TEXT.description
 
 
 def test_the_seasonal_terms_are_not_a_row():
@@ -225,19 +220,35 @@ def test_the_description_says_what_each_empty_cell_means_before_it_says_anything
     said = figures.MEASUREMENTS_TEXT.description
     assert "does not apply to the flux's own past values" in said
     assert "unavailable to a model forecasting three or more months ahead" in said
-    assert said.index("does not apply") < said.index("For carbon dioxide")
-    assert said.index("does not apply") < said.index("Three seasonal terms")
+    assert said.index("does not apply") < said.index("carbon dioxide")
+    assert said.index("does not apply") < said.index("seasonal terms")
 
 
-def test_the_unit_is_carried_by_the_headings_rather_than_by_an_axis_name():
-    """Naming two columns of five would read as a distinction between them."""
-    assert "%" in figures.DATE_HEADING and "%" in figures.CHOSEN_HEADING
+def test_each_column_group_names_its_unit_under_the_ticks():
+    """The heading sits a figure height above the numbers it belongs to."""
     fig = figures.measurements_used(real_panels())
+    said = [text.get_text() for text in fig.texts]
+    assert said.count(figures.DATE_AXIS) == 1 and said.count(figures.CHOSEN_AXIS) == 1
     for ax in fig.axes:
-        assert not ax.get_xlabel()
-        printed = [t.get_text() for t in ax.get_xticklabels() if t.get_text()]
+        printed = [text.get_text() for text in ax.get_xticklabels() if text.get_text()]
         assert printed in ([], ["0", "50", "100"])      # blank on all but the last row
     ps.plt.close(fig)
+
+
+def test_no_row_label_carries_a_unit():
+    """The bars are two percentages. A unit beside a row would name what the bar
+    is not: precipitation in millimetres appears nowhere on this panel."""
+    order = figures.usage_order(real_panels())
+    for name in order:
+        assert "(" not in name and ")" not in name
+        assert not any(token in name.split() for token in ("mm", "in", "m", "C", "F"))
+
+
+def test_the_description_fits_the_allocation_every_other_figure_has():
+    """It was the longest in the set and needed its own block; it no longer does."""
+    wrapped = ps.wrap_description(figures.MEASUREMENTS_TEXT.description,
+                                  ps.SIZES["tall"][0])
+    assert wrapped.count("\n") + 1 <= 5
 
 
 def test_the_title_names_the_site_as_the_rest_of_the_set_does():

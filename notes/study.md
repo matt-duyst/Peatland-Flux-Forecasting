@@ -1821,15 +1821,22 @@ finding**: a reader meeting a marked cell should not have to reach the end of th
 block to learn what it means. The two are given a sentence each rather than one
 clause, since they are two different situations.
 
-**The headings carry the unit, and no column carries an axis name.** "Predictable
-from the date (% of variation)" over the leading column and "Chosen by the models
-(% of rebuilds)" over the four horizons, each broken before its parenthetical so
-the pair reads in the same register. A "Percent" label was drawn under the two
-group centers first and removed: two of five columns carrying an axis name reads
-as a distinction between those columns and the other three rather than as a
-label, and the alternative of naming all five repeats one word five times for a
-scale that already runs 0 to 100 under a heading that says so. Ticks read 0, 50,
-100 on the bottom row of panels only.
+**Each column group names its unit twice: once above and once under the ticks.**
+"Predictable from the date (% of variation)" over the leading column and "Chosen
+by the models (% of rebuilds)" over the four horizons, each broken before its
+parenthetical so the pair reads in the same register, with "% of variation" and
+"% of rebuilds" under the bottom row of panels. The heading sits a full figure
+height above the numbers it belongs to, so a reader at the tick marks would
+otherwise have to travel back up to learn what they are. An earlier build used
+"Percent" for both and a build before that had no axis name at all; the unit is
+now the group's own words in both places. Per group rather than per column, since
+the unit is a property of the question rather than of a horizon, and five copies
+would repeat two facts. Ticks read 0, 50, 100 on the bottom row of panels only.
+
+**No units beside the row labels.** They would name what the bars are not. The
+bars carry two percentages, and precipitation in millimetres or temperature in
+degrees appears nowhere on this panel, so "(mm)" beside a row would read as the
+quantity the bar measures. A test pins their absence.
 
 **"Chosen" rather than "kept" or "retained".** The literal description is that a
 selection step retained a candidate. Two things decided against it. "Kept"
@@ -1844,13 +1851,33 @@ above each panel rather than in its corner: the corner holds the first row, whic
 here is a marked cell rather than the empty space the box needs. `panel_name`
 took an `x` override for this rather than the box being redrawn a second way.
 
-**The description outruns the shared allocation, and the canvas is sized around
-it.** It wraps to eight lines where the fixed block holds five, and the figure
-declares 240 px against the shared 156. `wrap_description`
-and `canvas_area` took a `description_px` parameter so this one figure can declare
-the room it needs on a taller canvas; the shared default is untouched, because
-raising it would change the proportions of every other figure in the set. This is
-the only figure that uses the override.
+**The description was cut to four lines, and three parts moved to the writeup.**
+It reached eight lines, longer than any other figure in the set, and needed a
+`description_px` override on `wrap_description` and `canvas_area` to hold it.
+Cut, it fits the shared allocation, and the override has been removed from
+`plotstyle` rather than left behind unused. What stays is what a reader needs
+while looking at the panel: the two blank-cell meanings, which are marks on the
+panel; the 95% and 0.5%, which are what the grey bars mean; and the carbon
+dioxide three-month result, which is the panel's most visible feature. A test
+asserts it fits the block every other figure has.
+
+**Three things moved out of the description and into the writeup.** All three are
+established results and none is lost; they are recorded here so the writeup picks
+them up.
+
+1. **The sort basis.** Rows are ordered by how often the models chose each
+   measurement, averaged across both gases and all four horizons, and the date
+   column was not sorted yet falls in the same order. That matters for verifying
+   the figure and not for reading it, and it is the mechanism behind the ordering
+   rather than something the ordering shows.
+2. **That the water table explains almost nothing left in the flux once the
+   seasonal cycle is removed.** This is the partial correlation analysis in the
+   section above (r = 0.006 for methane at lag 1, −0.157 for carbon dioxide at
+   lag 12, neither significant). The panel does not display it, and a description
+   that asserts it asks the reader to take a second analysis on trust.
+3. **That the same pattern appears at other wetland sites.** Knox et al. (2021),
+   recorded above with the ratio that makes this site fit. It is context for what
+   the figure means in the field, which is the writeup's job.
 
 **The calendar share is a fifth column, not a row label.** Drawn as a leading
 column of bars to the left, separated by a gap: soil temperature 95%, air

@@ -317,21 +317,14 @@ def wrap_subtitle(text: str, width_px: int) -> str:
     return textwrap.fill(" ".join(text.split()), width=width)
 
 
-def wrap_description(text: str, width_px: int, terms: tuple[str, ...] = (),
-                     block_px: int = DESCRIPTION_BLOCK_PX) -> str:
-    """Wrap a description to the canvas width, refusing text that will not fit.
-
-    `block_px` is the allocation the text has to fit in. It is a parameter rather
-    than the constant alone so a figure carrying an unusually long description can
-    declare the room it needs and be sized around it, instead of the shared
-    default drifting upward and every other figure changing shape with it.
-    """
+def wrap_description(text: str, width_px: int, terms: tuple[str, ...] = ()) -> str:
+    """Wrap a description to the canvas width, refusing text that will not fit."""
     width = _wrap_width(width_px) - (2 if terms else 0)
     wrapped = textwrap.fill(" ".join(text.split()), width=width)
     lines = wrapped.count("\n") + 1
     line_px = DESCRIPTION_SIZE * 1.45 / 72.0 * DPI
-    if lines * line_px > block_px:
-        allowed = int(block_px / line_px)
+    if lines * line_px > DESCRIPTION_BLOCK_PX:
+        allowed = int(DESCRIPTION_BLOCK_PX / line_px)
         raise DescriptionOverflow(
             f"description wraps to {lines} lines at this width; the fixed "
             f"allocation holds {allowed}. Shorten it rather than enlarging the block."
@@ -339,9 +332,8 @@ def wrap_description(text: str, width_px: int, terms: tuple[str, ...] = (),
     return emphasize(wrapped, terms)
 
 
-def canvas_area(text: FigureText, size: str = "wide", extra_left_px: int = 0,
-                description_px: int | None = None
-                ) -> tuple[Figure, tuple[float, float, float, float]]:
+def canvas_area(text: FigureText, size: str = "wide",
+                extra_left_px: int = 0) -> tuple[Figure, tuple[float, float, float, float]]:
     """A figure carrying its text blocks, and the rectangle left for drawing.
 
     Callers that need one axes use `canvas`; callers laying out several panels
@@ -352,9 +344,7 @@ def canvas_area(text: FigureText, size: str = "wide", extra_left_px: int = 0,
     width_px, height_px = SIZES[size]
     fig = plt.figure(figsize=(width_px / DPI, height_px / DPI), dpi=DPI)
 
-    description_block_px = DESCRIPTION_BLOCK_PX if description_px is None else description_px
-    body = wrap_description(text.description, width_px, text.emphasize,
-                            description_block_px)
+    body = wrap_description(text.description, width_px, text.emphasize)
     heading = wrap_subtitle(text.subtitle, width_px)
 
     subtitle_line_px = SUBTITLE_SIZE * 1.5 / 72.0 * DPI
@@ -370,7 +360,7 @@ def canvas_area(text: FigureText, size: str = "wide", extra_left_px: int = 0,
     right = 1 - MARGIN_PX["right"] / width_px
     axes_top = 1 - (MARGIN_PX["top"] + title_block_px) / height_px
     axes_bottom = (
-        MARGIN_PX["bottom"] + description_block_px + XAXIS_BLOCK_PX
+        MARGIN_PX["bottom"] + DESCRIPTION_BLOCK_PX + XAXIS_BLOCK_PX
     ) / height_px
 
     middle = (left + right) / 2
@@ -379,7 +369,7 @@ def canvas_area(text: FigureText, size: str = "wide", extra_left_px: int = 0,
     fig.text(middle, 1 - (MARGIN_PX["top"] + TITLE_SIZE * 1.9 / 72 * DPI) / height_px,
              emphasize(heading, text.emphasize), ha="center", va="top",
              fontsize=SUBTITLE_SIZE, color=INK, linespacing=1.5)
-    fig.text(left, (MARGIN_PX["bottom"] + description_block_px) / height_px,
+    fig.text(left, (MARGIN_PX["bottom"] + DESCRIPTION_BLOCK_PX) / height_px,
              body, ha="left", va="top", fontsize=DESCRIPTION_SIZE, color=MUTED,
              linespacing=1.45)
     return fig, (left, axes_bottom, right - left, axes_top - axes_bottom)

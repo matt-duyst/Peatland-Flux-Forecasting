@@ -889,33 +889,19 @@ MEASUREMENTS_TEXT = ps.FigureText(
         "cannot predict is the one they chose least."
     ),
     description=(
-        "Rows are ordered by how often the models chose each measurement, averaged "
-        "across both gases and all four horizons. Cells are marked rather than left "
-        "blank where a number would mean nothing, for two different reasons. The "
-        "date question does not apply to the flux's own past values, which are not "
-        "measurements taken at the site. Last month's flux is simply unavailable to "
-        "a model forecasting three or more months ahead. The date column was not "
-        "sorted, yet it falls in the same order, and three things follow from that. "
-        "Three seasonal terms account for 95% of soil and air temperature, so a "
-        "model that uses temperature gains almost nothing the date had not already "
-        "given it. Those same terms account for 0.5% of the water table, which means "
-        "it carries information nothing else does, but once the seasonal cycle is "
-        "removed from the flux, the water table explains almost nothing that "
-        "remains. For carbon dioxide three months ahead the models chose none of the "
-        "four measurements in any rebuild, keeping only the flux's own value from a "
-        "year earlier. The same pattern appears at other wetland sites, where "
-        "temperature dominated wherever the water table varied least."
+        "Two marks stand where a number would mean nothing. The date question does "
+        "not apply to the flux's own past values, which are not measurements taken "
+        "at the site. Last month's flux is unavailable to a model forecasting three "
+        "or more months ahead. Where a grey bar does stand, it is what three "
+        "seasonal terms account for: 95% of soil and air temperature, and 0.5% of "
+        "the water table. The sharpest case is carbon dioxide three months ahead, "
+        "where the models chose none of the four measurements in any rebuild and "
+        "kept only the flux's own value from a year earlier."
     ),
 )
 
-#: Room the description above needs. It runs past the shared allocation, and the
-#: canvas is sized around it rather than the shared default being raised, which
-#: would change the proportions of every other figure in the set.
-MEASUREMENTS_DESCRIPTION_PX = 240
-
 #: Headings over the two column groups, each centered on the columns it covers and
-#: broken before the parenthetical so the pair reads in the same register. They
-#: carry the unit, which is why no column is given an axis name of its own.
+#: broken before the parenthetical so the pair reads in the same register.
 #:
 #: "Chosen" rather than "kept" or "retained", which are the more literal words for
 #: what a selection step does. Kept implies a pool the reader has not been shown,
@@ -924,6 +910,12 @@ MEASUREMENTS_DESCRIPTION_PX = 240
 #: verb, so the panel and the sentence above it describe one act rather than two.
 CHOSEN_HEADING = "Chosen by the models\n(% of rebuilds)"
 DATE_HEADING = "Predictable from the date\n(% of variation)"
+
+#: The same units again, under the ticks they belong to. The heading sits a full
+#: figure height above the bottom row, so a reader at the tick marks would have to
+#: travel back up to learn what the numbers are.
+DATE_AXIS = "% of variation"
+CHOSEN_AXIS = "% of rebuilds"
 
 #: The two reasons a cell is empty, which are not the same reason and so are not
 #: drawn the same way. Neither is missing data.
@@ -1010,8 +1002,7 @@ def measurements_used(panels: dict[str, pd.DataFrame]) -> Figure:
     The leading column answers a different question from the four beside it, so
     it is set apart by a gap and drawn achromatic.
     """
-    fig, (left, bottom, width, height) = ps.canvas_area(
-        MEASUREMENTS_TEXT, size="tall", description_px=MEASUREMENTS_DESCRIPTION_PX)
+    fig, (left, bottom, width, height) = ps.canvas_area(MEASUREMENTS_TEXT, size="tall")
     width_px, height_px = ps.SIZES["tall"]
     order = usage_order(panels)
     # The flux's own past is not a measurement from the site, so it is ruled off
@@ -1061,11 +1052,13 @@ def measurements_used(panels: dict[str, pd.DataFrame]) -> Figure:
     date_middle = date_left + column / 2
     chosen_middle = first + (left + width - first) / 2
     heading_base = top - (HEADING_PX - 8) / height_px
-    # No axis name under the columns. The headings already give the unit, and the
-    # alternative to naming all five columns is naming none: two of five carrying
-    # it would read as a distinction between the columns rather than as a label.
-    for middle, heading in ((date_middle, DATE_HEADING), (chosen_middle, CHOSEN_HEADING)):
+    # Named per group rather than per column: the unit is a property of the two
+    # questions, and five copies of it would be five repetitions of two facts.
+    for middle, heading, axis in ((date_middle, DATE_HEADING, DATE_AXIS),
+                                  (chosen_middle, CHOSEN_HEADING, CHOSEN_AXIS)):
         fig.text(middle, heading_base, heading, ha="center", va="bottom",
                  fontsize=ps.LABEL_SIZE, fontweight="bold", color=ps.INK,
                  linespacing=1.4)
+        fig.text(middle, bottom - 34 / height_px, axis, ha="center", va="top",
+                 fontsize=ps.LABEL_SIZE, color=ps.MUTED)
     return fig
