@@ -2082,6 +2082,24 @@ the gutter holds 330 px. *Methane forecasts checked against measurements* needs
 part of the first moved into the block heading and the qualifier of the second
 moved to the clear ground beside its own bar.
 
+**The block headings are not boxed.** The bordered box `panel_name` draws is for
+a name sitting inside a panel, where it has data behind it and needs separating
+from it. These headings sit in the left gutter on white with nothing behind them,
+so a border would frame empty ground and would imply they name panels rather than
+groups of rows. Bold text at the gutter's left edge is enough.
+
+**The time axis is named and the row axis is not.** Direction is plain from the
+year labels, but an axis with no name is an axis a reader has to infer. The other
+one carries six names already, and a title over them would repeat all six.
+
+**Both text blocks were broken into shorter sentences.** The subtitle had said
+*longest record at the top* while the rows were sorted by end date, which put soil
+temperature, the longest at 383 months, third; and it still called the lower block
+three pieces of work after it had become four rows in two groups. Both were
+corrected. The description's second sentence had carried four clauses across
+three separate facts and is now three sentences. A test holds every sentence in
+either block to two clauses.
+
 **The water table row says elevation.** Its values run 413.07 to 413.75 m above
 sea level, and a reader who works on peatlands meets "water table" expecting a
 depth below the surface. The row reads *water table elevation (m)*: the unit was

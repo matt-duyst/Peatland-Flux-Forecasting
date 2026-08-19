@@ -155,10 +155,10 @@ def test_the_reason_a_month_was_set_aside_is_written_beside_it():
     fig = figure()
     said = [note.get_text() for note in fig.axes[0].texts]
     assert "instrument error" in said and "gauge change" in said
-    # Each leader stays on its own side of its own mark rather than crossing the bar.
-    leaders = [note for note in fig.axes[0].texts
+    # Each reason is tied to its own mark rather than crossing the bar to reach it.
+    leaders = [note.get_text() for note in fig.axes[0].texts
                if getattr(note, "arrow_patch", None) is not None]
-    assert len(leaders) == 2
+    assert {"instrument error", "gauge change"} <= set(leaders)
     ps.plt.close(fig)
 
 
@@ -242,13 +242,30 @@ def test_the_description_says_what_the_window_cost_and_not_only_its_cause():
 
 def test_the_description_names_the_benchmark_tail_without_drawing_it():
     """A fourth mark for a clause is not worth it."""
-    assert "seasonal benchmarks reach 2021 and 2024" in figures.AVAILABILITY_TEXT.description
+    assert "seasonal benchmarks alone reach 2021 and 2024" in \
+        figures.AVAILABILITY_TEXT.description
 
 
 def test_the_subtitle_says_the_windows_were_chosen():
     said = figures.AVAILABILITY_TEXT.subtitle
     assert "chosen from what was available" in said
     assert "rather than being facts about the site" in said
+
+
+def test_the_subtitle_describes_the_order_the_rows_are_actually_in():
+    """It said longest record at the top while they were sorted by end date, which
+    put soil temperature, the longest at 383 months, third."""
+    said = figures.AVAILABILITY_TEXT.subtitle
+    assert "ordered by where each record ends" in said
+    assert "longest record at the top" not in said
+
+
+def test_neither_block_of_text_runs_more_than_two_clauses_to_a_sentence():
+    """Four clauses across three facts is one sentence doing three jobs."""
+    text = figures.AVAILABILITY_TEXT
+    for block in (text.subtitle, text.description):
+        for sentence in block.split(". "):
+            assert sentence.count(",") <= 2, sentence
 
 
 def test_the_figure_asks_no_reader_to_know_the_method():
@@ -277,12 +294,23 @@ def test_no_term_appears_as_a_row_name_without_being_explained():
         assert term not in said
 
 
-def test_a_qualifier_too_long_for_the_gutter_is_set_beside_its_own_bar():
-    """Row names were measured against the gutter rather than assumed; the one
-    that did not fit sits in the clear ground to the right of its bar."""
+def test_a_qualifier_too_long_for_the_gutter_is_tied_to_its_own_bar():
+    """Row names were measured against the gutter rather than assumed. The one that
+    did not fit sits beside its bar with a leader, since a note floating in the
+    panel reads as a remark about the figure rather than about one row."""
     fig = figure()
-    said = [note.get_text() for note in fig.axes[0].texts]
-    assert "(no flux to check against)" in said
+    notes = [note for note in fig.axes[0].texts
+             if note.get_text() == "(no flux to check against)"]
+    assert len(notes) == 1
+    assert getattr(notes[0], "arrow_patch", None) is not None
+    ps.plt.close(fig)
+
+
+def test_the_time_axis_is_named_and_the_row_axis_is_not():
+    """Every row carries its own name; a title over them would repeat six."""
+    fig = figure()
+    assert fig.axes[0].get_xlabel() == figures.TIME_AXIS
+    assert not fig.axes[0].get_ylabel()
     ps.plt.close(fig)
 
 

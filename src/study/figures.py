@@ -1349,27 +1349,29 @@ AVAILABILITY_TEXT = ps.FigureText(
            "Marcell Bog Lake Peatland"),
     subtitle=(
         "Each row in the upper block is one measurement, and the bar covers the "
-        "months it exists, longest record at the top. The rows below are the three "
-        "pieces of work and the months each drew on. Those spans were chosen from "
-        "what was available rather than being facts about the site. The study's "
-        "boundaries fall where the shortest records end."
+        "months it exists. They are ordered by where each record ends, latest "
+        "first. The rows below are what each analysis covers: the months the model "
+        "used, and the months its forecasts were checked on. Those spans were "
+        "chosen from what was available rather than being facts about the site. "
+        "The study's boundaries fall where the shortest records end."
     ),
     description=(
-        "Air temperature and precipitation stop at the end of 2019, which ends the "
-        "months the model could learn from and discards 25 months of methane the "
+        "Air temperature and precipitation stop at the end of 2019. That ends the "
+        "months the model could learn from, and discards 25 months of methane the "
         "tower recorded. Forecasts cannot be checked until 48 months of flux have "
-        "accumulated, which took 62 calendar months for methane because of the "
-        "gaps in 2013 and 2014, and the check ends in 2020 where the models that "
-        "use a measurement run out, though the seasonal benchmarks reach 2021 and "
-        "2024. Blue marks the range the model was fitted on, as it does across "
-        "this set. The two hollow marks are decisions rather than absences: the "
-        "water table is set aside from January 2020 for a gauge change, and two "
-        "months of 2019 on evidence of instrument error."
+        "accumulated. For methane that took 62 calendar months, because of the "
+        "gaps in 2013 and 2014. The check ends in 2020, which is as far as the "
+        "models that use environmental measurements can run. The seasonal "
+        "benchmarks alone reach 2021 and 2024. Blue marks the range the model was "
+        "fitted on, as it does across this set. The two hollow marks are decisions "
+        "rather than absences: the water table set aside from January 2020 for a "
+        "gauge change, and two months of 2019 for instrument error."
     ),
 )
 
 BLOCK_HEADINGS = ("What was measured, as monthly means", "Months the model used",
                   "Months the forecasts were checked on")
+TIME_AXIS = "Year"
 PRESENT_LABEL = "months covered"
 MISSING_LABEL = "a month missing"
 ASIDE_LABEL = "set aside by the study"
@@ -1472,10 +1474,14 @@ def _draw_availability_row(ax, y: float, row: dict) -> None:
 def _draw_window_row(ax, y: float, row: dict) -> None:
     """A window: the months it used, and any lead spent on training first."""
     if row.get("note"):
-        # The qualifier that would not fit the gutter, set in the clear ground
-        # beside the bar it belongs to.
-        ax.text(_position(row["last"]) + 0.5, y, row["note"], ha="left", va="center",
-                fontsize=ps.ANNOTATION_SIZE, style="italic", color=ps.MUTED, zorder=4)
+        # The qualifier that would not fit the gutter, set beside the bar it
+        # belongs to and tied to it, since a note floating in the panel reads as
+        # a remark about the figure rather than about one row.
+        ps.annotate(ax, row["note"], xy=(_position(row["last"]) + 1 / 12.0, y),
+                    xytext=(_position(row["last"]) + 0.8, y), ha="left", va="center",
+                    color=ps.MUTED,
+                    arrowprops=dict(arrowstyle="-", color=ps.MUTED, linewidth=0.9,
+                                    shrinkA=3, shrinkB=2))
     if row.get("lead"):
         first, last = row["lead"]
         ax.plot([_position(first), _position(last)], [y, y], color=ps.MUTED,
@@ -1548,6 +1554,9 @@ def covariate_availability(rows: list[dict],
                        fontsize=ps.TICK_SIZE)
     ax.set_xticks(list(range(1990, 2026, 5)))
     ax.set_xticklabels([str(year) for year in range(1990, 2026, 5)])
+    # Named, though the direction is plain from the labels. No name on the other
+    # axis: every row carries its own, and a title over them would repeat six.
+    ax.set_xlabel(TIME_AXIS, fontsize=ps.LABEL_SIZE, color=ps.INK, labelpad=8)
     ax.tick_params(axis="y", length=0)
     ax.grid(axis="x", color=ps.GRID, linewidth=0.6, zorder=0)
     ax.set_axisbelow(True)
