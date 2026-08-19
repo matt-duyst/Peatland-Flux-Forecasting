@@ -15,7 +15,7 @@ from collections.abc import Sequence
 import numpy as np
 import pandas as pd
 from matplotlib.figure import Figure
-from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.colors import LinearSegmentedColormap, to_rgba
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 from matplotlib.ticker import NullFormatter, ScalarFormatter
@@ -937,7 +937,7 @@ def _draw_usage_panel(
     ax,
     values,
     order,
-    colour: str,
+    color: str,
     ticked: bool,
     rule_after: int | None,
     blank: str,
@@ -952,7 +952,7 @@ def _draw_usage_panel(
     positions = np.arange(len(order))
     heights = np.array([values.get(name, np.nan) for name in order], dtype=float)
     drawn = ~np.isnan(heights)
-    ax.barh(positions[drawn], 100 * heights[drawn], height=0.6, color=colour,
+    ax.barh(positions[drawn], 100 * heights[drawn], height=0.6, color=color,
             edgecolor="none", zorder=2)
     for position, height in zip(positions[drawn], heights[drawn]):
         share = 100 * height
@@ -1062,30 +1062,28 @@ def measurements_used(panels: dict[str, pd.DataFrame]) -> Figure:
 
 
 STABILITY_TEXT = ps.FigureText(
-    title=("How the water table coefficient at Marcell Bog Lake Peatland moves "
-           "as its supporting range narrows"),
+    title=("How the water table coefficient at Marcell Bog Lake Peatland changes "
+           "when the wettest months are removed"),
     subtitle=(
-        "The model was fitted again and again, each time on a drier slice of its "
-        "own record: first all 115 months, then the same months with the wettest "
-        "tenth taken away, and on to the wettest two fifths. The water table "
-        "coefficient is how much predicted emission changes per metre of water "
-        "table, and each point is what that coefficient came out as, drawn against "
-        "the wettest month still left in the fit. It climbs at every step, while "
-        "the soil temperature coefficient beside it moves a third as far. A "
-        "coefficient that moves as its supporting range narrows is describing the "
-        "months it was fitted on rather than the peatland, which is why it cannot "
-        "be carried into the shaded region, where the reconstruction needs it."
+        "The model was fitted five times, each on a smaller set of months: first "
+        "all 115, then the same months with the wettest tenth removed, and on to "
+        "the wettest two fifths. The water table coefficient is how much predicted "
+        "emission changes per meter of water table, and each point is what that "
+        "coefficient came out as, placed at the wettest month still in the fit. It "
+        "climbs at every step, while the soil temperature coefficient beside it "
+        "moves a third as far. A coefficient that changes when its range of water "
+        "table shrinks is describing the months it was fitted on rather than the "
+        "peatland, so it cannot be carried into the shaded region, where the "
+        "reconstruction needs it."
     ),
     description=(
         "The same analysis is drawn twice, once weighting each month by how well it "
-        "was measured and once not. Both fail and neither is the better treatment. "
-        "Weighted, the coefficient rises from 2.704 to 4.077, half again what it "
-        "started at; unweighted, from 2.385 to 3.299. Every step's range overlaps "
-        "the first, so no single step is decisive: the evidence is that it climbs "
-        "at all four and never once falls. The soil temperature coefficient moves "
-        "16% along the same path against the water table's 51%, and only without "
-        "weighting is it flat. The bracket is how far the wettest months held out "
-        "of the fit reached, 0.05 m against the 0.29 m the reconstruction requires."
+        "was measured and once not. Both fail and neither is the better treatment: "
+        "weighted, the coefficient rises 51%, from 2.704 to 4.077; unweighted, 38%, "
+        "from 2.385 to 3.299. Every step's range overlaps the first, so no single "
+        "step is decisive, and the evidence is that it climbs at all four and never "
+        "once falls. The soil temperature coefficient moves 16% along the same "
+        "path, and only without weighting is it flat."
     ),
 )
 
@@ -1096,22 +1094,25 @@ TREATMENTS = (
     ("weighted", "with weighting", {"color": ps.INK, "linestyle": "-", "linewidth": 1.8,
                                     "marker": "o", "markersize": 6.0}),
     ("unweighted", "without weighting", {"color": "#767676", "linestyle": (0, (7, 2, 2, 2)),
-                               "linewidth": 1.5, "marker": "^", "markersize": 6.2}),
+                                         "linewidth": 1.5, "marker": "^", "markersize": 6.2}),
 )
 
-#: The two terms, and the columns each is carried in. Soil temperature is here as
-#: the control: it is fitted on exactly the same narrowing months, so whatever it
-#: does is what refitting does on its own.
+#: The two terms, the columns each is carried in, and the unit its axis is in.
+#: Soil temperature is drawn as the fitted slope rather than as its Q10, which is
+#: an exponential of the same number: on the Q10 scale the same experiment reports
+#: a different drift, and the two panels would no longer be comparable.
 STABILITY_TERMS = (
-    ("Water table", "water_table_coef", "water_table_lo", "water_table_hi"),
-    ("Soil temperature", "q10", "q10_lo", "q10_hi"),
+    ("Water table", "water_table_coef", "water_table_lo", "water_table_hi",
+     "Per meter of water table", None),
+    ("Soil temperature", "soil_temp_coef", "soil_temp_lo", "soil_temp_hi",
+     "Per °C of soil temperature",
+     "The same five fits, on the coefficient the season already accounts for"),
 )
 
-STABILITY_AXIS = "Coefficient, as a percentage of its value on the whole range"
-STABILITY_X_AXIS = "Water table, in metres from the wettest month the model was fitted on"
+STABILITY_X_AXIS = "Water table, in meters from the wettest month the model was fitted on"
 REQUIRED_LABEL = "what the reconstruction requires"
 TESTED_LABEL = "held out and tested"
-REFIT_LABEL = "every refit"
+COUNT_LABEL = "months in the fit"
 
 
 def stability_paths(frame: pd.DataFrame) -> dict[str, pd.DataFrame]:
@@ -1122,33 +1123,56 @@ def stability_paths(frame: pd.DataFrame) -> dict[str, pd.DataFrame]:
     }
 
 
-#: Pixel allocations for the stability figure. The strip is the measuring device
-#: under the panels: it carries the three spans in metres, which is where the
-#: qualification lives, and keeps the panels free of anything but the paths.
-STABILITY_STRIP_PX = 78
-STABILITY_GAP_PX = 30
-STABILITY_HEAD_PX = 44
+def _stability_window(paths: dict[str, pd.DataFrame], term, margin: float = 0.05):
+    """Axis limits for one term, as a multiple of its value on the whole range.
+
+    Returned as a multiple rather than as values because the two panels are then
+    given heights in the same proportion, which is what makes their slopes
+    comparable: a sixteen percent climb and a fifty-one percent climb cover
+    different distances on the page only if the pixels per percent are equal.
+    """
+    _, value, low, high, _, _ = term
+    reference = float(paths[TREATMENTS[0][0]][value].iloc[0])
+    lowest = min(float(paths[name][low].min()) for name, _, _ in TREATMENTS)
+    highest = max(float(paths[name][high].max()) for name, _, _ in TREATMENTS)
+    room = margin * (highest - lowest)
+    return reference, ((lowest - room) / reference, (highest + room) / reference)
 
 
-def _draw_stability_panel(ax, paths, term, required, limits) -> None:
+def _draw_stability_panel(ax, paths, term, required, reference, window) -> None:
     """One term's coefficient against the wet edge of the range it was fitted on."""
-    _, value, low, high = term
-    ax.axvspan(0.0, required, color=ps.OUTSIDE, alpha=0.10, linewidth=0, zorder=0)
-    ax.axhline(100.0, color=ps.GRID, linewidth=1.0, zorder=1)
+    name, value, low, high, unit, caption = term
+    # A tint light enough to sit under the data rather than over it, with the edge
+    # of the evidence ruled: the region is a boundary a reader crosses, and a solid
+    # block at panel height would carry more weight than anything measured.
+    ax.axvspan(0.0, required, color=ps.OUTSIDE, alpha=0.05, linewidth=0, zorder=0)
+    ax.axvline(0.0, color=ps.OUTSIDE, linewidth=1.0, linestyle=(0, (5, 3)), zorder=1)
 
     for treatment, label, style in TREATMENTS:
         frame = paths[treatment]
-        anchor = float(frame["wte_max"].iloc[0])   # the full fit, before any dropping
-        base = float(frame[value].iloc[0])
+        anchor = float(frame["wte_max"].iloc[0])
         x = frame["wte_max"].to_numpy() - anchor
-        y = 100 * frame[value].to_numpy() / base
-        lower = y - 100 * frame[low].to_numpy() / base
-        upper = 100 * frame[high].to_numpy() / base - y
-        ax.errorbar(x, y, yerr=np.vstack([lower, upper]), elinewidth=1.0,
-                    capsize=3.5, ecolor=style["color"], zorder=3, label=label, **style,
-                    markerfacecolor="white", markeredgewidth=1.4)
+        y = frame[value].to_numpy()
+        ax.errorbar(x, y, yerr=np.vstack([y - frame[low].to_numpy(),
+                                          frame[high].to_numpy() - y]),
+                    elinewidth=1.0, capsize=3.5, ecolor=style["color"], zorder=3,
+                    label=label, **style, markerfacecolor="white",
+                    markeredgewidth=1.4)
+        # Where it started, carried across, so the climb is read against a line
+        # rather than against the axis.
+        ax.plot([x.min(), 0.0], [y[0], y[0]], color=style["color"], linewidth=0.9,
+                linestyle=(0, (1, 2.4)), zorder=2)
+        change = 100 * (y[-1] / y[0] - 1)
+        ax.annotate(f"{change:+.0f}%", xy=(x[-1], y[-1]), xytext=(-8, 0),
+                    textcoords="offset points", ha="right", va="center",
+                    fontsize=ps.ANNOTATION_SIZE, fontweight="bold",
+                    color=style["color"], zorder=4)
 
-    ax.set_ylim(*limits)
+    ax.set_ylim(reference * window[0], reference * window[1])
+    ax.set_ylabel(unit, fontsize=ps.LABEL_SIZE, color=ps.INK)
+    # Both panels' names set at the same distance from the axis, since their tick
+    # labels are different widths and would otherwise leave them out of line.
+    ax.yaxis.set_label_coords(-0.052, 0.5)
     ax.tick_params(top=False, right=False)
     ax.grid(axis="y", color=ps.GRID, linewidth=0.6, zorder=0)
     ax.set_axisbelow(True)
@@ -1156,24 +1180,86 @@ def _draw_stability_panel(ax, paths, term, required, limits) -> None:
         ax.spines[side].set_visible(False)
     for side in ("left", "bottom"):
         ax.spines[side].set_color(ps.BOUNDARY)
+    ps.panel_name(ax, name)
+    if caption:
+        # In the shaded half, which carries no data on either panel: the control
+        # has to say what it is for, and there is nowhere else clear to say it.
+        ax.text(0.42, 0.93, caption, transform=ax.transAxes, ha="left", va="top",
+                fontsize=ps.ANNOTATION_SIZE, style="italic", color=ps.MUTED, zorder=5)
 
 
-def _draw_stability_strip(ax, spans, required, tested) -> None:
-    """The three spans in metres: what was fitted, what was tested, what is asked."""
+def _draw_stability_strip(ax, x, counts, span, required, tested) -> None:
+    """What each point rests on, and the two distances the argument turns on."""
     ax.set_ylim(0, 1)
-    for name, start, end, y in spans:
-        ax.plot([start, end], [y, y], color=ps.BOUNDARY, linewidth=1.2, zorder=3)
+    for position, count in zip(x, counts):
+        ax.text(position, 0.62, f"{count:.0f}", ha="center", va="bottom",
+                fontsize=ps.ANNOTATION_SIZE, color=ps.MUTED)
+    ax.text(0.012, 0.62, COUNT_LABEL, ha="left", va="bottom",
+            fontsize=ps.ANNOTATION_SIZE, color=ps.MUTED)
+
+    for label, start, end, inside in (
+        (f"{TESTED_LABEL}, {tested:.2f} m", -tested, 0.0, False),
+        (f"{REQUIRED_LABEL}, {required:.2f} m", 0.0, required, True),
+    ):
+        ax.plot([start, end], [0.22, 0.22], color=ps.BOUNDARY, linewidth=1.2, zorder=3)
         for edge in (start, end):
-            ax.plot([edge, edge], [y - 0.13, y + 0.13], color=ps.BOUNDARY,
-                    linewidth=1.2, zorder=3)
-        ax.text((start + end) / 2, y + 0.22, name, ha="center", va="bottom",
-                fontsize=ps.ANNOTATION_SIZE, color=ps.MUTED, zorder=4)
-    ax.axvspan(0.0, required, color=ps.OUTSIDE, alpha=0.10, linewidth=0, zorder=0)
+            ax.plot([edge, edge], [0.12, 0.32], color=ps.BOUNDARY, linewidth=1.2, zorder=3)
+        if inside:
+            ax.text((start + end) / 2, 0.40, label, ha="center", va="bottom",
+                    fontsize=ps.ANNOTATION_SIZE, color=ps.MUTED)
+        else:
+            ax.text(start - 0.008, 0.22, label, ha="right", va="center",
+                    fontsize=ps.ANNOTATION_SIZE, color=ps.MUTED)
+
+    ax.axvspan(0.0, required, color=ps.OUTSIDE, alpha=0.05, linewidth=0, zorder=0)
+    ax.set_xlim(*span)
     ax.set_yticks([])
     ax.tick_params(top=False, right=False, left=False)
     for side in ("top", "right", "left"):
         ax.spines[side].set_visible(False)
     ax.spines["bottom"].set_color(ps.BOUNDARY)
+
+
+def _stability_legend(fig, rect) -> None:
+    """One key for both panels, naming every mark on them.
+
+    Outside the panels because there is no corner on either that is clear of the
+    data, and because two panels drawn from the same five fits should not carry
+    two keys. Two columns with ruled headings, as elsewhere in the set.
+    """
+    ax = fig.add_axes(rect)
+    ax.set_axis_off()
+    blank = Line2D([], [], linestyle="none", marker="none")
+    entries = [(blank, r"$\bf{The\ two\ treatments}$")]
+    entries += [(Line2D([], [], **style), label) for _, label, style in TREATMENTS]
+    entries += [(blank, ""), (blank, "")]
+    entries += [
+        (blank, r"$\bf{What\ the\ marks\ show}$"),
+        (Line2D([], [], color=ps.BOUNDARY, linestyle="none", marker="|", markersize=11,
+                markeredgewidth=1.2),
+         "Where the coefficient landed in 500 resamples"),
+        (Line2D([], [], color=ps.INK, linestyle=(0, (1, 2.4)), linewidth=0.9),
+         "Its value on the whole range, carried across"),
+        (Patch(facecolor=to_rgba(ps.OUTSIDE, 0.05), edgecolor=ps.OUTSIDE,
+               linewidth=1.0, linestyle=(0, (3, 2))),
+         "Where the reconstruction needs the coefficient"),
+        (Line2D([], [], color=ps.BOUNDARY, linewidth=1.2, marker="|", markersize=8,
+                markeredgewidth=1.2),
+         "A distance in meters of water table"),
+    ]
+    ax.legend(handles=[h for h, _ in entries], labels=[label for _, label in entries],
+              loc="center", ncol=2, frameon=False, labelspacing=0.42,
+              columnspacing=2.4, handlelength=2.4, handletextpad=0.9,
+              fontsize=ps.LEGEND_SIZE - 1.0)
+    _underline_legend_headings(fig, ax)
+
+
+#: Pixel allocations for the stability figure, from the bottom of the drawing
+#: area upward: the key, the axis name, the strip of distances, then the panels.
+STABILITY_STRIP_PX = 86
+STABILITY_LEGEND_PX = 108
+STABILITY_XLABEL_PX = 70
+STABILITY_GAP_PX = 26
 
 
 def coefficient_stability(paths: dict[str, pd.DataFrame], required: float,
@@ -1186,16 +1272,17 @@ def coefficient_stability(paths: dict[str, pd.DataFrame], required: float,
     is what the reconstruction asks the coefficient to hold across, and nothing is
     drawn inside it because nothing was measured there.
 
-    Both panels carry the same y-axis, each coefficient as a percentage of its own
-    value on the whole range. Scaled to their own data instead, a sixteen percent
-    drift and a fifty-one percent drift would draw the same picture.
+    Each panel carries its own coefficient in its own unit. The comparison is kept
+    by giving the panels heights in proportion to the range each has to cover, so
+    a percent of change is the same number of pixels on both and the control panel
+    cannot flatter itself with a tighter axis.
     """
     fig, (left, bottom, width, height) = ps.canvas_area(STABILITY_TEXT, size="stacked")
     width_px, height_px = ps.SIZES["stacked"]
     strip = STABILITY_STRIP_PX / height_px
+    legend_band = STABILITY_LEGEND_PX / height_px
+    label_band = STABILITY_XLABEL_PX / height_px
     gap = STABILITY_GAP_PX / height_px
-    head = STABILITY_HEAD_PX / height_px
-    panel_height = (height - strip - 2 * gap - head) / 2
 
     reference = paths[TREATMENTS[0][0]]
     anchor = float(reference["wte_max"].iloc[0])
@@ -1203,54 +1290,25 @@ def coefficient_stability(paths: dict[str, pd.DataFrame], required: float,
     pad = 0.06 * (required - x.min())
     span = (x.min() - pad, required + pad)
 
-    # One y-window for both panels, from the widest interval either of them holds.
-    edges = []
-    for _, value, low, high in STABILITY_TERMS:
-        for treatment, _, _ in TREATMENTS:
-            frame = paths[treatment]
-            base = float(frame[value].iloc[0])
-            edges += [100 * frame[low].min() / base, 100 * frame[high].max() / base]
-    room = 0.05 * (max(edges) - min(edges))
-    limits = (min(edges) - room, max(edges) + room)
+    windows = [_stability_window(paths, term) for term in STABILITY_TERMS]
+    spans = [high - low for _, (low, high) in windows]
+    room = height - strip - legend_band - label_band - 2 * gap
+    heights = [room * one / sum(spans) for one in spans]
 
-    axes = []
-    for index, term in enumerate(STABILITY_TERMS):
-        base = bottom + strip + gap + (1 - index) * (panel_height + gap)
-        ax = fig.add_axes((left, base, width, panel_height))
-        _draw_stability_panel(ax, paths, term, required, limits)
+    top = bottom + height
+    for index, (term, (anchor_value, window)) in enumerate(zip(STABILITY_TERMS, windows)):
+        base = top - sum(heights[: index + 1]) - index * gap
+        ax = fig.add_axes((left, base, width, heights[index]))
+        _draw_stability_panel(ax, paths, term, required, anchor_value, window)
         ax.set_xlim(*span)
         ax.set_xticklabels([])
-        ps.panel_name(ax, term[0])
-        if index == 0:
-            # Seated in the clear ground between the paths and the shaded region,
-            # which is the one place on either panel that carries nothing.
-            ax.legend(loc="upper center", bbox_to_anchor=(0.26, 1.0), frameon=False,
-                      fontsize=ps.LEGEND_SIZE, handlelength=2.6, labelspacing=0.55,
-                      borderaxespad=0.6)
-        axes.append(ax)
 
-    # The shares that produced each point, above the top panel: the experiment is
-    # what was done, and the axis below is what it left behind.
-    top = bottom + height
-    for position, share in zip(x, reference["dropped_wettest_pct"]):
-        fig.text(left + width * (position - span[0]) / (span[1] - span[0]),
-                 top - head + 0.010, "none" if share == 0 else f"{share:.0f}%",
-                 ha="center", va="bottom", fontsize=ps.ANNOTATION_SIZE, color=ps.MUTED)
-    fig.text(left + width * (x.mean() - span[0]) / (span[1] - span[0]),
-             top - head + 0.032, "wettest months dropped from the fit",
-             ha="center", va="bottom", fontsize=ps.ANNOTATION_SIZE, color=ps.MUTED)
-
-    strip_ax = fig.add_axes((left, bottom, width, strip))
-    _draw_stability_strip(
-        strip_ax,
-        ((f"{REFIT_LABEL}, {abs(x.min()):.2f} m", x.min(), 0.0, 0.70),
-         (f"{REQUIRED_LABEL}, {required:.2f} m", 0.0, required, 0.70),
-         (f"{TESTED_LABEL}, {tested:.2f} m", -tested, 0.0, 0.18)),
-        required, tested)
-    strip_ax.set_xlim(*span)
-    strip_ax.set_xlabel(STABILITY_X_AXIS, fontsize=ps.LABEL_SIZE, color=ps.INK, labelpad=8)
-
-    fig.text(left - 52 / width_px, bottom + strip + gap + panel_height + gap / 2,
-             STABILITY_AXIS, rotation=90, ha="right", va="center",
-             fontsize=ps.LABEL_SIZE, color=ps.INK)
+    strip_base = bottom + legend_band + label_band
+    strip_ax = fig.add_axes((left, strip_base, width, strip))
+    _draw_stability_strip(strip_ax, x, reference["n_months"].to_numpy(), span,
+                          required, tested)
+    fig.text(left + width / 2, strip_base - 34 / height_px, STABILITY_X_AXIS,
+             ha="center", va="top", fontsize=ps.LABEL_SIZE, fontweight="bold",
+             color=ps.INK)
+    _stability_legend(fig, (left, bottom, width, legend_band))
     return fig

@@ -137,7 +137,7 @@ def main() -> None:
         months = pd.PeriodIndex(series["month"], freq="M")
         # Cut at the datum break, as the forecasting half itself is: the share of
         # each covariate the date accounts for is measured on the same months the
-        # models saw, and two metres of gauge change would swamp the water table.
+        # models saw, and two meters of gauge change would swamp the water table.
         screening_panels[key] = figures.screening_panel(
             frame, covariates.before_datum_break(cov).reindex(months), months)
 
@@ -148,7 +148,7 @@ def main() -> None:
     print(f"wrote {path.relative_to(plotstyle.figures_dir().parent)}")
 
     # Coefficient stability reads the table `scripts/reconstruct.py` writes, and
-    # takes the two spans in metres from the same windows every other figure uses:
+    # takes the two spans in meters from the same windows every other figure uses:
     # what the reconstruction has to reach, and how far the holdout actually did.
     stability = pd.read_csv(root / "data/processed/coefficient_stability.csv")
     fitted, projected = built["fit"], built["reconstruction"]

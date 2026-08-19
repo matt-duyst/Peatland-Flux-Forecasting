@@ -97,6 +97,13 @@ def coefficient_path(
                 "water_table_includes_zero": bool(
                     water.quantile(0.025) <= 0.0 <= water.quantile(0.975)
                 ),
+                # Both the slope and its Q10. The slope is what the water table
+                # coefficient is comparable with, since a Q10 is already an
+                # exponential of it and would report a different drift; the Q10 is
+                # what this literature quotes and what the holdout tables carry.
+                "soil_temp_coef": float(fit.as_series()["soil_temp_c"]),
+                "soil_temp_lo": float(soil.quantile(0.025)),
+                "soil_temp_hi": float(soil.quantile(0.975)),
                 "q10": features.q10_from_slope(float(fit.as_series()["soil_temp_c"])),
                 "q10_lo": features.q10_from_slope(float(soil.quantile(0.025))),
                 "q10_hi": features.q10_from_slope(float(soil.quantile(0.975))),

@@ -1050,7 +1050,7 @@ reach was every quantity computed from the water table column on its own, where
 nothing else forced those months out: the share of the water table the calendar
 accounts for, which read **0.5% with the step and 3.8% to 6.0% without it**, and the
 partial correlations, which changed sign. Both are corrected above and in the
-figure. Twelve months in 141, all at one end of the record and all two metres
+figure. Twelve months in 141, all at one end of the record and all two meters
 out, moved a headline number by a factor of ten.
 
 **The cut is now in the code rather than in a caveat.**
@@ -1060,7 +1060,7 @@ it. The reconstruction half is unaffected either way, since no month after the
 break carries a complete covariate set. It is still worth knowing for anyone
 extending this study: the 2020 and 2021 methane months cannot be added without
 resolving the datum first, and a naive extension would read the step as a
-two-metre drawdown.
+two-meter drawdown.
 
 The same series carries the two 2019 months described under support, which are
 treated as missing there.
@@ -1540,7 +1540,7 @@ temperature, so it is genuinely non-seasonal information.
 concludes.** The values published here before were 0.2% and 0.5% for the calendar
 share and r = 0.006 and −0.157 for the partial correlation, and all four were
 artifacts of the 2020 datum step described under data caveats: twelve months
-sitting two metres below the rest of the record, read as hydrology. Cut at the
+sitting two meters below the rest of the record, read as hydrology. Cut at the
 break, the water table's partial correlation with the deseasonalized flux is
 **+0.245 for methane at lag 1 (p = 0.0075)** and **+0.250 for carbon dioxide at
 lag 12 (p = 0.0042)** — the same sign, and very nearly the same size, as the two
@@ -1584,7 +1584,7 @@ month-of-year means span **32.65 °C** against a full span of 42.47 °C. Put as 
 variable's seasonal swing relative to its own full span, the water table is
 **0.199** and air temperature **0.769**, a ratio of about one to four. The water
 table here moves, and most of that movement is not seasonal, which is the same
-fact as its small calendar share seen in metres rather than as a variance share.
+fact as its small calendar share seen in meters rather than as a variance share.
 **This is the regime their synthesis predicts temperature dominance in**, so the
 finding that the models reach for temperature and not for the water table is what
 the multi-site work expects of a site like this one, not an anomaly of this
@@ -1593,7 +1593,7 @@ record.
 **An earlier version of this paragraph was wrong twice over, and both errors are
 worth keeping visible.** It reported a full observed range of **2.380 m**, which
 is the 2020 datum step described under data caveats: the series was read across a
-change of gauge, and two metres of instrument became two metres of hydrology. It
+change of gauge, and two meters of instrument became two meters of hydrology. It
 then reported a month-of-year span of **0.333 m**, computed on the same
 contaminated series. Neither figure survives. The conclusion does, at 0.199
 against 0.769 rather than 0.140 against 0.813, which is the useful part: the
@@ -1913,7 +1913,7 @@ the unit is a property of the question rather than of a horizon, and five copies
 would repeat two facts. Ticks read 0, 50, 100 on the bottom row of panels only.
 
 **No units beside the row labels.** They would name what the bars are not. The
-bars carry two percentages, and precipitation in millimetres or temperature in
+bars carry two percentages, and precipitation in millimeters or temperature in
 degrees appears nowhere on this panel, so "(mm)" beside a row would read as the
 quantity the bar measures. A test pins their absence.
 
@@ -2066,16 +2066,55 @@ to the right of everything, two and a half times wider than the whole experiment
 with nothing drawn inside it. The share dropped is annotated above each point, so
 the experimental knob is still legible.
 
+**One key for both panels, naming every mark.** The first build had a legend in
+panel a naming the two treatments and nothing else, which left a reader with five
+unexplained marks and panel b with no key at all. The key now sits below the
+figure, outside both panels, in the two-column ruled-heading form used across the
+set: the treatments in one column, and in the other the interval bars, the
+carried-across starting value, the shaded region and the bracket.
+
+**The shading was reduced.** Two blocks at panel height and 0.10 alpha gave a
+region marker more weight than the data. The fill is now 0.05 with a dashed rule
+at the edge of the evidence, which is the boundary a reader actually crosses.
+
+**The two axes were reading in opposite directions.** The row above the panels ran
+40%, 30%, 20%, 10%, none from left to right while the axis below ran negative to
+positive. Reversing either would have put the extrapolation on the left, where it
+reads as the past. The row now gives the **months left in the fit** — 69, 81, 92,
+103, 115 — which increases in the same direction as the axis, sits in the strip
+rather than above the panels where a title would, and adds the sample size each
+point rests on, which the first design left out.
+
+**The control panel says on the panel what it is for.** A nearly flat line in a
+tall axis with no caption was the hardest mark on the figure to read. It now
+carries one line in the empty half: the same five fits, on the coefficient the
+season already accounts for.
+
 **The holdout bracket sits against the shaded region.** The wettest-decile test
 trained to 413.41 and reached 413.46, so it demonstrated transfer over 0.05 m
 against the 0.29 m required. Drawn as two lengths on one axis, the 17% is a thing
 a reader measures by eye rather than a number to be taken on trust.
 
-**Both panels carry one y-axis, each coefficient as a percentage of its own value
-on the whole range.** Scaled to their own data instead, a 16% drift and a 51%
-drift would draw the same picture and the control panel would prove nothing. The
-cost is that the soil temperature panel sits in the lower half of a window set by
-the water table's widest interval, and that emptiness is the finding.
+**Each panel carries its own coefficient in its own units, and the comparison is
+kept by the geometry rather than by the axis.** The first build indexed both
+panels to 100 at the full-range value, which made the two drifts directly
+comparable and put a translation step on the figure's central quantity: a reader
+seeing 100 rising to 150 had to remember that 100 meant 2.704. The axes now read
+in the coefficient's own units, each path's starting value is carried across as a
+dotted rule, and the total change is labeled at the dry end. What replaces the
+shared axis is a shared scale: **the panels are given heights in proportion to
+the proportional range each has to cover, so a percent of change is the same
+number of pixels on both.** A control panel scaled to its own data would draw a
+16% climb exactly like a 51% one; this one cannot. It also solves the empty
+space, since the soil temperature panel is now a third the height rather than
+two thirds empty. A test measures pixels per unit of proportion on both panels
+and requires them equal.
+
+**Soil temperature is drawn as the fitted slope, not as its Q10.** A Q10 is an
+exponential of the slope, so the same experiment reports a different drift on it:
+15.5% against the slope's 16.3%, and the description quotes 16%. `stability.
+coefficient_path` now emits `soil_temp_coef` beside `q10` so the figure reads the
+comparable quantity and the holdout tables keep the one this literature quotes.
 
 **Two treatments, achromatic, separated by line style.** They are one analysis run
 twice and the finding is that neither survives, so hue would have made them read
@@ -2094,6 +2133,11 @@ per step, 115 down to 69. The three reconstruction variants. Knox et al. (2021)
 and the nuclear verification study. The wettest-decile tie instability. And any
 curve through the shaded region, which is the one thing the figure exists to
 refuse.
+
+**A shortened axis name.** "Coefficient, as a percentage of its value on the whole
+range" was doing the work the subtitle should do. The axes now read "Per meter of
+water table" and "Per °C of soil temperature", and what a coefficient is belongs
+to the subtitle.
 
 **A title that outran the canvas.** This is the longest title in the set and it
 overflowed the drawing area. `plotstyle.wrap_title` now wraps a title and sizes

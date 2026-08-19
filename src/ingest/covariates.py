@@ -110,7 +110,7 @@ def load_water_table() -> pd.DataFrame:
 #: every month afterwards between 411.08 and 411.22, with no intervening values
 #: and a series as smooth on each side as the other. That is a change of datum or
 #: of gauge, not a drawdown, and reading across it turns an instrument change into
-#: two metres of hydrology.
+#: two meters of hydrology.
 WATER_TABLE_DATUM_BREAK = pd.Period("2020-01", freq="M")
 
 

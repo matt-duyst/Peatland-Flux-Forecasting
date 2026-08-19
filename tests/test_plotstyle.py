@@ -57,9 +57,9 @@ def test_canvas_pixel_size_matches_the_named_size(tmp_path):
 
 def test_hue_is_reserved_for_support_status():
     """No model variant may reuse a support hue, in any channel."""
-    variant_colours = {v["color"].upper() for v in ps.VARIANT.values()}
-    assert ps.INSIDE.upper() not in variant_colours
-    assert ps.OUTSIDE.upper() not in variant_colours
+    variant_colors = {v["color"].upper() for v in ps.VARIANT.values()}
+    assert ps.INSIDE.upper() not in variant_colors
+    assert ps.OUTSIDE.upper() not in variant_colors
 
 
 def test_variants_are_achromatic_and_separated_by_line_style():

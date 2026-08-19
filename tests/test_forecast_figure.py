@@ -306,8 +306,8 @@ def test_the_legend_keeps_its_clearance_on_both_panels():
 # --- the palette ------------------------------------------------------------
 
 
-def _lab(hex_colour: str) -> np.ndarray:
-    rgb = np.array([int(hex_colour[i:i + 2], 16) / 255 for i in (1, 3, 5)])
+def _lab(hex_color: str) -> np.ndarray:
+    rgb = np.array([int(hex_color[i:i + 2], 16) / 255 for i in (1, 3, 5)])
     lin = np.where(rgb <= 0.04045, rgb / 12.92, ((rgb + 0.055) / 1.055) ** 2.4)
     matrix = np.array([[0.4124, 0.3576, 0.1805], [0.2126, 0.7152, 0.0722],
                        [0.0193, 0.1192, 0.9505]])
@@ -316,8 +316,8 @@ def _lab(hex_colour: str) -> np.ndarray:
     return np.array([116 * f[1] - 16, 500 * (f[0] - f[1]), 200 * (f[1] - f[2])])
 
 
-def _simulate(hex_colour: str, kind: str) -> str:
-    rgb = np.array([int(hex_colour[i:i + 2], 16) / 255 for i in (1, 3, 5)])
+def _simulate(hex_color: str, kind: str) -> str:
+    rgb = np.array([int(hex_color[i:i + 2], 16) / 255 for i in (1, 3, 5)])
     lin = np.where(rgb <= 0.04045, rgb / 12.92, ((rgb + 0.055) / 1.055) ** 2.4)
     lms = np.array([[17.8824, 43.5161, 4.11935], [3.45565, 27.1554, 3.86714],
                     [0.0299566, 0.184309, 1.46709]])

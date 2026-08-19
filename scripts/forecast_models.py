@@ -51,7 +51,7 @@ def load_covariates(index: pd.PeriodIndex) -> pd.DataFrame:
 
     This half of the study runs to 2021 and so meets the step described in
     `ingest.covariates.before_datum_break`. Read across it, the last twelve months
-    of water table are two metres below everything before them, which is a gauge
+    of water table are two meters below everything before them, which is a gauge
     change wearing the clothes of a drought.
     """
     frame = pd.read_csv(paths.processed_dir() / "monthly_bog_lake_fen.csv")

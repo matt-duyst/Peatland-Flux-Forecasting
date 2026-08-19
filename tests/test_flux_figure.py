@@ -212,9 +212,9 @@ def _hex_to_rgb(value: str) -> np.ndarray:
     return np.array([int(value[i:i + 2], 16) / 255 for i in (1, 3, 5)])
 
 
-def _over(colour: str, alpha: float, base: np.ndarray | None = None) -> np.ndarray:
+def _over(color: str, alpha: float, base: np.ndarray | None = None) -> np.ndarray:
     ground = np.ones(3) if base is None else base
-    return _hex_to_rgb(colour) * alpha + ground * (1 - alpha)
+    return _hex_to_rgb(color) * alpha + ground * (1 - alpha)
 
 
 def test_the_observed_band_and_the_fitted_band_separate_in_grayscale():

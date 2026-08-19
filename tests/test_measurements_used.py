@@ -255,7 +255,7 @@ def test_each_column_group_names_its_unit_under_the_ticks():
 
 def test_no_row_label_carries_a_unit():
     """The bars are two percentages. A unit beside a row would name what the bar
-    is not: precipitation in millimetres appears nowhere on this panel."""
+    is not: precipitation in millimeters appears nowhere on this panel."""
     order = figures.usage_order(real_panels())
     for name in order:
         assert "(" not in name and ")" not in name

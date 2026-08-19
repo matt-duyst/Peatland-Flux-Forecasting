@@ -31,6 +31,9 @@ def synthetic(drift: float = 0.5, control_drift: float = 0.1) -> pd.DataFrame:
                 "water_table_lo": 2.1 * climb,
                 "water_table_hi": 4.4 * climb,
                 "water_table_includes_zero": False,
+                "soil_temp_coef": 0.088 * held,
+                "soil_temp_lo": 0.071 * held,
+                "soil_temp_hi": 0.099 * held,
                 "q10": 2.4 * held,
                 "q10_lo": 2.0 * held,
                 "q10_hi": 2.7 * held,
@@ -44,10 +47,21 @@ def paths(**kwargs) -> dict[str, pd.DataFrame]:
 
 
 def drawn(fig, term: int) -> dict[str, np.ndarray]:
-    """The y values each treatment's path was drawn at, on one panel."""
-    ax = fig.axes[term]
-    return {line.get_label(): line.get_ydata() for line in ax.lines
-            if line.get_label() in dict((t[0], t[1]) for t in figures.TREATMENTS).values()}
+    """The y values each treatment's path was drawn at, on one panel.
+
+    Read off the error bar containers rather than off `ax.lines`: the label sits
+    on the container and its first artist is the path itself.
+    """
+    return {container.get_label(): container[0].get_ydata()
+            for container in fig.axes[term].containers}
+
+
+def strip_of(fig):
+    """The band of distances under the panels, found by what it carries."""
+    for ax in fig.axes:
+        if any(figures.REQUIRED_LABEL in text.get_text() for text in ax.texts):
+            return ax
+    raise AssertionError("the strip of distances is missing")
 
 
 # --- the two spans the figure exists to put side by side ----------------------
@@ -82,8 +96,7 @@ def test_nothing_is_drawn_inside_the_region_that_was_never_measured():
 def test_the_tested_span_is_drawn_against_the_required_one_in_the_same_units():
     """The qualification is a ratio of two lengths, so it is drawn as two lengths."""
     fig = figures.coefficient_stability(paths(), required=0.29, tested=0.05)
-    strip = fig.axes[-1]
-    labels = [t.get_text() for t in strip.texts]
+    labels = [t.get_text() for t in strip_of(fig).texts]
     assert any(figures.TESTED_LABEL in text and "0.05" in text for text in labels)
     assert any(figures.REQUIRED_LABEL in text and "0.29" in text for text in labels)
     ps.plt.close(fig)
@@ -92,7 +105,7 @@ def test_the_tested_span_is_drawn_against_the_required_one_in_the_same_units():
 def test_the_spans_come_from_the_caller_rather_than_from_the_module():
     """Both are properties of the windows in use and would go stale if pinned."""
     fig = figures.coefficient_stability(paths(), required=0.4, tested=0.1)
-    labels = " ".join(t.get_text() for t in fig.axes[-1].texts)
+    labels = " ".join(t.get_text() for t in strip_of(fig).texts)
     assert "0.40" in labels and "0.10" in labels
     ps.plt.close(fig)
 
@@ -100,22 +113,61 @@ def test_the_spans_come_from_the_caller_rather_than_from_the_module():
 # --- the comparison the control panel rests on --------------------------------
 
 
-def test_both_panels_share_one_y_axis_so_the_drifts_can_be_compared():
-    """Scaled to their own data, a 10% drift and a 50% drift draw the same line."""
-    fig = figures.coefficient_stability(paths(), required=0.29, tested=0.05)
-    assert fig.axes[0].get_ylim() == pytest.approx(fig.axes[1].get_ylim())
+def test_a_percent_of_change_covers_the_same_distance_on_both_panels():
+    """Each axis is in its own unit, so the comparison rests on the geometry: the
+    panels are as tall as the proportional range each has to cover, and a control
+    scaled to its own data would draw a 10% climb exactly like a 50% one."""
+    fig = figures.coefficient_stability(paths(drift=0.5, control_drift=0.1),
+                                        required=0.29, tested=0.05)
+    pixels = []
+    for index in (0, 1):
+        ax = fig.axes[index]
+        low, high = ax.get_ylim()
+        reference = drawn(fig, index)["with weighting"][0]
+        height = ax.get_position().height
+        pixels.append(height / ((high - low) / reference))   # per unit of proportion
+    assert pixels[0] == pytest.approx(pixels[1], rel=0.02)
     ps.plt.close(fig)
 
 
-def test_each_path_is_drawn_against_where_it_started_rather_than_in_its_own_unit():
-    """One is per metre and the other a temperature response; only the movement
-    is comparable, so movement is what the axis carries."""
+def test_each_path_is_drawn_in_the_units_of_the_coefficient_itself():
+    """A reader should not have to translate an index back into a coefficient."""
+    split = paths(drift=0.5, control_drift=0.1)
+    fig = figures.coefficient_stability(split, required=0.29, tested=0.05)
+    for index, column in ((0, "water_table_coef"), (1, "soil_temp_coef")):
+        for treatment, label, _ in figures.TREATMENTS:
+            expected = split[treatment][column].to_numpy()
+            assert drawn(fig, index)[label] == pytest.approx(expected)
+    ps.plt.close(fig)
+
+
+def test_the_total_change_is_labeled_at_the_end_of_each_path():
+    """It is the number the panels are compared on, so it is on the panels."""
     fig = figures.coefficient_stability(paths(drift=0.5, control_drift=0.1),
                                         required=0.29, tested=0.05)
-    for index, expected in ((0, 150.0), (1, 110.0)):
-        for values in drawn(fig, index).values():
-            assert values[0] == pytest.approx(100.0)
-            assert values[-1] == pytest.approx(expected, abs=0.5)
+    for index, expected in ((0, "+50%"), (1, "+10%")):
+        printed = [note.get_text() for note in fig.axes[index].texts]
+        assert printed.count(expected) == len(figures.TREATMENTS)
+    ps.plt.close(fig)
+
+
+def test_the_control_panel_says_on_the_panel_what_it_is_for():
+    """A nearly flat line with no caption is the hardest mark on the figure."""
+    fig = figures.coefficient_stability(paths(), required=0.29, tested=0.05)
+    said = " ".join(note.get_text() for note in fig.axes[1].texts)
+    assert "same five fits" in said
+    ps.plt.close(fig)
+
+
+def test_one_key_serves_both_panels_and_names_every_mark():
+    """Panel b carries the same marks and had no key of its own."""
+    fig = figures.coefficient_stability(paths(), required=0.29, tested=0.05)
+    keys = [ax.get_legend() for ax in fig.axes if ax.get_legend()]
+    assert len(keys) == 1
+    labels = [text.get_text() for text in keys[0].get_texts()]
+    for mark in ("resamples", "carried across", "reconstruction needs", "distance in meters"):
+        assert any(mark in label for label in labels)
+    assert sum(label.startswith("$") for label in labels) == 2      # two headings
     ps.plt.close(fig)
 
 
@@ -138,8 +190,8 @@ def test_neither_treatment_is_named_as_the_better_one():
 
 def test_the_subtitle_says_what_the_coefficient_is_before_the_panel_is_read():
     said = figures.STABILITY_TEXT.subtitle
-    assert "per metre of water table" in said
-    assert "fitted again and again" in said
+    assert "per meter of water table" in said
+    assert "fitted five times" in said
 
 
 def test_the_subtitle_says_why_a_moving_coefficient_matters():
@@ -169,6 +221,13 @@ def test_the_verdict_criterion_is_not_put_on_the_panel():
     for term in ("criterion", "verdict", "monotone", "spearman", "bootstrap",
                  "significant", "p =", "stable"):
         assert term not in said
+
+
+def test_the_figure_spells_it_the_american_way():
+    text = figures.STABILITY_TEXT
+    said = " ".join([text.title, text.subtitle, text.description,
+                     figures.STABILITY_X_AXIS]).lower()
+    assert "metre" not in said and "meter" in said
 
 
 # --- the table it reads -------------------------------------------------------
