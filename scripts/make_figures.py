@@ -198,13 +198,15 @@ def main() -> None:
     )}
     measured_rows = figures.availability_rows(measured, set_aside)
 
+    # Named by what the span is rather than by what was done to it, so a reader
+    # meeting the figure first does not need the study's structure to read them.
     drew_on = [
-        {"name": "Learned from", "first": built["fit"].min(),
-         "last": built["fit"].max(), "months": len(built["fit"]), "lead": None,
-         "support": True},
-        {"name": "Estimated backward", "first": built["reconstruction"].min(),
-         "last": built["reconstruction"].max(), "months": len(built["reconstruction"]),
-         "lead": None, "note": "(no flux to check against)"},
+        {"name": "Months with both flux and drivers (used to fit the model)",
+         "first": built["fit"].min(), "last": built["fit"].max(),
+         "months": len(built["fit"]), "lead": None, "support": True},
+        {"name": "Months with drivers but no flux (estimated by the model)",
+         "first": built["reconstruction"].min(), "last": built["reconstruction"].max(),
+         "months": len(built["reconstruction"]), "lead": None},
     ]
     scored = []
     for key, gas, _ in figures.GAS_PANEL:

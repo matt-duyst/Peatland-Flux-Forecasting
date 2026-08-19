@@ -2076,11 +2076,34 @@ noun phrases matching the upper block, *learned from* and *estimated backward*
 under **months the model used**, and *methane forecasts* and *carbon dioxide
 forecasts* under **months the forecasts were checked on**.
 
-**Every row name was measured against the gutter rather than assumed.** At 9.5 pt
-the gutter holds 330 px. *Methane forecasts checked against measurements* needs
-503 and *estimated backward (no flux to check against)* needs 459, so the shared
-part of the first moved into the block heading and the qualifier of the second
-moved to the clear ground beside its own bar.
+**The two model rows say what their span is rather than naming it.** They read
+*months with both flux and drivers (used to fit the model)* and *months with
+drivers but no flux (estimated by the model)*. The names they replaced, *learned
+from* and *estimated backward*, assumed a reader who already knew the study's
+structure, which is the fault being removed everywhere else in this set. The new
+names also make the *(no flux to check against)* note redundant, so the note and
+its leader are gone.
+
+**Every row name was measured against the gutter rather than assumed**, and where
+they did not fit the gutter was widened rather than the names cut. It now holds
+580 px against the 565 the longer of the two needs. The cost is the timeline:
+2.4 px per month instead of 2.9. That is a trade the notch ticks were already
+there to survive, and a name a reader has to already know is worse than a
+narrower axis. *Methane forecasts checked against measurements* was the one name
+shortened instead, at 503 px, with its shared part moved into the block heading.
+
+**The forecast rows were left alone.** *Methane forecasts* and *carbon dioxide
+forecasts* under a heading reading **forecasts checked on** name their subject
+under a heading that says what was done to it, and assume nothing. The model rows
+needed rewriting because they named an operation without saying what distinguished
+the two spans.
+
+**Why there is no flux before 2009 is drawn rather than said.** The row now says
+*no flux*, and the upper block shows the methane and carbon dioxide bars beginning
+exactly where that span ends. A clause making it explicit would cost the
+description a sixth line, which the block does not have without dropping something
+else; if it is ever wanted, the sentence to trade is the one about the seasonal
+benchmarks reaching 2021 and 2024.
 
 **The block headings are framed, and the argument against it did not hold.** The
 case for leaving them bare was that the bordered box exists to separate a name

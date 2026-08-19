@@ -28,12 +28,12 @@ ASIDE = {"Water table": (
 )}
 
 DREW_ON = [
-    {"name": "Learned from", "first": pd.Period("2009-04", freq="M"),
-     "last": pd.Period("2019-12", freq="M"), "months": 115, "lead": None,
-     "support": True},
-    {"name": "Estimated backward", "first": pd.Period("1990-01", freq="M"),
-     "last": pd.Period("2009-03", freq="M"), "months": 230, "lead": None,
-     "note": "(no flux to check against)"},
+    {"name": "Months with both flux and drivers (used to fit the model)",
+     "first": pd.Period("2009-04", freq="M"), "last": pd.Period("2019-12", freq="M"),
+     "months": 115, "lead": None, "support": True},
+    {"name": "Months with drivers but no flux (estimated by the model)",
+     "first": pd.Period("1990-01", freq="M"), "last": pd.Period("2009-03", freq="M"),
+     "months": 230, "lead": None},
 ]
 SCORED = [
     {"name": "Methane forecasts", "first": pd.Period("2014-06", freq="M"),
@@ -243,16 +243,6 @@ def test_the_key_is_framed_and_centered_over_the_panel():
     ps.plt.close(fig)
 
 
-def test_the_note_beside_a_bar_is_lighter_than_the_row_names():
-    """At the same size and weight it read as a second label on that row."""
-    fig = figure()
-    note = next(n for n in fig.axes[0].texts
-                if n.get_text() == "(no flux to check against)")
-    assert note.get_fontsize() < ps.TICK_SIZE - 1
-    assert note.get_style() == "italic"
-    ps.plt.close(fig)
-
-
 def test_both_blocks_are_named_on_the_panel():
     fig = figure()
     said = " ".join(note.get_text() for note in fig.axes[0].texts)
@@ -335,15 +325,15 @@ def test_no_term_appears_as_a_row_name_without_being_explained():
         assert term not in said
 
 
-def test_a_qualifier_too_long_for_the_gutter_is_tied_to_its_own_bar():
-    """Row names were measured against the gutter rather than assumed. The one that
-    did not fit sits beside its bar with a leader, since a note floating in the
-    panel reads as a remark about the figure rather than about one row."""
+def test_the_model_rows_say_what_their_span_is_rather_than_naming_it():
+    """A reader meeting this figure first does not know the study's structure, so
+    a row cannot be called "learned from" and leave them to work out what from."""
+    names = [row["name"] for row in DREW_ON]
+    for name in names:
+        assert "flux" in name and "drivers" in name
+    # And having said it, nothing else on the panel needs to repeat it.
     fig = figure()
-    notes = [note for note in fig.axes[0].texts
-             if note.get_text() == "(no flux to check against)"]
-    assert len(notes) == 1
-    assert getattr(notes[0], "arrow_patch", None) is not None
+    assert not [note for note in fig.axes[0].texts if "check against" in note.get_text()]
     ps.plt.close(fig)
 
 

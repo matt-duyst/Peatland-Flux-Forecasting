@@ -1475,16 +1475,7 @@ def _draw_availability_row(ax, y: float, row: dict) -> None:
 
 
 def _draw_window_row(ax, y: float, row: dict) -> None:
-    """A window: the months it used, and any lead spent on training first."""
-    if row.get("note"):
-        # The qualifier that would not fit the gutter, set beside the bar it
-        # belongs to and tied to it, since a note floating in the panel reads as
-        # a remark about the figure rather than about one row.
-        ps.annotate(ax, row["note"], xy=(_position(row["last"]) + 1 / 12.0, y),
-                    xytext=(_position(row["last"]) + 0.8, y), ha="left", va="center",
-                    color=ps.MUTED, fontsize=ps.ANNOTATION_SIZE - 1.5,
-                    arrowprops=dict(arrowstyle="-", color=ps.MUTED, linewidth=0.9,
-                                    shrinkA=3, shrinkB=2))
+    """A window: the months it covers, and any lead spent on training first."""
     if row.get("lead"):
         first, last = row["lead"]
         ax.plot([_position(first), _position(last)], [y, y], color=ps.MUTED,
@@ -1504,7 +1495,12 @@ HEADING_OFFSET = 1.15
 #: Room at the left for the row names and at the top for the key, in pixels. Taken
 #: out of the drawing rectangle rather than out of the canvas, so the title and the
 #: description stay centered on the page rather than on the bars.
-NAME_GUTTER_PX = 360
+#:
+#: Wide, because the two rows in the middle block say what their span is rather
+#: than naming it — 565 px at 9.5 pt — and a name a reader has to already know is
+#: worse than a narrower timeline. The cost is 2.4 px per month instead of 2.9,
+#: which the notch ticks were already there to survive.
+NAME_GUTTER_PX = 580
 KEY_BAND_PX = 40
 
 
