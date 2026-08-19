@@ -28,14 +28,15 @@ ASIDE = {"Water table": (
 )}
 
 DREW_ON = [
-    {"name": "Fitted the model", "first": pd.Period("2009-04", freq="M"),
+    {"name": "Learned from", "first": pd.Period("2009-04", freq="M"),
      "last": pd.Period("2019-12", freq="M"), "months": 115, "lead": None,
      "support": True},
-    {"name": "Projected it back", "first": pd.Period("1990-01", freq="M"),
-     "last": pd.Period("2009-03", freq="M"), "months": 230, "lead": None},
+    {"name": "Estimated backward", "first": pd.Period("1990-01", freq="M"),
+     "last": pd.Period("2009-03", freq="M"), "months": 230, "lead": None,
+     "note": "(no flux to check against)"},
 ]
 SCORED = [
-    {"name": "Methane", "first": pd.Period("2014-06", freq="M"),
+    {"name": "Methane forecasts", "first": pd.Period("2014-06", freq="M"),
      "last": pd.Period("2020-12", freq="M"), "months": 71,
      "lead": (pd.Period("2009-04", freq="M"), pd.Period("2014-06", freq="M"))},
 ]
@@ -161,10 +162,29 @@ def test_the_reason_a_month_was_set_aside_is_written_beside_it():
     ps.plt.close(fig)
 
 
-def test_the_key_carries_three_marks_and_no_reasons():
+def test_the_key_covers_every_mark_on_the_panel_and_carries_no_reasons():
+    """Both blocks are keyed from one place: the lower block holds two fills and
+    one of them is a hue that means something across the whole set."""
     fig = figure()
     labels = [text.get_text() for text in fig.axes[0].get_legend().get_texts()]
-    assert labels == [figures.PRESENT_LABEL, figures.MISSING_LABEL, figures.ASIDE_LABEL]
+    assert labels == [figures.PRESENT_LABEL, figures.MISSING_LABEL,
+                      figures.ASIDE_LABEL, figures.FITTED_RANGE_LABEL]
+    ps.plt.close(fig)
+
+
+def test_the_blue_convention_is_stated_somewhere_on_the_figure():
+    """A reader meeting this figure first has no other way to know what it means."""
+    assert "Blue marks the range the model was fitted on" in \
+        figures.AVAILABILITY_TEXT.description
+
+
+def test_one_neutral_serves_every_bar_that_is_not_the_fitted_range():
+    """Two grays would draw a distinction the blocks already carry by position."""
+    from matplotlib.colors import to_rgb
+
+    fig = figure()
+    fills = {p.get_facecolor()[:3] for p in fig.axes[0].patches}
+    assert fills == {to_rgb(ps.MEASURED), to_rgb(ps.INSIDE), (1.0, 1.0, 1.0)}
     ps.plt.close(fig)
 
 
@@ -222,7 +242,7 @@ def test_the_description_says_what_the_window_cost_and_not_only_its_cause():
 
 def test_the_description_names_the_benchmark_tail_without_drawing_it():
     """A fourth mark for a clause is not worth it."""
-    assert "benchmarks alone reach" in figures.AVAILABILITY_TEXT.description
+    assert "seasonal benchmarks reach 2021 and 2024" in figures.AVAILABILITY_TEXT.description
 
 
 def test_the_subtitle_says_the_windows_were_chosen():
@@ -253,8 +273,17 @@ def test_no_counts_are_drawn_beside_the_bars():
 def test_no_term_appears_as_a_row_name_without_being_explained():
     """Reconstruction, fitting window and scored over were all internal."""
     said = " ".join([row["name"] for row in WINDOWS] + list(figures.BLOCK_HEADINGS)).lower()
-    for term in ("reconstruction", "fitting window", "scored"):
+    for term in ("reconstruction", "fitting window", "scored", "projected"):
         assert term not in said
+
+
+def test_a_qualifier_too_long_for_the_gutter_is_set_beside_its_own_bar():
+    """Row names were measured against the gutter rather than assumed; the one
+    that did not fit sits in the clear ground to the right of its bar."""
+    fig = figure()
+    said = [note.get_text() for note in fig.axes[0].texts]
+    assert "(no flux to check against)" in said
+    ps.plt.close(fig)
 
 
 def test_the_title_names_the_site():

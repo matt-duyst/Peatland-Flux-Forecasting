@@ -80,14 +80,15 @@ OUTSIDE = "#D55E00"
 #: too close to it, and 17.5 from the gridlines so a bar cannot merge with one.
 DATE_SHARE = "#A9A9A9"
 
-#: The measurement rows on the availability figure. Reddish purple, at the
-#: lightness the panel requires rather than at Okabe-Ito's: the set-aside outlines
-#: are drawn in `OUTSIDE` on top of these bars, and #CC79A7 measures **0.9 from
-#: `OUTSIDE` under tritanopia**, where this clears it by 34.3 and by 0.136 in
-#: relative luminance. Same hue, 330 degrees, taken down in lightness until the
-#: outline survives. Softer than the near-black it replaces without receding to
-#: the gray the window rows use, which it clears by 13.5.
-MEASURED = "#7B3F5E"
+#: Every bar on the availability figure that is not the fitted range. Neutral, so
+#: the only colored marks on that panel are the two that carry meaning: orange for
+#: months a decision discarded, blue for the range the model was fitted on. It
+#: clears the orange by **54.5 under the worst simulated deficiency and 0.147 in
+#: relative luminance**, which matters because the discard outlines are drawn on
+#: top of these bars. Reddish purple was measured and set aside for that reason:
+#: Okabe-Ito's #CC79A7 sits **0.9 from the orange under tritanopia**, and a darker
+#: plum that cleared it added a fifth hue to the set for rows that are context.
+MEASURED = "#4D4D4D"
 
 #: The site and its tower, on the site map only. Okabe-Ito yellow, measured
 #: against the imagery it sits on: 41.3 from the light peat beside the tower and

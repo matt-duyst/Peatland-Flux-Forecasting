@@ -185,10 +185,12 @@ def main() -> None:
         "Soil temperature at 10 cm (°F)": cov["soil_temp_f"],
         "Air temperature (°F)": cov["atm_temp_f"],
         "Precipitation (inches)": cov["precip_in"],
-        "Water table (m above sea level)": cov[features.WATER_TABLE],
+        # Elevation, not depth: the values run 413.07 to 413.75 m above sea level,
+        # and a peatland reader meeting "water table" expects depth below surface.
+        "Water table elevation (m)": cov[features.WATER_TABLE],
     }
     recorded = cov[features.WATER_TABLE].dropna().index
-    set_aside = {"Water table (m above sea level)": (
+    set_aside = {"Water table elevation (m)": (
         (pd.PeriodIndex([m for m in recorded if m in windows.WATER_TABLE_ARTIFACTS],
                         freq="M"), "instrument error"),
         (pd.PeriodIndex([m for m in recorded if m >= covariates.WATER_TABLE_DATUM_BREAK],
@@ -197,12 +199,12 @@ def main() -> None:
     measured_rows = figures.availability_rows(measured, set_aside)
 
     drew_on = [
-        {"name": "Fitted the model", "first": built["fit"].min(),
+        {"name": "Learned from", "first": built["fit"].min(),
          "last": built["fit"].max(), "months": len(built["fit"]), "lead": None,
          "support": True},
-        {"name": "Projected it back", "first": built["reconstruction"].min(),
+        {"name": "Estimated backward", "first": built["reconstruction"].min(),
          "last": built["reconstruction"].max(), "months": len(built["reconstruction"]),
-         "lead": None},
+         "lead": None, "note": "(no flux to check against)"},
     ]
     scored = []
     for key, gas, _ in figures.GAS_PANEL:
@@ -213,7 +215,7 @@ def main() -> None:
         flux = measured[
             "Carbon dioxide ($\\mu$mol m$^{-2}$ s$^{-1}$)" if key == "carbon_dioxide"
             else "Methane (nmol m$^{-2}$ s$^{-1}$)"].dropna().index
-        scored.append({"name": gas, "first": months.min(), "last": months.max(),
+        scored.append({"name": f"{gas} forecasts", "first": months.min(), "last": months.max(),
                        "months": months.nunique(), "lead": (flux.min(), months.min())})
 
     # No guides: ordered by where each record ends, the bars step inward and stop

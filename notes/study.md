@@ -2071,8 +2071,21 @@ read as choices, and the largest ink on the panel never gets drawn.
 **Row names carry their units, and no row name carries a term the panel does not
 explain.** Each row is a monthly mean, said once in the block heading rather than
 six times in the rows. "Reconstruction", "fitting window" and "scored over" are
-gone: the rows now read *fitted the model*, *projected it back*, and under
-*tested forecasts on*, the two gas names.
+gone, and the verb phrases that replaced them are gone too: the lower rows are now
+noun phrases matching the upper block, *learned from* and *estimated backward*
+under **months the model used**, and *methane forecasts* and *carbon dioxide
+forecasts* under **months the forecasts were checked on**.
+
+**Every row name was measured against the gutter rather than assumed.** At 9.5 pt
+the gutter holds 330 px. *Methane forecasts checked against measurements* needs
+503 and *estimated backward (no flux to check against)* needs 459, so the shared
+part of the first moved into the block heading and the qualifier of the second
+moved to the clear ground beside its own bar.
+
+**The water table row says elevation.** Its values run 413.07 to 413.75 m above
+sea level, and a reader who works on peatlands meets "water table" expecting a
+depth below the surface. The row reads *water table elevation (m)*: the unit was
+right and the word was missing.
 
 **Four kinds of month, three marks.** Measured is a filled bar. Missing from an
 otherwise unbroken run is a hole in the bar, with a tick under it because one
@@ -2121,7 +2134,7 @@ rather than a mark on top of one.
 ### The palette question on this figure, and what it should be
 
 The figure was first drawn in black and gray alone, which left it the only one of
-eight with no connection to the palette the rest of the set uses. Three decisions
+eight with no connection to the palette the rest of the set uses. Four decisions
 came out of looking at that.
 
 **The measured bars stay neutral.** They are a record of what exists rather than
@@ -2129,6 +2142,17 @@ a result, and the upper block's distinction is exists, missing, discarded — no
 retained against discarded. `INSIDE` for existence would claim a decision was
 made where none was. This is the same reasoning that made the date share
 achromatic on the measurements-used figure.
+
+**Neutral, but not black.** Near-black made rows that are context the loudest
+thing on the page. Three versions were built and compared at full size — black,
+reddish purple, and a mid gray — and the gray was chosen, at `#4D4D4D`. It clears
+the discard orange, which is drawn on top of these bars, by **54.5 under the
+worst simulated deficiency and 0.147 in relative luminance**. Reddish purple was
+measured and set aside twice over: Okabe-Ito's `#CC79A7` sits **0.9 from that
+orange under tritanopia**, where the outlines would vanish, and the darker plum
+that cleared it (`#7B3F5E`, 34.3) added a fifth hue to the set for rows that are
+context rather than subject. With gray, the only colored marks on the panel are
+the two that carry meaning.
 
 **The set-aside marks take `OUTSIDE`.** That hue already means *outside, or
 discarded* across the reconstruction figures and the site map, and these are the
@@ -2154,6 +2178,21 @@ identical. The distinction a reader needs is carried by the row name and the
 group heading, and the hue is a tie to the rest of the set rather than the thing
 that makes the row legible. `FITTED` was not considered: the convention scopes it
 to the two forecast figures, and a scoring window is not a range across models.
+
+**One neutral for every bar that is not the fitted range.** The lower block was
+briefly drawn in a second, lighter gray. Nothing distinguished those two grays
+except that they were drawn at different times, and the blocks are already
+separated by position and heading, so the second gray went. Hatching was
+considered for the same purpose and rejected: at this bar height across 35 years
+it aliases, which is why it was turned down on the reconstruction strip.
+
+**The key covers every mark from one place.** It carried three marks in the upper
+block and nothing in the lower, where a reader met a blue bar and two gray ones
+with no key at all. It now runs four entries across one line, and the first is
+worded *months covered* rather than *months measured* so it serves both blocks;
+what each block's bars are is said by its heading. The blue's convention — that it
+marks the range the model was fitted on, here and across the set — is a sentence
+rather than a label, so it sits in the description, which is on the canvas.
 
 **The lower block is two groups, not four rows of one thing.** Reconstruction and
 fitting window are spans of months the study drew on; the two forecast rows are
@@ -2314,6 +2353,13 @@ refuse.
 whole range" was doing the work the subtitle should do. The axes now read "Per meter of
 water table" and "Per °C of soil temperature", and what a coefficient is belongs
 to the subtitle.
+
+**The title was distilled with the rest.** Every title in the set now reads as one
+clause naming what is plotted and the site: this one became *The water table
+coefficient refitted on drier months at Marcell Bog Lake Peatland*, and the site
+figure's became *The flux tower and the wind directions it measures at Marcell Bog
+Lake Peatland*, with ", Minnesota" moving into its subtitle. All eight fit on one
+line.
 
 **A title that outran the canvas.** This is the longest title in the set and it
 overflowed the drawing area. `plotstyle.wrap_title` now wraps a title and sizes

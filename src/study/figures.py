@@ -1064,8 +1064,8 @@ def measurements_used(panels: dict[str, pd.DataFrame]) -> Figure:
 
 
 STABILITY_TEXT = ps.FigureText(
-    title=("How the water table coefficient at Marcell Bog Lake Peatland changes "
-           "when the wettest months are removed"),
+    title=("The water table coefficient refitted on drier months at "
+           "Marcell Bog Lake Peatland"),
     subtitle=(
         "The model was fitted five times, each on a smaller set of months: first "
         "all 115, then the same months with the wettest tenth removed, and on to "
@@ -1345,7 +1345,7 @@ def coefficient_stability(paths: dict[str, pd.DataFrame], required: float,
 # --------------------------------------------------------------------------
 
 AVAILABILITY_TEXT = ps.FigureText(
-    title=("Which months each measurement and each part of the study cover at "
+    title=("Which months each measurement and each analysis cover at "
            "Marcell Bog Lake Peatland"),
     subtitle=(
         "Each row in the upper block is one measurement, and the bar covers the "
@@ -1356,24 +1356,24 @@ AVAILABILITY_TEXT = ps.FigureText(
     ),
     description=(
         "Air temperature and precipitation stop at the end of 2019, which ends the "
-        "fitting window and discards 25 months of methane the tower recorded and "
-        "the study could not use. The model is projected back over the span where "
-        "the measurements exist and the flux does not. Forecasting cannot begin "
-        "until "
-        "48 months of flux have accumulated, which took 62 calendar months for "
-        "methane because of the gaps in 2013 and 2014, and it ends in 2020 where "
-        "the models needing a measurement run out, though the benchmarks alone "
-        "reach 2021 and 2024. The two hollow marks are decisions rather than "
-        "absences: the water table is set aside from January 2020 because the "
-        "gauge changed, and two months of 2019 on evidence of instrument error."
+        "months the model could learn from and discards 25 months of methane the "
+        "tower recorded. Forecasts cannot be checked until 48 months of flux have "
+        "accumulated, which took 62 calendar months for methane because of the "
+        "gaps in 2013 and 2014, and the check ends in 2020 where the models that "
+        "use a measurement run out, though the seasonal benchmarks reach 2021 and "
+        "2024. Blue marks the range the model was fitted on, as it does across "
+        "this set. The two hollow marks are decisions rather than absences: the "
+        "water table is set aside from January 2020 for a gauge change, and two "
+        "months of 2019 on evidence of instrument error."
     ),
 )
 
-BLOCK_HEADINGS = ("What was measured, as monthly means", "Fitted and projected",
-                  "Tested forecasts on")
-PRESENT_LABEL = "months measured"
+BLOCK_HEADINGS = ("What was measured, as monthly means", "Months the model used",
+                  "Months the forecasts were checked on")
+PRESENT_LABEL = "months covered"
 MISSING_LABEL = "a month missing"
 ASIDE_LABEL = "set aside by the study"
+FITTED_RANGE_LABEL = "the range the model was fitted on"
 TRAINING_LABEL = "48 months of training first"
 
 #: Bar geometry in row units. The bars are the figure, so they are heavy; the notch
@@ -1462,20 +1462,26 @@ def _draw_availability_row(ax, y: float, row: dict) -> None:
 
 
 #: The span that defines what "inside the fitted range" means everywhere else in
-#: the study, drawn in the hue that carries it. The reconstruction beside it stays
-#: neutral: 117 of its 230 months lie outside that range and 113 inside, so one
-#: hue across the whole bar would assert a verdict the study measured as mixed.
-WINDOW_FILL = "#767676"
+#: the study, drawn in the hue that carries it. The span beside it stays neutral:
+#: 117 of its 230 months lie outside that range and 113 inside, so one hue across
+#: the whole bar would assert a verdict the study measured as mixed. Every other
+#: bar on the panel takes the same neutral, since a second gray would draw a
+#: distinction the blocks already carry by position.
 
 
 def _draw_window_row(ax, y: float, row: dict) -> None:
     """A window: the months it used, and any lead spent on training first."""
+    if row.get("note"):
+        # The qualifier that would not fit the gutter, set in the clear ground
+        # beside the bar it belongs to.
+        ax.text(_position(row["last"]) + 0.5, y, row["note"], ha="left", va="center",
+                fontsize=ps.ANNOTATION_SIZE, style="italic", color=ps.MUTED, zorder=4)
     if row.get("lead"):
         first, last = row["lead"]
         ax.plot([_position(first), _position(last)], [y, y], color=ps.MUTED,
                 linewidth=1.1, zorder=3)
     _draw_bar(ax, y, row["first"], row["last"],
-              facecolor=ps.INSIDE if row.get("support") else WINDOW_FILL,
+              facecolor=ps.INSIDE if row.get("support") else ps.MEASURED,
               edgecolor="none", zorder=3)
 
 
@@ -1489,7 +1495,7 @@ HEADING_OFFSET = 1.15
 #: Room at the left for the row names and at the top for the key, in pixels. Taken
 #: out of the drawing rectangle rather than out of the canvas, so the title and the
 #: description stay centered on the page rather than on the bars.
-NAME_GUTTER_PX = 300
+NAME_GUTTER_PX = 330
 KEY_BAND_PX = 40
 
 
@@ -1575,6 +1581,7 @@ def covariate_availability(rows: list[dict],
         (Line2D([], [], color=ps.MEASURED, linestyle="none", marker="|", markersize=10,
                 markeredgewidth=1.4), MISSING_LABEL),
         (Patch(facecolor="white", edgecolor=ps.OUTSIDE, linewidth=1.2), ASIDE_LABEL),
+        (Patch(facecolor=ps.INSIDE, edgecolor="none"), FITTED_RANGE_LABEL),
     ]
     ps.legend(ax, handles=[h for h, _ in entries], labels=[label for _, label in entries],
               loc="lower right", bbox_to_anchor=(1.0, 1.005), ncol=len(entries),

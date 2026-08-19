@@ -62,10 +62,10 @@ SITE_MARKER = dict(marker="*", markersize=15, markerfacecolor=ps.SITE,
 
 
 SITEMAP_TEXT = ps.FigureText(
-    title="The flux tower at Marcell Bog Lake Peatland, Minnesota, and the directions it measures",
+    title="The flux tower and the wind directions it measures at Marcell Bog Lake Peatland",
     subtitle=(
-        "Flux is discarded from 30 to 200 degrees, where upland forest lies, which "
-        "removes 40% of the record"
+        "The site is in north-central Minnesota. Flux is discarded from 30 to 200 "
+        "degrees, where upland forest lies, which removes 40% of the record"
     ),
     description=(
         "Panel a is the peatland around the tower, with the wetland polygon the "

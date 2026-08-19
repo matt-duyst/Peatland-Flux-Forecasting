@@ -6,11 +6,11 @@
 
 Reconstruction means estimating methane emissions for years before measurements began in 2009, from relationships fitted on 2009 to 2019. Each point is one month's mean. The shaded band marks the 115 months the fit used. The water table fell through the 2000s, so the fit window opens after the wetter state has gone, sampling only the drier conditions. The dashed lines mark the highest and lowest water table they reached. Points beyond them lie outside anything the model has seen: 107 above in runs lasting years, six below by under 0.06 m. Those lines sit 0.33 m apart, and the reconstruction runs 0.29 m above the upper one: the excursion is nearly as wide as the whole fitted span. It stops at 2019 because precipitation, a covariate it needs, ends there.
 
-### The flux tower at Marcell Bog Lake Peatland, Minnesota, and the directions it measures
+### The flux tower and the wind directions it measures at Marcell Bog Lake Peatland
 
-![The flux tower at Marcell Bog Lake Peatland, Minnesota, and the directions it measures](figures/site_overview.png)
+![The flux tower and the wind directions it measures at Marcell Bog Lake Peatland](figures/site_overview.png)
 
-**Flux is discarded from 30 to 200 degrees, where upland forest lies, which removes 40% of the record**
+**The site is in north-central Minnesota. Flux is discarded from 30 to 200 degrees, where upland forest lies, which removes 40% of the record**
 
 Panel a is the peatland around the tower, with the wetland polygon the National Wetlands Inventory maps there and a circle at the 200 m over which the site reports its surface uniform. Panel b places the site among the FLUXNET-CH4 network: it is not one of them, so no community gap-filled product exists for it. Panel c is how often the wind blew from each direction over 2009 to 2019, the years the model was fitted on. Flux is discarded from 30 to 200 degrees, where the tower and the upland forest lie. That sector holds 45% of the half-hours that carry a wind direction and 40% of the whole record, and the published product holds no retained flux from it at all.
 
@@ -46,18 +46,18 @@ The predictions follow the seasonal cycle, rising and falling in step with the m
 
 Two marks stand where a number would mean nothing. The date question does not apply to the flux's own past values, which are not measurements taken at the site. Last month's flux is unavailable to a model forecasting three or more months ahead. Where a grey bar does stand, it is what three seasonal terms account for: 95% of soil and air temperature, and about 5% of the water table. The sharpest case is carbon dioxide three months ahead, where the models chose none of the four measurements in any rebuild and kept only the flux's own value from a year earlier.
 
-### How the water table coefficient at Marcell Bog Lake Peatland changes when the wettest months are removed
+### The water table coefficient refitted on drier months at Marcell Bog Lake Peatland
 
-![How the water table coefficient at Marcell Bog Lake Peatland changes when the wettest months are removed](figures/coefficient_stability.png)
+![The water table coefficient refitted on drier months at Marcell Bog Lake Peatland](figures/coefficient_stability.png)
 
 **The model was fitted five times, each on a smaller set of months: first all 115, then the same months with the wettest tenth removed, and on to the wettest two fifths. The water table coefficient is how much predicted emission changes per meter of water table, and each point is what that coefficient came out as, placed at the wettest month still in the fit. It climbs at every step, while the soil temperature coefficient beside it moves a third as far. A coefficient that changes when its range of water table shrinks is describing the months it was fitted on rather than the peatland, so it cannot be carried out along the arrow, where the reconstruction needs it.**
 
 The same analysis is drawn twice, once weighting each month by how well it was measured and once not. Both fail and neither is the better treatment: weighted, the coefficient rises 51%, from 2.704 to 4.077; unweighted, 38%, from 2.385 to 3.299. Every step's range overlaps the first, so no single step is decisive, and the evidence is that it climbs at all four and never once falls. The soil temperature coefficient moves 16% along the same path, and only without weighting is it flat.
 
-### Which months each measurement and each part of the study cover at Marcell Bog Lake Peatland
+### Which months each measurement and each analysis cover at Marcell Bog Lake Peatland
 
-![Which months each measurement and each part of the study cover at Marcell Bog Lake Peatland](figures/covariate_availability.png)
+![Which months each measurement and each analysis cover at Marcell Bog Lake Peatland](figures/covariate_availability.png)
 
 **Each row in the upper block is one measurement, and the bar covers the months it exists, longest record at the top. The rows below are the three pieces of work and the months each drew on. Those spans were chosen from what was available rather than being facts about the site. The study's boundaries fall where the shortest records end.**
 
-Air temperature and precipitation stop at the end of 2019, which ends the fitting window and discards 25 months of methane the tower recorded and the study could not use. The model is projected back over the span where the measurements exist and the flux does not. Forecasting cannot begin until 48 months of flux have accumulated, which took 62 calendar months for methane because of the gaps in 2013 and 2014, and it ends in 2020 where the models needing a measurement run out, though the benchmarks alone reach 2021 and 2024. The two hollow marks are decisions rather than absences: the water table is set aside from January 2020 because the gauge changed, and two months of 2019 on evidence of instrument error.
+Air temperature and precipitation stop at the end of 2019, which ends the months the model could learn from and discards 25 months of methane the tower recorded. Forecasts cannot be checked until 48 months of flux have accumulated, which took 62 calendar months for methane because of the gaps in 2013 and 2014, and the check ends in 2020 where the models that use a measurement run out, though the seasonal benchmarks reach 2021 and 2024. Blue marks the range the model was fitted on, as it does across this set. The two hollow marks are decisions rather than absences: the water table is set aside from January 2020 for a gauge change, and two months of 2019 on evidence of instrument error.
