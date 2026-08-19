@@ -1792,6 +1792,17 @@ order on every panel, so the eye compares along a row across horizons and down a
 column between gases. Length carries the share, and the ordering carries the
 finding without needing to be read off a scale.
 
+**The title names the site, as the other five figures do.** An earlier title
+described the figure's two halves in a comma construction and named no place; the
+horizon is now parenthetical and the site is in the title proper.
+
+**The subtitle defines a forecast horizon.** This may be the first figure of the
+set a reader meets, and every panel is a horizon. An earlier six-sentence version
+carried two definitions and the finding, and spent a sentence explaining that
+July is warm and January cold — which the grey bars and the column heading
+already carry between them. Cut to four sentences: what a horizon is, what the
+green bars are, what the grey bars are, and what reading the two together shows.
+
 **Rows are ordered by mean use across both gases and all four horizons.** The
 resulting order is the flux a month before, the flux a year before, soil
 temperature, air temperature, precipitation, water table. The description states
@@ -1804,14 +1815,29 @@ question does not apply: the flux's own past is not a measurement taken at the
 site. On the horizon columns the one-month row is empty at three, six and twelve
 months because a model forecasting that far ahead cannot have last month's flux.
 The first is marked *does not apply* and the second *not available*, both in the
-cell, and the description says what each means. Left blank they read alike, and
-both read as data that went missing.
+cell. Left blank they read alike, and both read as data that went missing. **The
+description explains them in its second, third and fourth sentences, before any
+finding**: a reader meeting a marked cell should not have to reach the end of the
+block to learn what it means. The two are given a sentence each rather than one
+clause, since they are two different situations.
 
-**The axis is labeled and the headings carry the unit.** "Predictable from the
-date (% of variation)" over the leading column and "Chosen by the models (% of
-rebuilds)" over the four horizons, each broken before its parenthetical so the
-pair reads in the same register, with "Percent" under each group. The tick at
-full scale reads 100 rather than 100%, since the unit is now said twice above it.
+**The headings carry the unit, and no column carries an axis name.** "Predictable
+from the date (% of variation)" over the leading column and "Chosen by the models
+(% of rebuilds)" over the four horizons, each broken before its parenthetical so
+the pair reads in the same register. A "Percent" label was drawn under the two
+group centers first and removed: two of five columns carrying an axis name reads
+as a distinction between those columns and the other three rather than as a
+label, and the alternative of naming all five repeats one word five times for a
+scale that already runs 0 to 100 under a heading that says so. Ticks read 0, 50,
+100 on the bottom row of panels only.
+
+**"Chosen" rather than "kept" or "retained".** The literal description is that a
+selection step retained a candidate. Two things decided against it. "Kept"
+presupposes a pool the reader has not been shown, and naming that pool is the
+screening vocabulary returning by another route, where "chosen" needs no
+antecedent. And the subtitle says "chose" three times; a heading that said "kept"
+would describe the same act with a second verb and read as a second operation.
+The anthropomorphism is real and is the price paid.
 
 **The gases are named in the same bordered box as the other figures**, seated
 above each panel rather than in its corner: the corner holds the first row, which
@@ -1819,7 +1845,8 @@ here is a marked cell rather than the empty space the box needs. `panel_name`
 took an `x` override for this rather than the box being redrawn a second way.
 
 **The description outruns the shared allocation, and the canvas is sized around
-it.** It wraps to eight lines where the fixed block holds five. `wrap_description`
+it.** It wraps to eight lines where the fixed block holds five, and the figure
+declares 240 px against the shared 156. `wrap_description`
 and `canvas_area` took a `description_px` parameter so this one figure can declare
 the room it needs on a taller canvas; the shared default is untouched, because
 raising it would change the proportions of every other figure in the set. This is

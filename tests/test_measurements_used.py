@@ -220,16 +220,34 @@ def test_the_two_kinds_of_empty_cell_are_told_apart():
     ps.plt.close(fig)
 
 
-def test_the_description_says_what_each_empty_cell_means():
+def test_the_description_says_what_each_empty_cell_means_before_it_says_anything_else():
+    """A reader meeting a marked cell should not have to read to the end for it."""
     said = figures.MEASUREMENTS_TEXT.description
     assert "does not apply to the flux's own past values" in said
-    assert "unavailable to a" in said and "three months or more ahead" in said
+    assert "unavailable to a model forecasting three or more months ahead" in said
+    assert said.index("does not apply") < said.index("For carbon dioxide")
+    assert said.index("does not apply") < said.index("Three seasonal terms")
 
 
-def test_both_column_groups_carry_the_axis_they_are_read_against():
+def test_the_unit_is_carried_by_the_headings_rather_than_by_an_axis_name():
+    """Naming two columns of five would read as a distinction between them."""
+    assert "%" in figures.DATE_HEADING and "%" in figures.CHOSEN_HEADING
     fig = figures.measurements_used(real_panels())
-    assert [t.get_text() for t in fig.texts].count(figures.AXIS_LABEL) == 2
+    for ax in fig.axes:
+        assert not ax.get_xlabel()
+        printed = [t.get_text() for t in ax.get_xticklabels() if t.get_text()]
+        assert printed in ([], ["0", "50", "100"])      # blank on all but the last row
     ps.plt.close(fig)
+
+
+def test_the_title_names_the_site_as_the_rest_of_the_set_does():
+    assert "Marcell Bog Lake Peatland" in figures.MEASUREMENTS_TEXT.title
+
+
+def test_the_subtitle_says_what_a_horizon_is():
+    """This may be the first figure a reader meets, and the panels are horizons."""
+    said = figures.MEASUREMENTS_TEXT.subtitle
+    assert "fixed distance ahead" in said and "one month to twelve" in said
 
 
 def test_the_gases_are_named_in_the_bordered_box_the_other_figures_use():

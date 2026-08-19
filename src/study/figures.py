@@ -875,36 +875,36 @@ def screening_panel(
 
 
 MEASUREMENTS_TEXT = ps.FigureText(
-    title="Which measurements the models used at each forecast horizon",
+    title=("Which measurements the models used at Marcell Bog Lake Peatland "
+           "(by forecast horizon)"),
     subtitle=(
-        "Each model was rebuilt every month as the record grew, and each time it "
-        "chose which of the measurements to use. The green bars show how often "
-        "each was chosen, from never to every rebuild. The grey bars show "
-        "something different: how much of that measurement can be predicted from "
-        "the date alone. Temperature scores high there because every July is warm "
-        "and every January cold, while the water table scores near zero because "
-        "how wet the peatland is depends on that year's rain rather than on the "
-        "month. Reading the two together, what the models chose most often are the "
-        "measurements the date already predicts, and the one thing the date cannot "
-        "predict is the one they chose least."
+        "Each model predicts a fixed distance ahead, from one month to twelve, "
+        "and was rebuilt every month as the record grew. Each time it chose which "
+        "of the measurements to use, and the green bars show how often each was "
+        "chosen, from never to every rebuild. The grey bars show something "
+        "different: how much of that measurement can be predicted from the date "
+        "alone, which is high for temperature and near zero for the water table. "
+        "Reading the two together, what the models chose most often are the "
+        "measurements the date already predicts, and the one thing the date "
+        "cannot predict is the one they chose least."
     ),
     description=(
         "Rows are ordered by how often the models chose each measurement, averaged "
-        "across both gases and all four horizons. The date column was not sorted, "
-        "yet it falls in the same order, and three things follow from that. Three "
-        "seasonal terms account for 95% of soil and air temperature, so a model "
-        "that uses temperature gains almost nothing the date had not already given "
-        "it. Those same terms account for 0.5% of the water table, which means it "
-        "carries information nothing else does, but once the seasonal cycle is "
+        "across both gases and all four horizons. Cells are marked rather than left "
+        "blank where a number would mean nothing, for two different reasons. The "
+        "date question does not apply to the flux's own past values, which are not "
+        "measurements taken at the site. Last month's flux is simply unavailable to "
+        "a model forecasting three or more months ahead. The date column was not "
+        "sorted, yet it falls in the same order, and three things follow from that. "
+        "Three seasonal terms account for 95% of soil and air temperature, so a "
+        "model that uses temperature gains almost nothing the date had not already "
+        "given it. Those same terms account for 0.5% of the water table, which means "
+        "it carries information nothing else does, but once the seasonal cycle is "
         "removed from the flux, the water table explains almost nothing that "
-        "remains. For carbon dioxide three months ahead the models chose none of "
-        "the four measurements in any rebuild, keeping only the flux's own value "
-        "from a year earlier. The same pattern appears at other wetland sites, "
-        "where temperature dominated wherever the water table varied least. Two "
-        "rows are marked rather than left blank: the date question does not apply "
-        "to the flux's own past values, which are not measurements taken at the "
-        "site, and last month's flux is unavailable to a model forecasting three "
-        "months or more ahead."
+        "remains. For carbon dioxide three months ahead the models chose none of the "
+        "four measurements in any rebuild, keeping only the flux's own value from a "
+        "year earlier. The same pattern appears at other wetland sites, where "
+        "temperature dominated wherever the water table varied least."
     ),
 )
 
@@ -914,10 +914,16 @@ MEASUREMENTS_TEXT = ps.FigureText(
 MEASUREMENTS_DESCRIPTION_PX = 240
 
 #: Headings over the two column groups, each centered on the columns it covers and
-#: broken before the parenthetical so the pair reads in the same register.
+#: broken before the parenthetical so the pair reads in the same register. They
+#: carry the unit, which is why no column is given an axis name of its own.
+#:
+#: "Chosen" rather than "kept" or "retained", which are the more literal words for
+#: what a selection step does. Kept implies a pool the reader has not been shown,
+#: and naming that pool is the screening vocabulary coming back by another route;
+#: chosen needs no antecedent. It also holds the subtitle and the heading to one
+#: verb, so the panel and the sentence above it describe one act rather than two.
 CHOSEN_HEADING = "Chosen by the models\n(% of rebuilds)"
 DATE_HEADING = "Predictable from the date\n(% of variation)"
-AXIS_LABEL = "Percent"
 
 #: The two reasons a cell is empty, which are not the same reason and so are not
 #: drawn the same way. Neither is missing data.
@@ -1055,10 +1061,11 @@ def measurements_used(panels: dict[str, pd.DataFrame]) -> Figure:
     date_middle = date_left + column / 2
     chosen_middle = first + (left + width - first) / 2
     heading_base = top - (HEADING_PX - 8) / height_px
+    # No axis name under the columns. The headings already give the unit, and the
+    # alternative to naming all five columns is naming none: two of five carrying
+    # it would read as a distinction between the columns rather than as a label.
     for middle, heading in ((date_middle, DATE_HEADING), (chosen_middle, CHOSEN_HEADING)):
         fig.text(middle, heading_base, heading, ha="center", va="bottom",
                  fontsize=ps.LABEL_SIZE, fontweight="bold", color=ps.INK,
                  linespacing=1.4)
-        fig.text(middle, bottom - 34 / height_px, AXIS_LABEL, ha="center", va="top",
-                 fontsize=ps.LABEL_SIZE, color=ps.MUTED)
     return fig
