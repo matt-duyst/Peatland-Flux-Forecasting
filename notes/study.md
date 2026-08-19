@@ -2077,6 +2077,58 @@ covered is nothing at all. Because the two hollow cases carry their reasons in
 words, the key holds three marks and no reasons, which is what keeps six kinds of
 absence from becoming six keys.
 
+**One tick per break, not per month.** The first build drew a tick under every
+missing month, and the eight months missing across 2013 and 2014 came out as an
+indistinct smear rather than as anything countable. A run of adjacent missing
+months is one break in the record; the count of months belongs in these notes.
+The tick is also heavier and in the same ink as the bars, since it is part of one
+rather than a mark on top of one.
+
+### The palette question on this figure, and what it should be
+
+The figure was first drawn in black and gray alone, which left it the only one of
+eight with no connection to the palette the rest of the set uses. Three decisions
+came out of looking at that.
+
+**The measured bars stay neutral.** They are a record of what exists rather than
+a result, and the upper block's distinction is exists, missing, discarded — not
+retained against discarded. `INSIDE` for existence would claim a decision was
+made where none was. This is the same reasoning that made the date share
+achromatic on the measurements-used figure.
+
+**The set-aside marks take `OUTSIDE`.** That hue already means *outside, or
+discarded* across the reconstruction figures and the site map, and these are the
+only months on the panel that a decision discarded. The mapping is exact rather
+than analogical. Measured against the white they sit on, the edge clears it by
+**74.5 ΔE under the worst simulated deficiency and 0.778 in relative luminance**,
+so the mark reads with or without color.
+
+**The fitting window takes `INSIDE`; the reconstruction does not take `OUTSIDE`.**
+The fitting window is the range that defines what *inside the fitted range* means
+everywhere else in the study, drawn in time rather than in water table, so blue is
+the same statement in a different projection. The reconstruction is not its
+opposite: **117 of its 230 months lie outside the fitted range and 113 inside**,
+so a uniformly orange bar would assert a verdict this study measured as mixed and
+would contradict the reconstruction figures, where those months are split between
+the two hues month by month. It stays neutral, and that asymmetry is the honest
+one.
+
+**What the hue is not carrying.** `INSIDE` sits **41.3 ΔE** from the neutral
+window fill under the worst deficiency but only **0.029 apart in relative
+luminance**, so in grayscale the blue bar and the gray bars are near enough to
+identical. The distinction a reader needs is carried by the row name and the
+group heading, and the hue is a tie to the rest of the set rather than the thing
+that makes the row legible. `FITTED` was not considered: the convention scopes it
+to the two forecast figures, and a scoring window is not a range across models.
+
+**The lower block is two groups, not four rows of one thing.** Reconstruction and
+fitting window are spans of months the study drew on; the two forecast rows are
+spans it scored predictions over. Drawn as four identical bars they read as four
+instances of one kind. They are now grouped under two headings, which marks the
+distinction without a fourth mark in the key, and it shortened the row names to
+one line each — the two forecast rows had been wrapping to two while every other
+row sat on one.
+
 **The 48-month rule is a weight, not a fourth symbol.** Each comparison row runs
 as a thin line from where its flux record starts to where the comparison begins,
 then as a full bar. Methane's lead is **62 calendar months for 48 observations**,
@@ -2085,15 +2137,19 @@ rather than time.
 
 **Three guides, added after the build rather than designed in.** The alignments
 are the figure's whole argument and they have to be read vertically across the
-rule between blocks. At 426 months wide that did not hold by eye, so light
-verticals were added at the three boundaries that carry a claim: where the flux
-record starts and the reconstruction ends, where the shortest measurements stop
-and the fitting window with them, and where the comparison ends while methane
-carries on for another year. The second falls on the 2020 gridline already there.
-Nothing else is guided.
+rule between blocks. At 426 months wide that did not hold by eye, so verticals
+were added at the three boundaries that carry a claim: where the flux record
+starts and the reconstruction ends, where the shortest measurements stop and the
+fitting window with them, and where the comparison ends while methane carries on
+for another year. Nothing else is guided. Drawn first in the gridline gray and
+under the gridlines, they were invisible at the rendered size; they are now dashed
+in the apparatus gray the set rules its range boundaries with, and drawn above the
+gridlines. A guide that reads as a gridline is not a guide.
 
 **The month counts sit beside each bar rather than in a column**, which would
-read as a table set next to a figure. The unit is named once, on the first row.
+read as a table set next to a figure. All twelve are bare numbers: naming the unit
+on the first row alone was meant as a heading and read as an inconsistency, and
+the subtitle already says the bars cover months.
 
 **What the alignments show without a word of annotation.** The fitting bar stops
 exactly where air temperature and precipitation stop, while methane runs 24
@@ -2108,6 +2164,11 @@ difference. Gap-filling, since none was done. Any shading across the panel. And
 the benchmark-only tail — methane compared to 2021-12 and carbon dioxide to
 2024-12 where no measurement is needed — which is one clause of the description
 rather than a fourth mark.
+
+**Both reasons are labeled from below, one to each side of its own mark.** They
+were first stacked to the right of the row, which ran two leaders back across the
+water table bar to reach marks six months apart. Each label now sits under the
+row on its own side, and neither leader crosses anything.
 
 **Nothing is pinned.** Spans, gaps and counts are computed from the committed
 sources; the two exclusions come from `windows.WATER_TABLE_ARTIFACTS` and

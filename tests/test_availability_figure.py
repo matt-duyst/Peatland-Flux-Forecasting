@@ -27,15 +27,20 @@ ASIDE = {"Water table": (
     (pd.period_range("2020-01", "2021-01", freq="M"), "gauge change"),
 )}
 
-WINDOWS = [
+DREW_ON = [
     {"name": "Reconstruction", "first": pd.Period("1990-01", freq="M"),
      "last": pd.Period("2009-03", freq="M"), "months": 230, "lead": None},
     {"name": "Fitting window", "first": pd.Period("2009-04", freq="M"),
-     "last": pd.Period("2019-12", freq="M"), "months": 115, "lead": None},
-    {"name": "Forecast comparison", "first": pd.Period("2014-06", freq="M"),
+     "last": pd.Period("2019-12", freq="M"), "months": 115, "lead": None,
+     "support": True},
+]
+SCORED = [
+    {"name": "Methane", "first": pd.Period("2014-06", freq="M"),
      "last": pd.Period("2020-12", freq="M"), "months": 71,
      "lead": (pd.Period("2009-04", freq="M"), pd.Period("2014-06", freq="M"))},
 ]
+GROUPS = ((figures.BLOCK_HEADINGS[1], DREW_ON), (figures.BLOCK_HEADINGS[2], SCORED))
+WINDOWS = DREW_ON + SCORED
 
 
 def rows():
@@ -43,7 +48,7 @@ def rows():
 
 
 def figure(guides=()):
-    return figures.covariate_availability(rows(), WINDOWS, guides)
+    return figures.covariate_availability(rows(), GROUPS, guides)
 
 
 # --- four kinds of month ------------------------------------------------------
@@ -87,18 +92,40 @@ def test_every_run_is_a_bar_and_every_hole_is_a_hole():
     ps.plt.close(fig)
 
 
-def test_each_hole_carries_a_tick_because_one_month_is_four_pixels_wide():
+def test_one_tick_marks_each_break_rather_than_each_missing_month():
+    """Three months adjacent are one break in the record. Three ticks side by side
+    were an indistinct smear, and the count of months is not the figure's business."""
     fig = figure()
     ticks = [line for line in fig.axes[0].lines
-             if len(line.get_xdata()) == 2 and line.get_xdata()[0] == line.get_xdata()[1]]
-    assert len(ticks) == 4                              # one per missing month
+             if len(line.get_xdata()) == 2 and line.get_xdata()[0] == line.get_xdata()[1] > 1900
+             and tuple(line.get_ydata()) != (0.0, 1.0)]
+    assert len(ticks) == 2                              # one month, then three
+    assert ticks[0].get_linewidth() > 1.2               # heavy enough to see
     ps.plt.close(fig)
 
 
-def test_what_was_set_aside_is_drawn_hollow_rather_than_absent():
+def test_what_was_set_aside_is_drawn_hollow_and_edged_in_the_discard_hue():
+    """Discarded is what that hue means everywhere else in the set, and this is the
+    one place on the panel where something was discarded rather than absent."""
+    from matplotlib.colors import to_rgb
+
     fig = figure()
     hollow = [p for p in fig.axes[0].patches if p.get_facecolor()[:3] == (1.0, 1.0, 1.0)]
     assert len(hollow) == 3                             # two single months, one run
+    assert all(p.get_edgecolor()[:3] == to_rgb(ps.OUTSIDE) for p in hollow)
+    ps.plt.close(fig)
+
+
+def test_the_fitting_window_carries_the_hue_that_means_inside_the_fitted_range():
+    """It is that range, in time. The reconstruction beside it stays neutral: its
+    months are half inside and half outside, and one hue would assert otherwise."""
+    from matplotlib.colors import to_rgb
+
+    fig = figure()
+    filled = [p.get_facecolor()[:3] for p in fig.axes[0].patches
+              if p.get_facecolor()[:3] != (1.0, 1.0, 1.0)]
+    assert filled.count(to_rgb(ps.INSIDE)) == 1
+    assert to_rgb(ps.OUTSIDE) not in filled
     ps.plt.close(fig)
 
 
@@ -107,6 +134,10 @@ def test_the_reason_a_month_was_set_aside_is_written_beside_it():
     fig = figure()
     said = [note.get_text() for note in fig.axes[0].texts]
     assert "instrument error" in said and "gauge change" in said
+    # Each leader stays on its own side of its own mark rather than crossing the bar.
+    leaders = [note for note in fig.axes[0].texts
+               if getattr(note, "arrow_patch", None) is not None]
+    assert len(leaders) == 2
     ps.plt.close(fig)
 
 
@@ -126,8 +157,18 @@ def test_the_windows_are_their_own_rows_rather_than_shading_over_the_series():
     ax = fig.axes[0]
     names = [label.get_text() for label in ax.get_yticklabels()]
     assert names[-len(WINDOWS):] == [row["name"] for row in WINDOWS]
+    assert not any("\n" in name for name in names)      # every row on one line
     # Every mark is one row tall: nothing spans the panel the way a band would.
     assert {round(p.get_height(), 6) for p in ax.patches} == {figures.BAR_HEIGHT}
+    ps.plt.close(fig)
+
+
+def test_the_two_kinds_of_window_are_grouped_and_headed_separately():
+    """Spans the study drew on and spans it scored over are not the same thing, and
+    four identical bars said they were."""
+    fig = figure()
+    said = " ".join(note.get_text() for note in fig.axes[0].texts)
+    assert figures.BLOCK_HEADINGS[1] in said and figures.BLOCK_HEADINGS[2] in said
     ps.plt.close(fig)
 
 
@@ -154,6 +195,8 @@ def test_guides_are_drawn_only_where_the_caller_asks_for_them():
     """They are for alignments that carry a claim, not for every boundary."""
     plain = figure()
     guided = figure((pd.Period("2009-04", freq="M"), pd.Period("2020-01", freq="M")))
+    assert all(line.get_linestyle() != "-" for line in guided.axes[0].lines
+               if tuple(line.get_ydata()) == (0.0, 1.0))      # dashed, not a gridline
     def verticals(fig):
         """Full-height rules, which are in year coordinates and axes fractions."""
         return sum(1 for line in fig.axes[0].lines
@@ -193,6 +236,15 @@ def test_the_figure_asks_no_reader_to_know_the_method():
     for jargon in ("covariate", "exogenous", "holdout", "horizon", "gap-filling",
                    "boruta", "fold", "datum"):
         assert jargon not in said
+
+
+def test_the_counts_are_all_written_the_same_way():
+    """One row reading "142 months" beside seven bare numbers read as a slip."""
+    fig = figure()
+    numbers = [note.get_text() for note in fig.axes[0].texts
+               if note.get_text().replace(".", "").isdigit()]
+    assert len(numbers) == len(rows()) + len(WINDOWS)
+    ps.plt.close(fig)
 
 
 def test_the_title_names_the_site():

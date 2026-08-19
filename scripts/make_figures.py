@@ -194,29 +194,32 @@ def main() -> None:
     )}
     measured_rows = figures.availability_rows(measured, set_aside)
 
-    used = [
+    drew_on = [
         {"name": "Reconstruction", "first": built["reconstruction"].min(),
          "last": built["reconstruction"].max(), "months": len(built["reconstruction"]),
          "lead": None},
         {"name": "Fitting window", "first": built["fit"].min(),
-         "last": built["fit"].max(), "months": len(built["fit"]), "lead": None},
+         "last": built["fit"].max(), "months": len(built["fit"]), "lead": None,
+         "support": True},
     ]
+    scored = []
     for key, gas, _ in figures.GAS_PANEL:
         frame = pd.read_csv(root / f"data/processed/forecasts_{key}_exogenous.csv")
         frame["target"] = pd.PeriodIndex(frame["target"], freq="M")
-        scored = frame.dropna(subset=["actual"])["target"]
+        # Not named `targets`: that is the module this script already imports.
+        months = frame.dropna(subset=["actual"])["target"]
         flux = measured["Carbon dioxide" if key == "carbon_dioxide"
                         else "Methane, site aggregate"].dropna().index
-        used.append({"name": f"Forecast comparison,\n{gas.lower()}",
-                     "first": scored.min(), "last": scored.max(),
-                     "months": scored.nunique(), "lead": (flux.min(), scored.min())})
+        scored.append({"name": gas, "first": months.min(), "last": months.max(),
+                       "months": months.nunique(), "lead": (flux.min(), months.min())})
 
     # Guides only where two rows have to be compared across a boundary: where the
     # flux record starts, where the shortest measurements stop, and where the
     # comparison ends while the flux itself carries on.
     fig = figures.covariate_availability(
-        measured_rows, used,
-        (built["fit"].min(), built["fit"].max() + 1, used[-1]["last"] + 1))
+        measured_rows,
+        ((figures.BLOCK_HEADINGS[1], drew_on), (figures.BLOCK_HEADINGS[2], scored)),
+        (built["fit"].min(), built["fit"].max() + 1, scored[-1]["last"] + 1))
     path = plotstyle.save(fig, "covariate_availability")
     fragments.append(plotstyle.readme_block(figures.AVAILABILITY_TEXT,
                                             "covariate_availability"))

@@ -1368,18 +1368,20 @@ AVAILABILITY_TEXT = ps.FigureText(
     ),
 )
 
-BLOCK_HEADINGS = ("What was measured", "What each part of the study used")
-COUNT_HEADING = "months"
+BLOCK_HEADINGS = ("What was measured", "Months the study drew on",
+                  "Months predictions were scored over")
 PRESENT_LABEL = "months measured"
 MISSING_LABEL = "a month missing"
 ASIDE_LABEL = "set aside by the study"
 TRAINING_LABEL = "48 months of training first"
 
-#: Bar geometry in points. The bars are the figure, so they are heavy; the notch
+#: Bar geometry in row units. The bars are the figure, so they are heavy; the notch
 #: has to read as a break in one rather than as a mark on top of one, which is why
-#: it is a hole in the bar with a tick under it rather than a symbol over it.
+#: it is a hole in the bar with a tick under it rather than a symbol over it. One
+#: tick per stretch of missing months, not per month: five months adjacent are one
+#: break in the record, and five ticks side by side were an indistinct smear.
 BAR_HEIGHT = 0.46
-NOTCH_TICK = 0.30
+NOTCH_TICK = 0.42
 
 
 def _runs(index: pd.PeriodIndex) -> list[tuple[pd.Period, pd.Period]]:
@@ -1440,16 +1442,25 @@ def _draw_availability_row(ax, y: float, row: dict) -> None:
     """A series: what exists, where it breaks, and what was set aside in it."""
     for first, last in _runs(row["present"]):
         _draw_bar(ax, y, first, last, facecolor=ps.INK, edgecolor="none", zorder=3)
-    # A tick under each hole, because a single missing month is four pixels wide
-    # across thirty-five years and reads as nothing at all on its own.
-    for month in row["gaps"]:
-        ax.plot([_position(month) + 1 / 24.0] * 2,
-                [y - BAR_HEIGHT / 2 - NOTCH_TICK, y - BAR_HEIGHT / 2 - 0.04],
-                color=ps.MUTED, linewidth=1.0, zorder=4)
+    # One tick per break, because a single missing month is four pixels wide across
+    # thirty-five years and reads as nothing at all on its own.
+    for first, last in _runs(row["gaps"]):
+        middle = (_position(first) + _position(last) + 1 / 12.0) / 2
+        ax.plot([middle] * 2,
+                [y - BAR_HEIGHT / 2 - NOTCH_TICK, y - BAR_HEIGHT / 2 - 0.02],
+                color=ps.INK, linewidth=1.4, zorder=4)
+    # Discarded, which is what the support hue means everywhere else in the set.
     for months, _ in row["aside"]:
         for first, last in _runs(months):
-            _draw_bar(ax, y, first, last, facecolor="white", edgecolor=ps.INK,
-                      linewidth=0.9, zorder=5)
+            _draw_bar(ax, y, first, last, facecolor="white", edgecolor=ps.OUTSIDE,
+                      linewidth=1.2, zorder=5)
+
+
+#: The span that defines what "inside the fitted range" means everywhere else in
+#: the study, drawn in the hue that carries it. The reconstruction beside it stays
+#: neutral: 117 of its 230 months lie outside that range and 113 inside, so one
+#: hue across the whole bar would assert a verdict the study measured as mixed.
+WINDOW_FILL = "#767676"
 
 
 def _draw_window_row(ax, y: float, row: dict) -> None:
@@ -1458,37 +1469,42 @@ def _draw_window_row(ax, y: float, row: dict) -> None:
         first, last = row["lead"]
         ax.plot([_position(first), _position(last)], [y, y], color=ps.MUTED,
                 linewidth=1.1, zorder=3)
-    _draw_bar(ax, y, row["first"], row["last"], facecolor="#767676",
+    _draw_bar(ax, y, row["first"], row["last"],
+              facecolor=ps.INSIDE if row.get("support") else WINDOW_FILL,
               edgecolor="none", zorder=3)
 
 
-#: Where each block sits on the row axis, and where the rule between them falls.
-#: The gap holds the two reasons a month was set aside, which are labeled where
-#: they happened rather than encoded in the key.
-BLOCK_GAP = 3.2
+#: Row spacing. The wide gap holds the two reasons a month was set aside, which
+#: are labeled where they happened rather than encoded in the key; the narrow one
+#: separates the two things the lower block holds, which are not the same thing.
+BLOCK_GAP = 3.4
+GROUP_GAP = 1.9
 HEADING_OFFSET = 1.15
 
 #: Room at the left for the row names and at the top for the key, in pixels. Taken
 #: out of the drawing rectangle rather than out of the canvas, so the title and the
 #: description stay centered on the page rather than on the bars.
-NAME_GUTTER_PX = 272
+NAME_GUTTER_PX = 220
 KEY_BAND_PX = 40
 
 
 def _draw_guides(ax, guides) -> None:
-    """A light vertical at each boundary two rows have to be compared across.
+    """A dashed vertical at each boundary two rows have to be compared across.
 
     Only where an alignment carries a claim. Thirty-five years is wide enough that
     the eye cannot hold a month while it travels between blocks, and these are the
-    months the figure exists to line up.
+    months the figure exists to line up. Drawn in the apparatus gray the rest of
+    the set rules its range boundaries with, above the gridlines rather than under
+    them, because a guide that reads as a gridline is not a guide.
     """
     for month in guides:
-        ax.axvline(_position(month), color=ps.GRID, linewidth=0.9, zorder=1)
+        ax.axvline(_position(month), color=ps.BOUNDARY, linewidth=1.0,
+                   linestyle=(0, (4, 3)), alpha=0.75, zorder=2)
 
 
-def covariate_availability(rows: list[dict], windows_rows: list[dict],
+def covariate_availability(rows: list[dict], groups: Sequence[tuple[str, list[dict]]],
                            guides: Sequence[pd.Period] = ()) -> Figure:
-    """Every series against every window, on one timeline.
+    """Every series against every window the study drew, on one timeline.
 
     Two blocks rather than one: the windows are choices made from what was
     available, and shading them across the series would draw them as a property of
@@ -1505,27 +1521,36 @@ def covariate_availability(rows: list[dict], windows_rows: list[dict],
 
     _draw_guides(ax, guides)
     series_y = list(range(len(rows)))
-    window_y = [len(rows) + BLOCK_GAP + index for index in range(len(windows_rows))]
     for y, row in zip(series_y, rows):
         _draw_availability_row(ax, y, row)
-    for y, row in zip(window_y, windows_rows):
-        _draw_window_row(ax, y, row)
 
-    # The count sits just past the bar it belongs to rather than in a column of
-    # its own, which would read as a table set beside the figure. The unit is
-    # named once, on the first row, and the rest are bare numbers.
-    for index, (y, row) in enumerate(zip(series_y + window_y, rows + windows_rows)):
+    # The lower block holds two different things: spans of months the study drew
+    # on, and spans it scored predictions over. Grouped and headed separately
+    # rather than distinguished by a mark, which would have cost a fourth key.
+    headings = [(series_y[0] - HEADING_OFFSET, BLOCK_HEADINGS[0])]
+    window_y, window_rows = [], []
+    cursor = len(rows) + BLOCK_GAP
+    for index, (heading, group) in enumerate(groups):
+        headings.append((cursor - HEADING_OFFSET, heading))
+        for row in group:
+            _draw_window_row(ax, cursor, row)
+            window_y.append(cursor)
+            window_rows.append(row)
+            cursor += 1
+        cursor += GROUP_GAP if index < len(groups) - 1 else 0
+
+    # The count sits just past the bar it belongs to rather than in a column of its
+    # own, which would read as a table set beside the figure.
+    for y, row in zip(series_y + window_y, rows + window_rows):
         last = row["present"].max() if "present" in row else row["last"]
-        ax.text(_position(last) + 2 / 12.0, y,
-                f"{row['months']} months" if index == 0 else f"{row['months']}",
-                ha="left", va="center", fontsize=ps.TICK_SIZE - 2.0, color=ps.MUTED,
-                zorder=4)
+        ax.text(_position(last) + 2 / 12.0, y, f"{row['months']}", ha="left",
+                va="center", fontsize=ps.TICK_SIZE - 2.0, color=ps.MUTED, zorder=4)
 
     first_year = min(_position(row["present"].min()) for row in rows)
     ax.set_xlim(first_year - 0.5, 2026.4)
     ax.set_ylim(window_y[-1] + 1.0, -HEADING_OFFSET - 0.9)
     ax.set_yticks(series_y + window_y)
-    ax.set_yticklabels([row["name"] for row in rows + windows_rows],
+    ax.set_yticklabels([row["name"] for row in rows + window_rows],
                        fontsize=ps.TICK_SIZE)
     ax.set_xticks(list(range(1990, 2026, 5)))
     ax.set_xticklabels([str(year) for year in range(1990, 2026, 5)])
@@ -1536,30 +1561,30 @@ def covariate_availability(rows: list[dict], windows_rows: list[dict],
         ax.spines[side].set_visible(False)
     ax.spines["bottom"].set_color(ps.BOUNDARY)
 
-    # The rule between the blocks, and a name for each of them in the gutter the
-    # row names already occupy, so neither block can be read as the other.
     ax.axhline(len(rows) + BLOCK_GAP - 1.9, color=ps.BOUNDARY, linewidth=0.8,
                alpha=0.45, zorder=1)
-    heading = blended_transform_factory(ax.transAxes, ax.transData)
+    heading_at = blended_transform_factory(ax.transAxes, ax.transData)
     outside = -gutter / (width - gutter)
-    for y, name in ((series_y[0] - HEADING_OFFSET, BLOCK_HEADINGS[0]),
-                    (window_y[0] - HEADING_OFFSET, BLOCK_HEADINGS[1])):
-        ax.text(outside, y, name, transform=heading, ha="left", va="center",
+    for y, name in headings:
+        ax.text(outside, y, name, transform=heading_at, ha="left", va="center",
                 fontsize=ps.LABEL_SIZE, fontweight="bold", color=ps.INK)
 
-    # Each set-aside span says why it was set aside, in the band between the
-    # blocks, so the key never has to carry a reason.
-    for index, (months, reason) in enumerate(rows[-1]["aside"]):
-        middle = (_position(months.min()) + _position(months.max())) / 2
-        ps.annotate(ax, reason, xy=(middle, series_y[-1] + 0.35),
-                    xytext=(middle + (2.4 if index else -3.0), series_y[-1] + 1.7),
-                    ha="left" if index else "right", va="center")
+    # One reason each side of its own mark, in the band below the row, so both
+    # leaders are short and neither crosses the bar it points at. The key already
+    # says the marks are months set aside, so the labels carry only the reason.
+    for (months, reason), side in zip(rows[-1]["aside"], (-1, 1)):
+        edge = _position(months.min()) if side < 0 else _position(months.max()) + 1 / 12.0
+        ps.annotate(ax, reason, xy=(edge, series_y[-1] + 0.32),
+                    xytext=(edge + 1.1 * side, series_y[-1] + 1.25),
+                    ha="right" if side < 0 else "left", va="center", color=ps.OUTSIDE,
+                    arrowprops=dict(arrowstyle="-", color=ps.OUTSIDE, linewidth=0.9,
+                                    shrinkA=3, shrinkB=2))
 
     entries = [
         (Patch(facecolor=ps.INK, edgecolor="none"), PRESENT_LABEL),
-        (Line2D([], [], color=ps.MUTED, linestyle="none", marker="|", markersize=9,
-                markeredgewidth=1.0), MISSING_LABEL),
-        (Patch(facecolor="white", edgecolor=ps.INK, linewidth=0.9), ASIDE_LABEL),
+        (Line2D([], [], color=ps.INK, linestyle="none", marker="|", markersize=10,
+                markeredgewidth=1.4), MISSING_LABEL),
+        (Patch(facecolor="white", edgecolor=ps.OUTSIDE, linewidth=1.2), ASIDE_LABEL),
     ]
     ps.legend(ax, handles=[h for h, _ in entries], labels=[label for _, label in entries],
               loc="lower right", bbox_to_anchor=(1.0, 1.005), ncol=len(entries),
