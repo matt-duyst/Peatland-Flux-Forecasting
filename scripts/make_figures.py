@@ -163,6 +163,21 @@ def main() -> None:
     fragments.append(plotstyle.readme_block(figures.STABILITY_TEXT, "coefficient_stability"))
     print(f"wrote {path.relative_to(plotstyle.figures_dir().parent)}")
 
+    # The seasonal split reads the observed months alone, over the whole record
+    # rather than the fitting window: methane's weakest season is 2021, which the
+    # fitting window ends before, and it is half of what the amplitude range says.
+    parts = {}
+    for key, _, _ in figures.GAS_PANEL:
+        filename, column, _ = figures.GAS_OBSERVED[key]
+        series = pd.read_csv(root / "data/processed" / filename)
+        series["month"] = pd.PeriodIndex(series["month"], freq="M")
+        parts[key] = figures.seasonal_parts(series.set_index("month")[column])
+
+    fig = figures.seasonal_cycle(parts)
+    path = plotstyle.save(fig, "seasonal_cycle")
+    fragments.append(plotstyle.readme_block(figures.SEASONAL_TEXT, "seasonal_cycle"))
+    print(f"wrote {path.relative_to(plotstyle.figures_dir().parent)}")
+
     # Availability reads every source the study draws on, and takes its two
     # exclusions from the constants that define them, so a change to either moves
     # the figure rather than leaving it stale.

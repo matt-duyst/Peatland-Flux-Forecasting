@@ -54,6 +54,14 @@ Two marks stand where a number would mean nothing. The date question does not ap
 
 The same analysis is drawn twice, once weighting each month by how well it was measured and once not. Both fail and neither is the better treatment: weighted, the coefficient rises 51%, from 2.704 to 4.077; unweighted, 38%, from 2.385 to 3.299. Every step's range overlaps the first, so no single step is decisive, and the evidence is that it climbs at all four and never once falls. The soil temperature coefficient moves 16% along the same path, and only without weighting is it flat.
 
+### The seasonal cycle in monthly flux at Marcell Bog Lake Peatland
+
+![The seasonal cycle in monthly flux at Marcell Bog Lake Peatland](figures/seasonal_cycle.png)
+
+**Each column is one gas and each row is one part of its record. The middle row is one average shape for the whole record (the same twelve values repeated every year). The bottom row is what the measurements leave once that shape is taken out. It is where the size of each season lives, and it is the part nothing in this study predicts.**
+
+What the repeating shape leaves is half the variation in the record: 0.54 of the measurements' spread on methane and 0.53 on carbon dioxide. The shape accounts for the rest, 71% of the variance in both. The size of the season is what varies: methane's swing from lowest to highest month runs 33.7 to 150.6 across the years, a factor of 4.5, and carbon dioxide's 0.8 to 2.4, a factor of 3.0, neither of them trending (p = 0.119 and 0.505). The level was tested for a trend as well, and neither gas has one, so nothing was removed for it. This shape is fitted on every observed month, which is not what the forecast benchmark does: that one is rebuilt inside each fold from the months up to it.
+
 ### Which months each measurement and each analysis cover at Marcell Bog Lake Peatland
 
 ![Which months each measurement and each analysis cover at Marcell Bog Lake Peatland](figures/covariate_availability.png)

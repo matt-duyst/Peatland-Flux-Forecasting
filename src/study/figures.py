@@ -1638,3 +1638,180 @@ def covariate_availability(rows: list[dict],
               framealpha=1.0, handlelength=1.8, handletextpad=0.7, columnspacing=2.0,
               borderpad=0.55, fontsize=ps.LEGEND_SIZE - 1.0)
     return fig
+
+
+# --------------------------------------------------------------------------
+# The seasonal cycle and what it leaves
+# --------------------------------------------------------------------------
+
+SEASONAL_TEXT = ps.FigureText(
+    title="The seasonal cycle in monthly flux at Marcell Bog Lake Peatland",
+    subtitle=(
+        "Each column is one gas and each row is one part of its record. The middle "
+        "row is one average shape for the whole record (the same twelve values "
+        "repeated every year). The bottom row is what the measurements leave once "
+        "that shape is taken out. It is where the size of each season lives, and "
+        "it is the part nothing in this study predicts."
+    ),
+    # The title names the middle row, which orients; the finding is in the bottom
+    # one, and this clause is the only place the subtitle says so.
+    emphasize=("nothing in this study predicts",),
+    description=(
+        "What the repeating shape leaves is half the variation in the record: 0.54 "
+        "of the measurements' spread on methane and 0.53 on carbon dioxide. The "
+        "shape accounts for the rest, 71% of the variance in both. The size of the "
+        "season is what varies: methane's swing from lowest to highest month runs "
+        "33.7 to 150.6 across the years, a factor of 4.5, and carbon dioxide's 0.8 "
+        "to 2.4, a factor of 3.0, neither of them trending (p = 0.119 and 0.505). "
+        "The level was tested for a trend as well, and neither gas has one, so "
+        "nothing was removed for it. This shape is fitted on every observed month, "
+        "which is not what the forecast benchmark does: that one is rebuilt inside "
+        "each fold from the months up to it."
+    ),
+)
+
+#: The three parts, top to bottom, and the column each is held in.
+SEASONAL_ROWS = (
+    ("The flux as measured", "observed"),
+    ("The part that repeats every year", "repeating"),
+    ("What is left over", "leftover"),
+)
+
+#: Height of each row against the others. The bottom row is where the finding is,
+#: and the middle row is twelve numbers repeated, so it needs the least.
+SEASONAL_WEIGHTS = (1.0, 0.8, 1.5)
+
+#: Years with fewer months than this are dropped from the amplitude, since a year
+#: missing its summer would report a swing it never had.
+AMPLITUDE_MIN_MONTHS = 10
+
+
+def seasonal_parts(series: pd.Series) -> pd.DataFrame:
+    """A flux record split into the shape that repeats and what it leaves.
+
+    One shape for the whole record, the twelve month-of-year averages, applied to
+    every year alike. That is the study's own benchmark, so the split answers the
+    question the benchmark asks. It is fitted on every observed month here, which
+    the benchmark does not do: inside a fold it sees only months up to the origin.
+    Nothing is predicted on this figure, so there is nothing to leak into.
+    """
+    from forecast import preprocessing
+    from scipy import stats
+
+    observed = series.dropna()
+    leftover = preprocessing.SeasonalAdjustment().fit(observed).transform(observed)
+    panel = pd.DataFrame({"observed": observed, "repeating": observed - leftover,
+                          "leftover": leftover})
+
+    counted = observed.groupby(observed.index.year).size()
+    swing = observed.groupby(observed.index.year).agg(lambda year: year.max() - year.min())
+    swing = swing[counted >= AMPLITUDE_MIN_MONTHS]
+    trend = stats.linregress(np.asarray(swing.index, dtype=float), swing.to_numpy())
+    panel.attrs["swing"] = swing
+    panel.attrs["trend_p"] = float(trend.pvalue)
+    panel.attrs["explained"] = float(1 - leftover.var() / observed.var())
+    panel.attrs["left_share"] = float(leftover.std() / observed.std())
+    return panel
+
+
+#: Room at the left for the row names, and at the top for the gas labels.
+SEASONAL_GUTTER_PX = 352
+SEASONAL_HEAD_PX = 46
+SEASONAL_ROW_GAP_PX = 26
+SEASONAL_COLUMN_GAP_PX = 76
+
+
+def _draw_seasonal_row(ax, values: pd.Series, zeroed: bool, labeled: bool) -> None:
+    """One part of one gas, against the time axis every panel shares."""
+    if zeroed:
+        ax.axhline(0.0, color=ps.BOUNDARY, linewidth=0.9, zorder=1)
+    ax.plot(values.index.to_timestamp(), values.to_numpy(), color=ps.INK,
+            linewidth=1.2, zorder=3)
+    ax.margins(y=0.08)
+    ax.tick_params(top=False, right=False)
+    ax.grid(axis="x", color=ps.GRID, linewidth=0.6, zorder=0)
+    ax.set_axisbelow(True)
+    for side in ("top", "right"):
+        ax.spines[side].set_visible(False)
+    for side in ("left", "bottom"):
+        ax.spines[side].set_color(ps.BOUNDARY)
+
+
+
+def _mark_extreme_years(ax, panel: pd.DataFrame) -> None:
+    """Name the strongest and weakest seasons, lightly.
+
+    The finding is that the size of the season varies without direction, so these
+    are two labeled points in a scattered field rather than two events against a
+    quiet background. They are set at annotation weight for that reason, and the
+    numbers behind them are left to the description.
+    """
+    swing = panel.attrs["swing"]
+    leftover = panel["leftover"]
+    # Room for the two labels inside the panel, so neither hangs over a neighbor.
+    low, high = ax.get_ylim()
+    ax.set_ylim(low - 0.10 * (high - low), high + 0.10 * (high - low))
+    for year, name, pick in ((swing.idxmax(), "strongest season", "idxmax"),
+                             (swing.idxmin(), "weakest season", "idxmin")):
+        inside = leftover[leftover.index.year == year]
+        month = getattr(inside, pick)()
+        high = pick == "idxmax"
+        ax.annotate(f"{year}, {name}", xy=(month.to_timestamp(), float(inside[month])),
+                    xytext=(0 if high else -10, 14 if high else -16),
+                    textcoords="offset points", ha="center" if high else "right",
+                    va="bottom" if high else "top",
+                    fontsize=ps.ANNOTATION_SIZE - 1.0, style="italic", color=ps.MUTED,
+                    zorder=4)
+
+
+def seasonal_cycle(panels: dict[str, pd.DataFrame]) -> Figure:
+    """Each gas split into the shape that repeats and what that shape leaves.
+
+    Three rows against one time axis, so a month sits in the same place in every
+    panel and the bottom row can be read as what the two above it do not account
+    for. The gases are columns with their own scales: they are in different units,
+    and carbon dioxide crosses zero where methane does not.
+    """
+    fig, (left, bottom, width, height) = ps.canvas_area(SEASONAL_TEXT, size="stacked")
+    width_px, height_px = ps.SIZES["stacked"]
+    gutter = SEASONAL_GUTTER_PX / width_px
+    head = SEASONAL_HEAD_PX / height_px
+    row_gap = SEASONAL_ROW_GAP_PX / height_px
+    column_gap = SEASONAL_COLUMN_GAP_PX / width_px
+
+    column_width = (width - gutter - column_gap) / 2
+    room = height - head - row_gap * (len(SEASONAL_ROWS) - 1)
+    heights = [room * weight / sum(SEASONAL_WEIGHTS) for weight in SEASONAL_WEIGHTS]
+
+    first = min(panel.index.min() for panel in panels.values()).to_timestamp()
+    last = (max(panel.index.max() for panel in panels.values()) + 1).to_timestamp()
+    top = bottom + height - head
+
+    for column, (key, gas, unit) in enumerate(GAS_PANEL):
+        panel = panels[key]
+        base_x = left + gutter + column * (column_width + column_gap)
+        for index, (_, part) in enumerate(SEASONAL_ROWS):
+            base = top - sum(heights[: index + 1]) - index * row_gap
+            ax = fig.add_axes((base_x, base, column_width, heights[index]))
+            _draw_seasonal_row(ax, panel[part], zeroed=part == "leftover",
+                               labeled=index == len(SEASONAL_ROWS) - 1)
+            ax.set_xlim(first, last)
+            ps.even_year_ticks(ax, first.year, last.year)
+            if index < len(SEASONAL_ROWS) - 1:
+                ax.set_xticklabels([])          # after the locator, or it resets them
+            if part == "leftover":
+                _mark_extreme_years(ax, panel)
+            if index == 0:
+                ps.panel_name(ax, f"{gas} ({unit})", y=1.0 + 34 / (heights[index] * height_px))
+
+    # The row names once, in the gutter, since the three rows mean the same thing
+    # in both columns and naming them twice would say so twice. Seated clear of the
+    # widest tick label rather than at a guessed inset.
+    fig.canvas.draw()
+    clear = max(label.get_window_extent().width
+                for ax in fig.axes for label in ax.get_yticklabels() if label.get_text())
+    for index, (name, _) in enumerate(SEASONAL_ROWS):
+        middle = top - sum(heights[: index + 1]) + heights[index] / 2 - index * row_gap
+        fig.text(left + gutter - (clear + 16) / width_px, middle, name, ha="right",
+                 va="center", fontsize=ps.TICK_SIZE, color=ps.INK)
+    return fig

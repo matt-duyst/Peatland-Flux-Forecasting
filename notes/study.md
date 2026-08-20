@@ -2042,6 +2042,111 @@ and which stay in these notes. Significance marks, since the binomial threshold
 is the published rule rather than a calibrated error rate and stars would imply
 otherwise. A colorbar, since every bar prints its value.
 
+### The seasonal split figure
+
+`figures/seasonal_cycle.png`, built by `study.figures.seasonal_cycle` from
+`study.figures.seasonal_parts`, which reads the observed monthly series alone.
+
+**Why it exists.** The study concludes that flux here is predictable in shape and
+not in magnitude. Every other figure states that or supports it sideways. This one
+draws it: the middle row is the shape, which repeats reliably enough that a
+month-of-year average beats every fitted model, and the bottom row is the
+magnitude, which varies 4.5-fold without direction and which nothing the tower
+measures reaches.
+
+**The span is the whole observed record, and the amplitude claim settles it.**
+Methane's weakest season is **2021 at 33.7**, which falls outside the fitting
+window. Decomposing on that window drops the year that makes the point and cuts
+the range from 4.5-fold to 4.1; on the months forecasts were checked on it is
+narrower still, and describes what the models were graded on rather than what the
+site does. Carbon dioxide would lose a third of its record for nothing. The figure
+fits nothing and scores nothing, so there is no window to protect.
+
+| span | methane range | carbon dioxide range |
+|---|---|---|
+| **whole observed record** | **4.5×** (33.7 to 150.6) | **3.0×** (0.8 to 2.4) |
+| fitting window | 4.1× | 2.5× |
+
+**One shape, and the figure says which.** The middle row is the twelve
+month-of-year averages, the same twelve in every year, which is the study's own
+benchmark. A method that lets the shape evolve would answer a question the
+benchmark does not ask, so none is used and none is named: the subtitle says *one
+average shape for the whole record (the same twelve values repeated every year)*.
+A test asserts the drawn shape takes twelve distinct values and no more.
+
+**The caveat that is easy to skip and expensive to omit.** This shape is fitted on
+every observed month. The forecast benchmark is not: inside each fold it is
+rebuilt from the months up to the origin. Same idea, different operation, and a
+reader who took one for the other would misread both figures. It is the last
+sentence of the description and a test holds it there.
+
+**No trend row.** Neither gas trends anywhere near significance — methane
+p = 0.668 on the level, carbon dioxide p = 0.530 — and nothing was detrended
+anywhere in this study. A row flat by construction would take height from the
+bottom row while implying a component that is not there. One clause of the
+description instead.
+
+**The bottom row is the tallest**, at 1.5 against 1.0 and 0.8. It is where the
+finding is, and the row above it is twelve numbers repeated.
+
+**The two variance framings pull opposite ways, and the description leads with
+the one the panel exists to make.** The fixed shape accounts for **71%** of the
+variance in both gases, which sounds like most of it; what it leaves is **0.54 and
+0.53 of the measurements' standard deviation**, which says half the variation is
+still there. Variance is a square, so the two are the same fact read at different
+powers. The description gives the spread share first and the variance share as
+context, and a test pins that order.
+
+**Two years are marked, lightly.** The strongest and weakest seasons on each gas,
+at annotation weight in italic muted, with their values left to the description.
+The finding is that the size varies *without direction*, so the marks have to read
+as two labeled points in a scattered field rather than two events against a quiet
+background. Anything heavier would have said the opposite of the panel.
+
+**The title names the middle row and the subtitle carries the finding.** That is
+the division used across the set: the title orients, the subtitle argues. Since
+the title does not reinforce it, the subtitle's last clause — *nothing in this
+study predicts* — is set bold, which puts it on its own line at the foot of the
+block.
+
+**What was left out.** A trend row. Any evolving-shape decomposition. Confidence
+bands on the shape, which would make an average look like a result. A per-year
+amplitude row, which is a different quantity in different units. Model predictions,
+which are the forecast figures' job. The reconstruction period, where there is no
+flux to split. The observed uncertainty band, which is on the flux figure and
+would compete with the bottom row here. And the Delwiche network context, which
+belongs to the writeup.
+
+**On precedent.** Delwiche et al. (2021) decompose methane seasonality across 79
+sites, and the notes above hold what its appendix gives. It carries nothing on how
+to draw a components view for one site, so this was designed from first principles.
+One thing from it does bear on the design and is worth repeating here: peak methane
+timing there correlates with neither air temperature, soil temperature nor gross
+primary productivity across sites, so the shape has to be estimated from this
+record rather than borrowed from the literature, which is what the middle row does.
+
+### The in-canvas text is a repository choice, and publication would undo it
+
+Every figure in this set carries its title, subtitle and description inside the
+canvas. That is deliberate and it is a choice about **where the figures are read**:
+in a repository on GitHub, a figure travels alone, is opened on its own, and has
+to explain itself with no caption anywhere near it.
+
+Publication is the goal at the end of this work, and journals set captions outside
+the figure, in the venue's register, which is technical rather than plain. **A
+publication pass would therefore strip the in-canvas text from every figure and
+rewrite it as captions.** That is not a rebuild: every figure function already
+takes prepared data and returns a `Figure`, and every block of text lives in a
+`FigureText` beside its function rather than inside the drawing code. The work is
+a mode in `plotstyle` — one that lays out the same rectangle without the title,
+subtitle and description blocks — plus a caption written per figure in the
+journal's voice.
+
+Recorded here as a known task rather than an oversight. Two things follow from it
+for the work still to come: the text blocks should stay in `FigureText` and out of
+the drawing functions, and the plain-language standard is a property of the
+repository audience rather than of the figures themselves.
+
 ### The availability figure
 
 `figures/covariate_availability.png`, built by `study.figures.covariate_availability`
