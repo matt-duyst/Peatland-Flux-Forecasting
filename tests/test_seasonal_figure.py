@@ -125,18 +125,89 @@ def test_only_the_leftover_row_carries_a_zero_line():
 def test_each_row_is_named_once_rather_than_once_per_column():
     fig = figures.seasonal_cycle(panels())
     said = [text.get_text() for text in fig.texts]
-    for name, _ in figures.SEASONAL_ROWS:
+    for name, _, _ in figures.SEASONAL_ROWS:
         assert said.count(name) == 1
     ps.plt.close(fig)
 
 
-def test_the_gases_are_named_in_the_bordered_box_with_their_units():
+def test_the_gases_are_named_in_a_bordered_box_centered_over_the_column():
     fig = figures.seasonal_cycle(panels())
-    boxed = [note.get_text() for ax in fig.axes for note in ax.texts
+    boxed = [note for ax in fig.axes for note in ax.texts
              if note.get_bbox_patch() is not None]
-    assert len(boxed) == len(figures.GAS_PANEL)
-    for gas in boxed:
-        assert "m$^{-2}$" in gas
+    assert [note.get_text() for note in boxed] == [gas for _, gas, _ in figures.GAS_PANEL]
+    for note in boxed:
+        assert note.get_ha() == "center"
+        assert note.get_position()[0] == pytest.approx(0.5)
+    ps.plt.close(fig)
+
+
+def test_each_column_names_its_own_unit_on_its_own_axis():
+    """The columns are in different units, so one axis name cannot serve both."""
+    fig = figures.seasonal_cycle(panels())
+    said = [text.get_text() for text in fig.texts]
+    for _, _, unit in figures.GAS_PANEL:
+        assert said.count(unit) == 1
+    assert said.count(figures.SEASONAL_TIME_AXIS) == 1
+    ps.plt.close(fig)
+
+
+def test_each_row_is_drawn_in_its_own_ink_and_only_one_carries_a_hue():
+    """Measurements, then a construct fitted from them, then what neither
+    accounts for: three kinds of thing, and the finding takes the only color."""
+    from matplotlib.colors import to_rgb
+
+    fig = figures.seasonal_cycle(panels())
+    rows = len(figures.SEASONAL_ROWS)
+    for index, (_, _, ink) in enumerate(figures.SEASONAL_ROWS):
+        series = next(line for line in fig.axes[index].lines
+                      if len(line.get_xdata()) > 2)
+        assert to_rgb(series.get_color()) == to_rgb(ink)
+    red, green, blue = to_rgb(ps.UNEXPLAINED)
+    assert not (red == pytest.approx(green) == pytest.approx(blue))
+    for _, _, ink in figures.SEASONAL_ROWS[:-1]:
+        red, green, blue = to_rgb(ink)
+        assert red == pytest.approx(green) == pytest.approx(blue)
+    ps.plt.close(fig)
+
+
+def test_every_panel_carries_a_scale_bar_of_one_length_per_column():
+    """Each row is scaled to its own data, so without a bar in its own units a
+    reader cannot tell that what the average year leaves is as wide as the average
+    year itself. Cleveland et al. (1990) put one in every panel for that reason."""
+    fig = figures.seasonal_cycle(panels())
+    rows = len(figures.SEASONAL_ROWS)
+    for column in range(len(figures.GAS_PANEL)):
+        lengths = []
+        for index in range(rows):
+            ax = fig.axes[column * rows + index]
+            bars = [line for line in ax.lines
+                    if len(line.get_xdata()) == 2
+                    and line.get_xdata()[0] == line.get_xdata()[1] > 1.0]
+            assert len(bars) == 1, "a panel is missing its scale bar"
+            low, high = bars[0].get_ydata()
+            lengths.append(high - low)
+        assert lengths[0] == pytest.approx(lengths[1]) == pytest.approx(lengths[2])
+    ps.plt.close(fig)
+
+
+def test_the_scale_bar_sits_outside_the_panel_rather_than_over_the_data():
+    """Carbon dioxide runs to the right edge of its axis, so a bar inside would
+    cross the record's last months."""
+    fig = figures.seasonal_cycle(panels())
+    for ax in fig.axes:
+        bars = [line for line in ax.lines
+                if len(line.get_xdata()) == 2
+                and line.get_xdata()[0] == line.get_xdata()[1] > 1.0]
+        assert bars[0].get_xdata()[0] > 1.0
+    ps.plt.close(fig)
+
+
+def test_the_two_marked_years_are_led_to_their_points_rather_than_set_on_them():
+    """Both labels sat on the line before; they are now in cleared strips."""
+    fig = figures.seasonal_cycle(panels())
+    marks = [note for ax in fig.axes for note in ax.texts if "season" in note.get_text()]
+    for mark in marks:
+        assert getattr(mark, "arrow_patch", None) is not None
     ps.plt.close(fig)
 
 
@@ -186,6 +257,6 @@ def test_the_subtitle_carries_the_finding_the_title_leaves_out():
 def test_the_figure_names_no_method():
     text = figures.SEASONAL_TEXT
     said = " ".join([text.title, text.subtitle, text.description,
-                     *[name for name, _ in figures.SEASONAL_ROWS]]).lower()
+                     *[name for name, _, _ in figures.SEASONAL_ROWS]]).lower()
     for jargon in ("decompos", "stl", "residual", "loess", "detrend", "component"):
         assert jargon not in said

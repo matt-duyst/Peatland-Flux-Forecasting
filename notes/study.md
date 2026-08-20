@@ -2089,6 +2089,28 @@ description instead.
 **The bottom row is the tallest**, at 1.5 against 1.0 and 0.8. It is where the
 finding is, and the row above it is twelve numbers repeated.
 
+**Scale bars, which the first build lacked and needed.** Cleveland, Cleveland,
+McRae and Terpenning (1990), the paper the decomposition comes from, put a bar of
+fixed data length at the right of each panel so component magnitudes can be
+compared; R's `plot.stl` has carried it since and Hyndman's **fabletools** still
+defaults to `scale_bars = TRUE`. Without one, every row stretches to fill its own
+height and the average year and what it leaves look comparably large. Each column
+now carries a bar of one length in that gas's own units — 50 nmol m⁻² s⁻¹ and
+1 μmol m⁻² s⁻¹, both chosen as a round number near a third of the widest row — in
+all three of its rows. Read within a panel, series against bar, then across
+panels in shared units: the measurements span about 165, the average year 71, and
+what it leaves 123. The finding stops being an assertion in the description.
+
+**The bars sit outside the panels.** Inside, the carbon dioxide record runs to
+the right edge of its axis and the bar would cross the last months of it. Space is
+reserved for them so nothing is drawn over.
+
+**A worry about unequal row heights that turned out to be wrong.** The convention
+assumes panels of equal height, and these are 1.0, 0.8 and 1.5. That does not
+break the bar: the reading is series against bar *within* a panel, and only then
+across panels in data units, so the pixel height of each panel cancels. Padding a
+row to make room for a label is harmless for the same reason.
+
 **The two variance framings pull opposite ways, and the description leads with
 the one the panel exists to make.** The fixed shape accounts for **71%** of the
 variance in both gases, which sounds like most of it; what it leaves is **0.54 and
@@ -2097,11 +2119,48 @@ still there. Variance is a square, so the two are the same fact read at differen
 powers. The description gives the spread share first and the variance share as
 context, and a test pins that order.
 
+### The palette on the seasonal split, and the gray that had to move
+
+**The three rows are three kinds of thing, and the ink says so.** The measurements
+are near-black. The average year is a construct fitted from them, so it is light
+enough to read as apparatus rather than as data. What neither accounts for is the
+finding, and it carries the only hue on the panel.
+
+**Reddish purple, `#CC79A7`, scoped to this figure** the way `FITTED` green is
+scoped to the two forecast figures. It means *what remains unexplained*, which is
+a meaning nothing else in the set carries. On its own panel it clears the
+measurements row by **51.4 under the worst simulated deficiency** and the
+gridlines by 24.8.
+
+**It forced the shape row's gray to move.** Against the first candidate,
+`#8C8C8C`, the purple measured **9.0 and only 0.031 in relative luminance** — two
+rows that would have looked the same tone to a deuteranope and identical in
+grayscale, which defeats the point of giving one row the hue. Four candidates were
+measured and `#B8B8B8` chosen: **14.0 from the purple and 0.186 in luminance**,
+65.5 from the measurements row, and still 11.9 from the gridlines, which the next
+lighter candidate was not.
+
+**One measurement that constrains where the purple may travel.** It sits **0.9
+from `OUTSIDE` under tritanopia**. The two never appear on one panel and must not:
+the palette note carries that condition, and it is the reason this hue is scoped
+rather than added to the set's shared vocabulary.
+
 **Two years are marked, lightly.** The strongest and weakest seasons on each gas,
 at annotation weight in italic muted, with their values left to the description.
 The finding is that the size varies *without direction*, so the marks have to read
 as two labeled points in a scattered field rather than two events against a quiet
 background. Anything heavier would have said the opposite of the panel.
+
+**The row names are literal.** They had been *the flux as measured*, *the part
+that repeats every year* and *what is left over*, which describe rather than name
+and leave the last one vague. They now read *the monthly measurements*, *the
+average shape of a year* and *how far each month sits from it*. The third was
+shortened from *from that average* at 426 px to fit the gutter beside the axis
+name; "it" is the row above, which the eye has just read.
+
+**Each column names its own unit on its own axis**, since the two are in different
+units, and the time axis is named once beneath both. The gas labels are centered
+over their columns and carry the gas alone now that the unit has a place.
 
 **The title names the middle row and the subtitle carries the finding.** That is
 the division used across the set: the title orients, the subtitle argues. Since

@@ -1671,10 +1671,15 @@ SEASONAL_TEXT = ps.FigureText(
 )
 
 #: The three parts, top to bottom, and the column each is held in.
+#: Each row named for what it is, with the ink it is drawn in. The measurements
+#: are near-black; the average year is a construct fitted from them and is lighter
+#: for it; what neither accounts for carries the only hue on the panel.
 SEASONAL_ROWS = (
-    ("The flux as measured", "observed"),
-    ("The part that repeats every year", "repeating"),
-    ("What is left over", "leftover"),
+    ("The monthly measurements", "observed", ps.INK),
+    ("The average shape of a year", "repeating", ps.SEASONAL_SHAPE),
+    # Shortened to fit the gutter beside the axis name: "it" is the row above,
+    # which the eye has just read.
+    ("How far each month sits from it", "leftover", ps.UNEXPLAINED),
 )
 
 #: Height of each row against the others. The bottom row is where the finding is,
@@ -1715,18 +1720,18 @@ def seasonal_parts(series: pd.Series) -> pd.DataFrame:
 
 
 #: Room at the left for the row names, and at the top for the gas labels.
-SEASONAL_GUTTER_PX = 352
+SEASONAL_GUTTER_PX = 452
 SEASONAL_HEAD_PX = 46
 SEASONAL_ROW_GAP_PX = 26
-SEASONAL_COLUMN_GAP_PX = 76
+SEASONAL_COLUMN_GAP_PX = 96
 
 
-def _draw_seasonal_row(ax, values: pd.Series, zeroed: bool, labeled: bool) -> None:
+def _draw_seasonal_row(ax, values: pd.Series, ink: str, zeroed: bool) -> None:
     """One part of one gas, against the time axis every panel shares."""
     if zeroed:
         ax.axhline(0.0, color=ps.BOUNDARY, linewidth=0.9, zorder=1)
-    ax.plot(values.index.to_timestamp(), values.to_numpy(), color=ps.INK,
-            linewidth=1.2, zorder=3)
+    ax.plot(values.index.to_timestamp(), values.to_numpy(), color=ink,
+            linewidth=1.3, zorder=3)
     ax.margins(y=0.08)
     ax.tick_params(top=False, right=False)
     ax.grid(axis="x", color=ps.GRID, linewidth=0.6, zorder=0)
@@ -1737,31 +1742,86 @@ def _draw_seasonal_row(ax, values: pd.Series, zeroed: bool, labeled: bool) -> No
         ax.spines[side].set_color(ps.BOUNDARY)
 
 
+def _scale_step(span: float) -> float:
+    """A round number about a third of the widest panel in this gas's units."""
+    rough = span / 3.0
+    power = 10.0 ** np.floor(np.log10(rough))
+    return float(next(step * power for step in (1.0, 2.0, 5.0, 10.0)
+                      if step * power >= rough * 0.7))
+
+
+def _draw_scale_bar(ax, step: float, labeled: bool) -> None:
+    """The same length in data units on every row, following Cleveland et al.
+
+    Each row is scaled to its own data, so without this a reader cannot tell that
+    what the average year leaves is as wide as the average year itself. The bar is
+    one length in the gas's units drawn in all three rows: the row it is longest in
+    is the row covering the least ground.
+    """
+    low, high = ax.get_ylim()
+    middle = (low + high) / 2
+    width_px = ax.get_window_extent().width
+    at = 1.0 + 14 / width_px
+    ax.plot([at] * 2, [middle - step / 2, middle + step / 2], transform=ps.blended(ax),
+            color=ps.BOUNDARY, linewidth=3.0, solid_capstyle="butt", zorder=5,
+            clip_on=False)
+    if labeled:
+        ax.text(at + 8 / width_px, middle, f"{step:g}", transform=ps.blended(ax),
+                ha="left", va="center", fontsize=ps.ANNOTATION_SIZE - 1.0,
+                color=ps.MUTED, zorder=5, clip_on=False)
+
 
 def _mark_extreme_years(ax, panel: pd.DataFrame) -> None:
-    """Name the strongest and weakest seasons, lightly.
+    """Name the strongest and weakest seasons, lightly and off the data.
 
     The finding is that the size of the season varies without direction, so these
     are two labeled points in a scattered field rather than two events against a
-    quiet background. They are set at annotation weight for that reason, and the
-    numbers behind them are left to the description.
+    quiet background. They are set at annotation weight for that reason, seated in
+    a strip cleared above and below the data so neither sits on the line.
     """
     swing = panel.attrs["swing"]
     leftover = panel["leftover"]
-    # Room for the two labels inside the panel, so neither hangs over a neighbor.
     low, high = ax.get_ylim()
-    ax.set_ylim(low - 0.10 * (high - low), high + 0.10 * (high - low))
+    room = 0.18 * (high - low)
+    ax.set_ylim(low - room, high + room)
+    floor, ceiling = ax.get_ylim()
+    # The scale bar reads inside its own panel, series against bar, so padding a
+    # row to make room for a label does not disturb the comparison between rows.
+    span = ax.get_xlim()
+
     for year, name, pick in ((swing.idxmax(), "strongest season", "idxmax"),
                              (swing.idxmin(), "weakest season", "idxmin")):
         inside = leftover[leftover.index.year == year]
         month = getattr(inside, pick)()
-        high = pick == "idxmax"
-        ax.annotate(f"{year}, {name}", xy=(month.to_timestamp(), float(inside[month])),
-                    xytext=(0 if high else -10, 14 if high else -16),
-                    textcoords="offset points", ha="center" if high else "right",
-                    va="bottom" if high else "top",
-                    fontsize=ps.ANNOTATION_SIZE - 1.0, style="italic", color=ps.MUTED,
-                    zorder=4)
+        high_side = pick == "idxmax"
+        at = ax.convert_xunits(month.to_timestamp())
+        share = (at - span[0]) / (span[1] - span[0])
+        side = "left" if share < 0.22 else "right" if share > 0.78 else "center"
+        ps.annotate(ax, f"{year}, {name}",
+                    xy=(month.to_timestamp(), float(inside[month])),
+                    xytext=(month.to_timestamp(),
+                            ceiling - 0.09 * (ceiling - floor) if high_side
+                            else floor + 0.09 * (ceiling - floor)),
+                    ha=side, va="center", color=ps.MUTED,
+                    fontsize=ps.ANNOTATION_SIZE - 1.0,
+                    arrowprops=dict(arrowstyle="-", color=ps.MUTED, linewidth=0.8,
+                                    shrinkA=6, shrinkB=4))
+
+
+#: Room at the left for the row names, at the top for the gas labels, and between
+#: each column's axis name and its tick labels.
+SEASONAL_GUTTER_PX = 452
+SEASONAL_HEAD_PX = 46
+SEASONAL_ROW_GAP_PX = 26
+SEASONAL_COLUMN_GAP_PX = 84
+SEASONAL_AXIS_PX = 30
+
+#: Reserved to the right of each column for the scale bar and its number, so the
+#: bar sits outside the panel rather than over the months at the end of a record.
+SEASONAL_BAR_PX = 54
+SEASONAL_NAME_INSET_PX = 128
+
+SEASONAL_TIME_AXIS = "Year"
 
 
 def seasonal_cycle(panels: dict[str, pd.DataFrame]) -> Figure:
@@ -1770,7 +1830,9 @@ def seasonal_cycle(panels: dict[str, pd.DataFrame]) -> Figure:
     Three rows against one time axis, so a month sits in the same place in every
     panel and the bottom row can be read as what the two above it do not account
     for. The gases are columns with their own scales: they are in different units,
-    and carbon dioxide crosses zero where methane does not.
+    and carbon dioxide crosses zero where methane does not. Each column carries a
+    scale bar of one length in its own units, since three rows each scaled to their
+    own data cannot otherwise be compared.
     """
     fig, (left, bottom, width, height) = ps.canvas_area(SEASONAL_TEXT, size="stacked")
     width_px, height_px = ps.SIZES["stacked"]
@@ -1779,39 +1841,57 @@ def seasonal_cycle(panels: dict[str, pd.DataFrame]) -> Figure:
     row_gap = SEASONAL_ROW_GAP_PX / height_px
     column_gap = SEASONAL_COLUMN_GAP_PX / width_px
 
-    column_width = (width - gutter - column_gap) / 2
+    bar_room = SEASONAL_BAR_PX / width_px
+    column_width = (width - gutter - column_gap - 2 * bar_room) / 2
     room = height - head - row_gap * (len(SEASONAL_ROWS) - 1)
     heights = [room * weight / sum(SEASONAL_WEIGHTS) for weight in SEASONAL_WEIGHTS]
 
     first = min(panel.index.min() for panel in panels.values()).to_timestamp()
     last = (max(panel.index.max() for panel in panels.values()) + 1).to_timestamp()
     top = bottom + height - head
+    columns = []
 
     for column, (key, gas, unit) in enumerate(GAS_PANEL):
         panel = panels[key]
-        base_x = left + gutter + column * (column_width + column_gap)
-        for index, (_, part) in enumerate(SEASONAL_ROWS):
+        base_x = left + gutter + column * (column_width + column_gap + bar_room)
+        step = _scale_step(float(panel["observed"].max() - panel["observed"].min()))
+        axes = []
+        for index, (_, part, ink) in enumerate(SEASONAL_ROWS):
             base = top - sum(heights[: index + 1]) - index * row_gap
             ax = fig.add_axes((base_x, base, column_width, heights[index]))
-            _draw_seasonal_row(ax, panel[part], zeroed=part == "leftover",
-                               labeled=index == len(SEASONAL_ROWS) - 1)
+            _draw_seasonal_row(ax, panel[part], ink, zeroed=part == "leftover")
             ax.set_xlim(first, last)
             ps.even_year_ticks(ax, first.year, last.year)
             if index < len(SEASONAL_ROWS) - 1:
                 ax.set_xticklabels([])          # after the locator, or it resets them
             if part == "leftover":
                 _mark_extreme_years(ax, panel)
+            _draw_scale_bar(ax, step, labeled=index == 0)
             if index == 0:
-                ps.panel_name(ax, f"{gas} ({unit})", y=1.0 + 34 / (heights[index] * height_px))
+                ps.panel_name(ax, gas, x=0.5, align="center",
+                              y=1.0 + 34 / (heights[index] * height_px))
+            axes.append(ax)
+        columns.append((base_x, axes, unit))
+
+    # One name per axis: the time axis under the two columns, and each column's
+    # unit beside its own rows, since the columns are in different units.
+    fig.text(left + gutter + (width - gutter) / 2 - bar_room, bottom - 34 / height_px,
+             SEASONAL_TIME_AXIS, ha="center", va="top", fontsize=ps.LABEL_SIZE,
+             fontweight="bold", color=ps.INK)
+    fig.canvas.draw()
+    for base_x, axes, unit in columns:
+        clear = max(label.get_window_extent().width
+                    for ax in axes for label in ax.get_yticklabels() if label.get_text())
+        middle = (axes[0].get_position().y1 + axes[-1].get_position().y0) / 2
+        fig.text(base_x - (clear + SEASONAL_AXIS_PX) / width_px, middle, unit,
+                 rotation=90, ha="center", va="center", fontsize=ps.LABEL_SIZE,
+                 fontweight="bold", color=ps.INK)
 
     # The row names once, in the gutter, since the three rows mean the same thing
-    # in both columns and naming them twice would say so twice. Seated clear of the
-    # widest tick label rather than at a guessed inset.
-    fig.canvas.draw()
-    clear = max(label.get_window_extent().width
-                for ax in fig.axes for label in ax.get_yticklabels() if label.get_text())
-    for index, (name, _) in enumerate(SEASONAL_ROWS):
+    # in both columns and naming them twice would say so twice.
+    for index, (name, _, _) in enumerate(SEASONAL_ROWS):
         middle = top - sum(heights[: index + 1]) + heights[index] / 2 - index * row_gap
-        fig.text(left + gutter - (clear + 16) / width_px, middle, name, ha="right",
-                 va="center", fontsize=ps.TICK_SIZE, color=ps.INK)
+        fig.text(left + gutter - SEASONAL_NAME_INSET_PX / width_px, middle, name,
+                 ha="right", va="center",
+                 fontsize=ps.TICK_SIZE, color=ps.INK)
     return fig
