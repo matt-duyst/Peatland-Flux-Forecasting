@@ -45,12 +45,19 @@ from ingest import paths
 # the FLUXNET-CH4 network. They are the strongest separation in the set, 111.7
 # apart under deuteranopia and 93.3 under protanopia.
 #
-#   FITTED  #009E73  the range across the eight fitted models
+#   FITTED  #009E73  the range across the eight fitted models, and on the
+#                    seasonal split what the average year leaves
 #   SITE    #F0E442  the site, and the tower on it
 #
-# `FITTED` is scoped to the two forecast figures only. It exists because the study's halves
-# ask different questions: the reconstruction figures are about support and the
-# forecast figures are about method, so neither set needs the other's encoding.
+# `FITTED` carries two scoped meanings, which is the one place this rule bends.
+# On the two forecast figures it is the range across the eight fitted models. On
+# the seasonal split it fills what the average year leaves. The two never appear
+# on one panel and the figures are not adjacent in the set; the alternative was a
+# fifth hue for a row that is one of three on a single figure. Recorded as a
+# deliberate exception rather than an oversight. The scoping exists because the
+# study's halves ask different questions: the reconstruction figures are about
+# support and the forecast figures are about method, so neither set needs the
+# other's encoding.
 # A second blue was tried here and removed, because blue already means retained.
 #
 # `SITE` marks the flux tower in the site panel and the same site among the
@@ -90,33 +97,29 @@ DATE_SHARE = "#A9A9A9"
 #: plum that cleared it added a fifth hue to the set for rows that are context.
 MEASURED = "#4D4D4D"
 
-#: What the seasonal shape leaves, on the seasonal split figure only, and scoped to
-#: it the way `FITTED` is scoped to the two forecast figures. It means what neither
-#: the measurements nor the average year account for, which is a meaning nothing
-#: else in the set carries. Okabe-Ito reddish purple. On its own panel it clears
-#: the near-black measurements row by 51.4 under the worst simulated deficiency and
-#: the gray shape row by 14.0, with 0.186 between them in relative luminance so the
-#: hierarchy survives in grayscale. It sits 0.9 from `OUTSIDE` under tritanopia,
-#: which is why it may not travel: the two never appear on one panel and must not.
-UNEXPLAINED = "#CC79A7"
-
-#: The average year on the same figure, light enough to read as something fitted
-#: rather than measured. Chosen by measurement between four candidates: it clears
-#: `UNEXPLAINED` by 14.0 and 0.186 in luminance, the measurements row by 65.5, and
-#: the gridlines by 11.9, which the next lighter candidate did not.
-SEASONAL_SHAPE = "#B8B8B8"
+#: The average year on the seasonal split, light enough to read as a line rather
+#: than as a weight beside the two below it. Achromatic no longer: that row now
+#: takes `INSIDE`, which is the study's own benchmark, so this constant is kept
+#: only for the width of the line it is drawn at.
+SEASONAL_SHAPE_WIDTH = 1.1
 
 #: The site and its tower, on the site map only. Okabe-Ito yellow, measured
 #: against the imagery it sits on: 41.3 from the light peat beside the tower and
 #: 101.5 from the dark forest, under the worst simulated deficiency.
 SITE = "#F0E442"
 
-#: The fitted models in the two forecast figures, per the convention above.
+#: The fitted models in the two forecast figures, and what the average year leaves
+#: on the seasonal split, per the two scopes named in the convention above.
 #: Okabe-Ito bluish green, chosen by measurement: it clears `INSIDE` by 20.9 and
 #: `OUTSIDE` by 35.9 under the worst simulated deficiency. Reddish purple was measured and rejected at **0.9 against
 #: `OUTSIDE` under tritanopia**: the band edges and the legend patch are drawn in
 #: the pure hue, so a reader would meet the same color carrying two meanings.
 FITTED = "#009E73"
+#: Alpha for the fill under what the average year leaves, on the seasonal split.
+#: Heavier than a line so the row carries weight, light enough that the zero rule
+#: and the gridlines read through it.
+LEFTOVER_FILL_ALPHA = 0.5
+
 #: Alpha for the fitted fill. Heavier than the sky blue it replaces, because a
 #: pale green sits close to the apparatus grays: at this weight the fill clears
 #: every gray on the panel by 12.1 and by 0.197 in relative luminance, where sky

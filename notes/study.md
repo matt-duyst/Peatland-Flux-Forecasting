@@ -2119,31 +2119,47 @@ still there. Variance is a square, so the two are the same fact read at differen
 powers. The description gives the spread share first and the variance share as
 context, and a test pins that order.
 
-### The palette on the seasonal split, and the gray that had to move
+### The palette on the seasonal split, and the hue that carries two meanings
 
-**The three rows are three kinds of thing, and the ink says so.** The measurements
-are near-black. The average year is a construct fitted from them, so it is light
-enough to read as apparatus rather than as data. What neither accounts for is the
-finding, and it carries the only hue on the panel.
+**Three rows, three kinds of thing, and the ink and weight say so.** The
+measurements are neutral and heaviest at 1.7, since they are the record. The
+average year takes `INSIDE`, at 1.1: it is the study's own benchmark, the
+month-of-year average that beat every fitted model, and blue means retained across
+the set, which fits a benchmark better than it fits a raw measurement. What that
+leaves takes `FITTED` and is **filled to zero** rather than drawn as a line, which
+gives the row the mass its finding deserves and shows each month's departure as an
+area rather than as a position.
 
-**Reddish purple, `#CC79A7`, scoped to this figure** the way `FITTED` green is
-scoped to the two forecast figures. It means *what remains unexplained*, which is
-a meaning nothing else in the set carries. On its own panel it clears the
-measurements row by **51.4 under the worst simulated deficiency** and the
-gridlines by 24.8.
+**Orange is used nowhere here.** It means outside or discarded across the set, and
+the average year is neither.
 
-**It forced the shape row's gray to move.** Against the first candidate,
-`#8C8C8C`, the purple measured **9.0 and only 0.031 in relative luminance** — two
-rows that would have looked the same tone to a deuteranope and identical in
-grayscale, which defeats the point of giving one row the hue. Four candidates were
-measured and `#B8B8B8` chosen: **14.0 from the purple and 0.186 in luminance**,
-65.5 from the measurements row, and still 11.9 from the gridlines, which the next
-lighter candidate was not.
+**`FITTED` now carries two scoped meanings, and that is a deliberate exception.**
+On the two forecast figures it is the range across the eight fitted models; here it
+is what the average year leaves. They never appear on one panel and the figures are
+not adjacent. The alternative was a fifth hue in the set for one row of one figure,
+and reddish purple was tried for exactly that before this: it measured **9.0 against
+the light gray it sat beside**, which is two rows a deuteranope would read as the
+same tone, and **0.9 from `OUTSIDE` under tritanopia**. The palette note carries
+the exception so it reads as a decision rather than as drift.
 
-**One measurement that constrains where the purple may travel.** It sits **0.9
-from `OUTSIDE` under tritanopia**. The two never appear on one panel and must not:
-the palette note carries that condition, and it is the reason this hue is scoped
-rather than added to the set's shared vocabulary.
+**Measured on this panel.** Blue clears the near-black measurements row by 56.8
+under the worst simulated deficiency and the gridlines by 56.3; bluish green clears
+the measurements row by 47.6 and the gridlines by 32.2; the two hues clear each
+other by 20.9, on rows that never touch.
+
+**The scale bar says what it is.** A gray rectangle with a number beside it was
+the one mark on the panel nothing accounted for. Each column's topmost bar now
+carries a rotated label reading *50 nmol m⁻² s⁻¹ in every row*, and the bars hang
+from one height in all three rows rather than being centered in each, so they are
+compared by their lower ends rather than by their middles.
+
+**What the bars actually show, which is not quite what was expected of them.** By
+range, what the average year leaves is **larger** than the average year's own
+swing: 123 units against 71 on methane. By standard deviation it is smaller: 16.4
+against 25.6. Both are true and they are not in conflict — a few extreme months
+overshoot far while the typical month does not. The bars show range because that
+is what a panel shows; the description gives the standard deviation. Neither the
+panel nor the words claim the leftover is small.
 
 **Two years are marked, lightly.** The strongest and weakest seasons on each gas,
 at annotation weight in italic muted, with their values left to the description.
@@ -2163,10 +2179,13 @@ units, and the time axis is named once beneath both. The gas labels are centered
 over their columns and carry the gas alone now that the unit has a place.
 
 **The title names the middle row and the subtitle carries the finding.** That is
-the division used across the set: the title orients, the subtitle argues. Since
-the title does not reinforce it, the subtitle's last clause — *nothing in this
-study predicts* — is set bold, which puts it on its own line at the foot of the
-block.
+the division used across the set: the title orients, the subtitle argues.
+
+**The subtitle's last clause was overstated and is corrected.** It had read *it is
+the part nothing in this study predicts*, set bold — the only bold clause in any
+subtitle in the set, and a claim wider than the evidence. What is true is narrower
+and is now what it says: **nothing tested here predicted it: eight fitted models,
+four benchmarks and four measured drivers.** The bold is gone with it.
 
 **What was left out.** A trend row. Any evolving-shape decomposition. Confidence
 bands on the shape, which would make an average look like a result. A per-year

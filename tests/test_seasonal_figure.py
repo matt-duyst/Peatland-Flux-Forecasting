@@ -125,7 +125,7 @@ def test_only_the_leftover_row_carries_a_zero_line():
 def test_each_row_is_named_once_rather_than_once_per_column():
     fig = figures.seasonal_cycle(panels())
     said = [text.get_text() for text in fig.texts]
-    for name, _, _ in figures.SEASONAL_ROWS:
+    for name, _, _, _ in figures.SEASONAL_ROWS:
         assert said.count(name) == 1
     ps.plt.close(fig)
 
@@ -141,32 +141,83 @@ def test_the_gases_are_named_in_a_bordered_box_centered_over_the_column():
     ps.plt.close(fig)
 
 
-def test_each_column_names_its_own_unit_on_its_own_axis():
-    """The columns are in different units, so one axis name cannot serve both."""
+def test_every_row_names_its_unit_and_every_column_names_its_time_axis():
+    """One label between the rows made a reader carry it from one panel to the
+    next; each row now says its own."""
     fig = figures.seasonal_cycle(panels())
+    rows = len(figures.SEASONAL_ROWS)
+    for column, (_, _, unit) in enumerate(figures.GAS_PANEL):
+        for index in range(rows):
+            assert fig.axes[column * rows + index].get_ylabel() == unit
     said = [text.get_text() for text in fig.texts]
-    for _, _, unit in figures.GAS_PANEL:
-        assert said.count(unit) == 1
-    assert said.count(figures.SEASONAL_TIME_AXIS) == 1
+    assert said.count(figures.SEASONAL_TIME_AXIS) == len(figures.GAS_PANEL)
     ps.plt.close(fig)
 
 
-def test_each_row_is_drawn_in_its_own_ink_and_only_one_carries_a_hue():
-    """Measurements, then a construct fitted from them, then what neither
-    accounts for: three kinds of thing, and the finding takes the only color."""
+def test_the_scale_bar_says_what_it_is():
+    """A grey rectangle with a number beside it is the one mark on the panel that
+    nothing else accounts for."""
+    fig = figures.seasonal_cycle(panels())
+    said = " ".join(note.get_text() for ax in fig.axes for note in ax.texts)
+    assert said.count("in every row") == len(figures.GAS_PANEL)
+    ps.plt.close(fig)
+
+
+def test_the_scale_bars_hang_from_one_height_in_every_row():
+    """Centred, they had to be compared by their middles; hung, by their ends."""
+    fig = figures.seasonal_cycle(panels())
+    rows = len(figures.SEASONAL_ROWS)
+    for column in range(len(figures.GAS_PANEL)):
+        tops = []
+        for index in range(rows):
+            ax = fig.axes[column * rows + index]
+            bar = next(line for line in ax.lines
+                       if len(line.get_xdata()) == 2
+                       and line.get_xdata()[0] == line.get_xdata()[1] > 1.0)
+            low, high = ax.get_ylim()
+            tops.append((max(bar.get_ydata()) - low) / (high - low))
+        assert tops[0] == pytest.approx(tops[1]) == pytest.approx(tops[2])
+    ps.plt.close(fig)
+
+
+def test_each_row_is_drawn_in_its_own_ink_at_its_own_weight():
+    """Three kinds of thing: the record, the benchmark fitted from it, and what
+    that benchmark leaves. The measurements stay neutral and heaviest."""
     from matplotlib.colors import to_rgb
 
     fig = figures.seasonal_cycle(panels())
-    rows = len(figures.SEASONAL_ROWS)
-    for index, (_, _, ink) in enumerate(figures.SEASONAL_ROWS):
+    weights = []
+    for index, (_, _, ink, weight) in enumerate(figures.SEASONAL_ROWS):
         series = next(line for line in fig.axes[index].lines
                       if len(line.get_xdata()) > 2)
         assert to_rgb(series.get_color()) == to_rgb(ink)
-    red, green, blue = to_rgb(ps.UNEXPLAINED)
-    assert not (red == pytest.approx(green) == pytest.approx(blue))
-    for _, _, ink in figures.SEASONAL_ROWS[:-1]:
-        red, green, blue = to_rgb(ink)
-        assert red == pytest.approx(green) == pytest.approx(blue)
+        weights.append(series.get_linewidth())
+    assert weights[0] == max(weights)
+    red, green, blue = to_rgb(figures.SEASONAL_ROWS[0][2])
+    assert red == pytest.approx(green) == pytest.approx(blue)
+    ps.plt.close(fig)
+
+
+def test_the_benchmark_row_takes_the_hue_that_means_retained():
+    """It is the month-of-year average that beat every fitted model, which is what
+    blue marks across this set."""
+    assert figures.SEASONAL_ROWS[1][2] == ps.INSIDE
+
+
+def test_no_row_is_drawn_in_the_hue_that_means_discarded():
+    """The average year is neither outside anything nor discarded."""
+    assert ps.OUTSIDE not in [ink for _, _, ink, _ in figures.SEASONAL_ROWS]
+
+
+def test_what_the_shape_leaves_is_filled_to_zero_rather_than_drawn_as_a_line():
+    """It is a departure from zero, so the distance from zero is what is drawn,
+    and the fill gives the row the weight its finding deserves."""
+    fig = figures.seasonal_cycle(panels())
+    rows = len(figures.SEASONAL_ROWS)
+    for column in range(len(figures.GAS_PANEL)):
+        for index in range(rows):
+            ax = fig.axes[column * rows + index]
+            assert bool(ax.collections) == (index == rows - 1)
     ps.plt.close(fig)
 
 
@@ -246,17 +297,19 @@ def test_the_description_reports_both_amplitudes_with_their_trend_tests():
         assert number in said
 
 
-def test_the_subtitle_carries_the_finding_the_title_leaves_out():
-    """The title names the middle row, which orients; the finding is the bottom."""
+def test_the_subtitle_claims_only_what_was_tested():
+    """"Nothing in this study predicts it" overstates. What is true is narrower,
+    and it is not the only bolded clause in any subtitle in the set."""
     text = figures.SEASONAL_TEXT
     assert "seasonal cycle" in text.title
-    assert "nothing in this study predicts" in text.subtitle
-    assert text.emphasize == ("nothing in this study predicts",)
+    assert "Nothing tested here predicted it" in text.subtitle
+    assert "eight fitted models, four benchmarks and four measured drivers" in text.subtitle
+    assert text.emphasize == ()
 
 
 def test_the_figure_names_no_method():
     text = figures.SEASONAL_TEXT
     said = " ".join([text.title, text.subtitle, text.description,
-                     *[name for name, _, _ in figures.SEASONAL_ROWS]]).lower()
+                     *[name for name, _, _, _ in figures.SEASONAL_ROWS]]).lower()
     for jargon in ("decompos", "stl", "residual", "loess", "detrend", "component"):
         assert jargon not in said
