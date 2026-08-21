@@ -1737,6 +1737,11 @@ SEASONAL_COLUMN_GAP_PX = 108
 
 SEASONAL_TIME_AXIS = "Year"
 
+#: Space between an axis name and the nearest of its tick labels. Left to
+#: matplotlib the name sits off the widest label on the axis, whichever one that
+#: is, which left gaps running from −4 to 8 px across the six panels.
+SEASONAL_NAME_GAP_PX = 5
+
 
 def _draw_seasonal_row(ax, values: pd.Series, ink: str, weight: float,
                        filled: bool) -> None:
@@ -1876,9 +1881,30 @@ def seasonal_cycle(panels: dict[str, pd.DataFrame]) -> Figure:
             axes.append(ax)
 
         fig.text(base_x + column_width / 2,
-                 row_base(len(SEASONAL_ROWS) - 1) - 52 / height_px,
+                 row_base(len(SEASONAL_ROWS) - 1) - 38 / height_px,
                  SEASONAL_TIME_AXIS, ha="center", va="top", fontsize=ps.LABEL_SIZE,
                  fontweight="bold", color=ps.INK)
+
+    # Each axis name seated a fixed distance from its own widest tick label.
+    # Left to matplotlib it sits off the widest label of the axis whatever the
+    # leftmost one is, which left gaps of −4 to 8 px across the six panels.
+    fig.canvas.draw()
+    # Pinned, then corrected against what it measures at: a rotated label's extent
+    # is not settled until it has been drawn where it will sit, and `set_position`
+    # does not hold on an axis label, which recomputes its own place on every draw.
+    for ax in fig.axes:
+        panel = ax.get_window_extent()
+        nearest = min(label.get_window_extent().x0
+                      for label in ax.get_yticklabels() if label.get_text())
+        ax.yaxis.set_label_coords((nearest - 30 - panel.x0) / panel.width, 0.5)
+    fig.canvas.draw()
+    for ax in fig.axes:
+        panel = ax.get_window_extent()
+        nearest = min(label.get_window_extent().x0
+                      for label in ax.get_yticklabels() if label.get_text())
+        name = ax.yaxis.get_label()
+        drift = nearest - SEASONAL_NAME_GAP_PX - name.get_window_extent().x1
+        ax.yaxis.set_label_coords(name.get_position()[0] + drift / panel.width, 0.5)
 
     # Seated clear of the widest tick label and the axis name beside it.
     fig.canvas.draw()

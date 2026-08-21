@@ -2121,6 +2121,13 @@ still redundant: the description gives the range they illustrated, 33.7 to 150.6
 on methane and 0.8 to 2.4 on carbon dioxide. Two marks that had been wrong twice
 were not worth a third defence.
 
+**The axis names are seated by measurement, then corrected.** Left to matplotlib
+each sits off the widest tick label on its axis, whichever one that is, which gave
+gaps running from −4 to 8 px across the six panels. They are now a uniform 5 px
+from the nearest tick label. It takes two passes: a rotated label's extent is not
+settled until it has been drawn where it will sit, and `set_position` does not
+hold on an axis label, which recomputes its own place on every draw.
+
 **Units are rotated at the left of each panel, which is the one place rotation is
 expected.** Set above the panel instead they read as belonging to the row beneath
 them, which is worse than the rotation costs. Every panel carries one, including
