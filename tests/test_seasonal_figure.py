@@ -130,13 +130,41 @@ def test_no_year_is_singled_out_on_any_panel():
     ps.plt.close(fig)
 
 
-def test_every_panel_below_the_first_names_its_unit():
+def test_every_panel_names_its_unit_on_its_own_axis():
     """A reader on a middle-row panel had nothing on the axis saying what the
-    numbers were; the top row's gas label already carries it."""
+    numbers were. Set above the panel instead, the unit read as belonging to the
+    row beneath it; rotated at the left is where a reader looks for it, and the
+    one place rotation is expected."""
     fig = figures.seasonal_cycle(panels())
-    said = [text.get_text() for text in fig.texts]
-    for _, _, unit in figures.GAS_PANEL:
-        assert said.count(unit) == len(figures.SEASONAL_ROWS) - 1
+    rows = len(figures.SEASONAL_ROWS)
+    for column, (_, _, unit) in enumerate(figures.GAS_PANEL):
+        for index in range(rows):
+            assert fig.axes[column * rows + index].get_ylabel() == unit
+    ps.plt.close(fig)
+
+
+def test_each_row_name_is_written_in_its_own_row_s_ink():
+    """It ties the label to the line without six legend boxes repeating six
+    labels; the line beneath stays muted so the hierarchy inside the frame holds."""
+    from matplotlib.colors import to_rgb
+
+    fig = figures.seasonal_cycle(panels())
+    named = {label.partition(" (")[0]: ink for label, _, ink, _ in figures.SEASONAL_ROWS}
+    asides = 0
+    for text in fig.texts:
+        if text.get_text() in named:
+            assert to_rgb(text.get_color()) == to_rgb(named[text.get_text()])
+        elif text.get_text().startswith("("):
+            assert to_rgb(text.get_color()) == to_rgb(ps.MUTED)
+            asides += 1
+    assert asides == len(figures.SEASONAL_ROWS)
+    ps.plt.close(fig)
+
+
+def test_no_panel_carries_a_legend():
+    """One line to a panel, and the row label to its left already names it."""
+    fig = figures.seasonal_cycle(panels())
+    assert not [ax for ax in fig.axes if ax.get_legend()]
     ps.plt.close(fig)
 
 

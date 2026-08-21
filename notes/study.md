@@ -2121,9 +2121,21 @@ still redundant: the description gives the range they illustrated, 33.7 to 150.6
 on methane and 0.8 to 2.4 on carbon dioxide. Two marks that had been wrong twice
 were not worth a third defence.
 
-**Units sit above each panel rather than rotated beside it.** Rotated they needed
-70 px of gutter the row names had already spent, and the same checklist argues
-against rotation. The top row goes without: its gas label already carries the unit.
+**Units are rotated at the left of each panel, which is the one place rotation is
+expected.** Set above the panel instead they read as belonging to the row beneath
+them, which is worse than the rotation costs. Every panel carries one, including
+the top row, whose gas label carries it too — a unit on an axis is where a reader
+looks for it, and the header is a column identity rather than an axis name.
+
+**The canvas is wider, not taller.** The panels were cramped and there was no room
+for both an axis name and a row name in the gutter, so `triple` went from 1800 to
+**2300 px wide**, holding 1900 px of height. The gutter is 624 px: the widest row
+name is 470, the axis name and its tick labels take about 90, and the frame needs
+to clear both. Panels occupy **42.6%** of the canvas, against 39.6% before.
+
+**The row names are written in their rows' own ink** — near-black, blue, green —
+which ties each name to its line without six legend boxes repeating six labels.
+The line beneath each stays muted, so the hierarchy inside the frame holds.
 
 ### The palette on the seasonal split, and the hue that carries two meanings
 

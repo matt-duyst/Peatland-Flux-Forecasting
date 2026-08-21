@@ -1730,7 +1730,7 @@ def seasonal_parts(series: pd.Series) -> pd.DataFrame:
 #: bars, which took three rounds to label and never read: the label had to be
 #: rotated, and every degree of rotation slows reading. What they were for is one
 #: sentence of the description, stated exactly rather than left to be measured.
-SEASONAL_GUTTER_PX = 486
+SEASONAL_GUTTER_PX = 624
 SEASONAL_HEAD_PX = 46
 SEASONAL_ROW_GAP_PX = 64
 SEASONAL_COLUMN_GAP_PX = 108
@@ -1786,10 +1786,13 @@ def _framed_rows(fig, x: float, middles: list[float]) -> None:
     """
     from matplotlib.patches import FancyBboxPatch
 
-    for (label, _, _, _), middle in zip(SEASONAL_ROWS, middles):
+    for (label, _, ink, _), middle in zip(SEASONAL_ROWS, middles):
         name, _, aside = label.partition(" (")
+        # The name in its own row's ink, which ties label to line without six
+        # legend boxes repeating six labels. The line beneath stays muted, so the
+        # hierarchy inside the frame holds.
         head = fig.text(x, middle, name, ha="right", va="bottom",
-                        fontsize=ps.TICK_SIZE, fontweight="bold", color=ps.INK)
+                        fontsize=ps.TICK_SIZE, fontweight="bold", color=ink)
         foot = fig.text(x, middle, f"({aside}", ha="right", va="top",
                         fontsize=ps.ANNOTATION_SIZE - 0.5, color=ps.MUTED)
         # Centered on each other rather than hung from one edge. The bold line is
@@ -1863,25 +1866,25 @@ def seasonal_cycle(panels: dict[str, pd.DataFrame]) -> Figure:
             ax.set_ylim(middle - reach, middle + reach)
             ax.set_xlim(first, last)
             ps.even_year_ticks(ax, first.year, last.year)
-            # The unit over each panel's own axis rather than rotated beside it.
-            # Rotated it needed 70 px of gutter the row names had already spent,
-            # and every degree of rotation costs a reader something. Not on the
-            # top row, where the gas label above already carries it.
-            if index:
-                fig.text(base_x, row_base(index) + heights[index] + 7 / height_px,
-                         unit, ha="left", va="bottom", fontsize=ps.LABEL_SIZE - 0.5,
-                         color=ps.INK)
+            # Rotated at the left of its own axis, which is where a reader looks
+            # for it and the one place rotation is expected. Above the panel it
+            # sat under the row before and read as that row's own.
+            ax.set_ylabel(unit, fontsize=ps.LABEL_SIZE - 0.5, color=ps.INK)
             if part == "observed":
                 ps.panel_name(ax, f"{gas} ({unit})", x=0.5, align="center",
-                              y=1.0 + 30 / (heights[index] * height_px))
+                              y=1.0 + 52 / (heights[index] * height_px))
             axes.append(ax)
 
         fig.text(base_x + column_width / 2,
-                 row_base(len(SEASONAL_ROWS) - 1) - 32 / height_px,
+                 row_base(len(SEASONAL_ROWS) - 1) - 52 / height_px,
                  SEASONAL_TIME_AXIS, ha="center", va="top", fontsize=ps.LABEL_SIZE,
                  fontweight="bold", color=ps.INK)
 
-    _framed_rows(fig, left + gutter - 78 / width_px,
+    # Seated clear of the widest tick label and the axis name beside it.
+    fig.canvas.draw()
+    clear = max(label.get_window_extent().width for label in fig.axes[0].get_yticklabels()
+                if label.get_text())
+    _framed_rows(fig, left + gutter - (clear + 96) / width_px,
                  [row_base(index) + heights[index] / 2
                   for index in range(len(SEASONAL_ROWS))])
     return fig
