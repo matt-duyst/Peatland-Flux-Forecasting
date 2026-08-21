@@ -130,36 +130,64 @@ def test_each_row_is_named_once_rather_than_once_per_column():
     ps.plt.close(fig)
 
 
-def test_the_gases_are_named_in_a_bordered_box_centered_over_the_column():
+def test_the_gases_are_named_with_their_units_centered_over_the_column():
+    """The row names span both columns and cannot carry two units, so the column
+    header is where the unit belongs."""
     fig = figures.seasonal_cycle(panels())
     boxed = [note for ax in fig.axes for note in ax.texts
              if note.get_bbox_patch() is not None]
-    assert [note.get_text() for note in boxed] == [gas for _, gas, _ in figures.GAS_PANEL]
+    assert [note.get_text() for note in boxed] == \
+        [f"{gas} ({unit})" for _, gas, unit in figures.GAS_PANEL]
     for note in boxed:
         assert note.get_ha() == "center"
         assert note.get_position()[0] == pytest.approx(0.5)
     ps.plt.close(fig)
 
 
-def test_every_row_names_its_unit_and_every_column_names_its_time_axis():
-    """One label between the rows made a reader carry it from one panel to the
-    next; each row now says its own."""
+def test_each_row_is_named_over_itself_in_the_frame_the_gases_use():
+    """Held in a left gutter the names needed 517 px for the widest line alone,
+    which took a quarter of the canvas from the panels."""
     fig = figures.seasonal_cycle(panels())
-    rows = len(figures.SEASONAL_ROWS)
-    for column, (_, _, unit) in enumerate(figures.GAS_PANEL):
-        for index in range(rows):
-            assert fig.axes[column * rows + index].get_ylabel() == unit
+    framed = {text.get_text(): text for text in fig.texts
+              if text.get_bbox_patch() is not None}
+    assert set(framed) == {name for name, _, _, _ in figures.SEASONAL_ROWS}
+    for text in framed.values():
+        assert text.get_ha() == "left"
+    ps.plt.close(fig)
+
+
+def test_each_row_name_says_how_its_row_was_built():
+    """The parentheticals carry what the names cannot: how a monthly value is
+    made, that the middle row is one fixed set of twelve, and what the
+    subtraction is."""
+    names = [name for name, _, _, _ in figures.SEASONAL_ROWS]
+    assert "half-hourly readings" in names[0]
+    assert "twelve values, repeated every year" in names[1]
+    assert "minus that month's average" in names[2]
+    for name in names:
+        assert "shape" not in name
+
+
+def test_every_panel_carries_its_own_labeled_time_axis():
+    """A row whose ticks are bare asks a reader to carry them down from another."""
+    fig = figures.seasonal_cycle(panels())
+    for ax in fig.axes:
+        assert [label.get_text() for label in ax.get_xticklabels() if label.get_text()]
     said = [text.get_text() for text in fig.texts]
     assert said.count(figures.SEASONAL_TIME_AXIS) == len(figures.GAS_PANEL)
     ps.plt.close(fig)
 
 
-def test_the_scale_bar_says_what_it_is():
-    """A grey rectangle with a number beside it is the one mark on the panel that
-    nothing else accounts for."""
+def test_the_scale_bar_says_what_it_is_beside_the_middle_row():
+    """It is the same length in all three rows, and a label at the top read as
+    belonging to the top row alone."""
     fig = figures.seasonal_cycle(panels())
-    said = " ".join(note.get_text() for ax in fig.axes for note in ax.texts)
-    assert said.count("in every row") == len(figures.GAS_PANEL)
+    rows = len(figures.SEASONAL_ROWS)
+    for column in range(len(figures.GAS_PANEL)):
+        labeled = [index for index in range(rows)
+                   if any("in every row" in note.get_text()
+                          for note in fig.axes[column * rows + index].texts)]
+        assert labeled == [1]
     ps.plt.close(fig)
 
 
@@ -253,12 +281,28 @@ def test_the_scale_bar_sits_outside_the_panel_rather_than_over_the_data():
     ps.plt.close(fig)
 
 
-def test_the_two_marked_years_are_led_to_their_points_rather_than_set_on_them():
-    """Both labels sat on the line before; they are now in cleared strips."""
+def test_the_two_marked_years_are_led_to_their_points_by_arrows():
+    """Both labels sat on the line before; they are now in cleared strips, and a
+    plain stub did not clearly reach its target."""
     fig = figures.seasonal_cycle(panels())
     marks = [note for ax in fig.axes for note in ax.texts if "season" in note.get_text()]
     for mark in marks:
         assert getattr(mark, "arrow_patch", None) is not None
+        assert "->" in str(mark.arrowprops.get("arrowstyle"))
+    ps.plt.close(fig)
+
+
+def test_the_marked_month_is_the_year_s_largest_departure_either_way():
+    """Taking the maximum for the strong year and the minimum for the weak one
+    assumed a positive flux. Carbon dioxide is an uptake, so both of its marks
+    landed on months near zero that meant nothing."""
+    panel = figures.seasonal_parts(-synthetic())           # an uptake, sign flipped
+    swing = panel.attrs["swing"]
+    strongest = panel["leftover"][panel.index.year == swing.idxmax()]
+    assert abs(strongest.min()) > abs(strongest.max())      # its extreme is negative
+    fig = figures.seasonal_cycle({key: panel for key, _, _ in figures.GAS_PANEL})
+    marks = [note for note in fig.axes[2].texts if "strongest" in note.get_text()]
+    assert marks and marks[0].xy[1] == pytest.approx(strongest.min())
     ps.plt.close(fig)
 
 

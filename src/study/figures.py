@@ -1669,17 +1669,14 @@ SEASONAL_TEXT = ps.FigureText(
 )
 
 #: The three parts, top to bottom, and the column each is held in.
-#: Each row named for what it is, with the ink and the weight it is drawn at. The
-#: measurements are neutral and heaviest, since they are the record. The average
-#: year takes `INSIDE`, which means retained across the set and is what this row is:
-#: the benchmark that beat every fitted model. What that leaves is filled rather
-#: than drawn, in `FITTED`, so the row carries the mass its finding deserves.
-SEASONAL_ROWS = (
-    ("The monthly measurements", "observed", ps.INK, 1.7),
-    ("The average shape of a year", "repeating", ps.INSIDE, ps.SEASONAL_SHAPE_WIDTH),
-    ("How far each month sits from that shape", "leftover", ps.FITTED, 1.0),
-)
-
+#: Each row named for what it is and how it was built, with the ink and the weight
+#: it is drawn at. The measurements are neutral and heaviest, since they are the
+#: record. The average year takes `INSIDE`, which means retained across the set and
+#: is what this row is: the benchmark that beat every fitted model. What that
+#: leaves is filled rather than drawn, in `FITTED`, so the row carries the mass its
+#: finding deserves. Each parenthetical says something the name cannot: how a
+#: monthly value is built, that the middle row is one fixed set of twelve rather
+#: than something recomputed, and what the subtraction actually is.
 #: Height of each row against the others. The bottom row is where the finding is,
 #: and the middle row is twelve numbers repeated, so it needs the least.
 SEASONAL_WEIGHTS = (1.0, 0.8, 1.5)
@@ -1688,6 +1685,15 @@ SEASONAL_WEIGHTS = (1.0, 0.8, 1.5)
 #: missing its summer would report a swing it never had.
 AMPLITUDE_MIN_MONTHS = 10
 
+SEASONAL_ROWS = (
+    ("Monthly flux measured at the tower "
+     "(each month averaged from its half-hourly readings)", "observed", ps.INK, 1.7),
+    ("The average flux for each calendar month "
+     "(twelve values, repeated every year)", "repeating", ps.INSIDE,
+     ps.SEASONAL_SHAPE_WIDTH),
+    ("Each month compared to a typical year "
+     "(the measurement minus that month's average)", "leftover", ps.FITTED, 1.0),
+)
 
 def seasonal_parts(series: pd.Series) -> pd.DataFrame:
     """A flux record split into the shape that repeats and what it leaves.
@@ -1795,14 +1801,21 @@ def _mark_extreme_years(ax, panel: pd.DataFrame) -> None:
     # row to make room for a label does not disturb the comparison between rows.
     span = ax.get_xlim()
 
-    for year, name, pick in ((swing.idxmax(), "strongest season", "idxmax"),
-                             (swing.idxmin(), "weakest season", "idxmin")):
+    for year, name in ((swing.idxmax(), "strongest season"),
+                       (swing.idxmin(), "weakest season")):
+        # The year comes from the measured swing, which is what a season's size
+        # means; the month marked is where that year departs furthest from the
+        # average, in whichever direction. Picking the maximum for the strong year
+        # and the minimum for the weak one assumed the flux was positive, and
+        # carbon dioxide is an uptake: its strongest season is its deepest
+        # negative and its weakest a high positive, so both marks landed on
+        # months near zero that meant nothing.
         inside = leftover[leftover.index.year == year]
-        month = getattr(inside, pick)()
+        month = inside.abs().idxmax()
         # Seated directly over or under its own point so the leader is vertical
         # and crosses nothing, and pulled inside the axis where a label at the
         # edge would otherwise run off it.
-        high_side = pick == "idxmax"
+        high_side = float(inside[month]) > 0
         at = ax.convert_xunits(month.to_timestamp())
         room = 0.20 * (span[1] - span[0])
         ps.annotate(ax, f"{year}, {name}",
@@ -1812,22 +1825,26 @@ def _mark_extreme_years(ax, panel: pd.DataFrame) -> None:
                             else floor + 0.08 * (ceiling - floor)),
                     ha="center", va="center", color=ps.MUTED,
                     fontsize=ps.ANNOTATION_SIZE - 1.0,
-                    arrowprops=dict(arrowstyle="-", color=ps.MUTED, linewidth=0.8,
+                    arrowprops=dict(arrowstyle="->", color=ps.MUTED, linewidth=0.9,
                                     shrinkA=7, shrinkB=5))
 
 
-#: Room at the left for the row names, at the top for the gas labels, and between
-#: each column's axis name and its tick labels.
-SEASONAL_GUTTER_PX = 486
-SEASONAL_HEAD_PX = 46
-SEASONAL_ROW_GAP_PX = 26
-SEASONAL_COLUMN_GAP_PX = 124
-SEASONAL_AXIS_PX = 30
+#: Room at the left for each column's tick labels, at the top for the gas labels,
+#: above each row for its name, and under each panel for its own tick labels.
+#:
+#: The names sit over their rows rather than beside them. Held in a left gutter
+#: they needed 517 px for the widest line alone, which took a quarter of the
+#: canvas from the panels; over the row they run the full width and cost only the
+#: band they stand in.
+SEASONAL_GUTTER_PX = 104
+SEASONAL_HEAD_PX = 48
+SEASONAL_LABEL_PX = 38
+SEASONAL_ROW_GAP_PX = 46
+SEASONAL_COLUMN_GAP_PX = 96
 
-#: Reserved to the right of each column for the scale bar and its number, so the
+#: Reserved to the right of each column for the scale bar and its label, so the
 #: bar sits outside the panel rather than over the months at the end of a record.
-SEASONAL_BAR_PX = 54
-SEASONAL_NAME_INSET_PX = 26
+SEASONAL_BAR_PX = 56
 
 SEASONAL_TIME_AXIS = "Year"
 
@@ -1842,16 +1859,17 @@ def seasonal_cycle(panels: dict[str, pd.DataFrame]) -> Figure:
     scale bar of one length in its own units, since three rows each scaled to their
     own data cannot otherwise be compared.
     """
-    fig, (left, bottom, width, height) = ps.canvas_area(SEASONAL_TEXT, size="stacked")
-    width_px, height_px = ps.SIZES["stacked"]
+    fig, (left, bottom, width, height) = ps.canvas_area(SEASONAL_TEXT, size="triple")
+    width_px, height_px = ps.SIZES["triple"]
     gutter = SEASONAL_GUTTER_PX / width_px
     head = SEASONAL_HEAD_PX / height_px
+    band = SEASONAL_LABEL_PX / height_px
     row_gap = SEASONAL_ROW_GAP_PX / height_px
     column_gap = SEASONAL_COLUMN_GAP_PX / width_px
-
     bar_room = SEASONAL_BAR_PX / width_px
+
     column_width = (width - gutter - column_gap - 2 * bar_room) / 2
-    room = height - head - row_gap * (len(SEASONAL_ROWS) - 1)
+    room = height - head - len(SEASONAL_ROWS) * band - row_gap * len(SEASONAL_ROWS)
     heights = [room * weight / sum(SEASONAL_WEIGHTS) for weight in SEASONAL_WEIGHTS]
 
     first = min(panel.index.min() for panel in panels.values()).to_timestamp()
@@ -1859,45 +1877,48 @@ def seasonal_cycle(panels: dict[str, pd.DataFrame]) -> Figure:
     top = bottom + height - head
     columns = []
 
+    def row_base(index: int) -> float:
+        """The foot of one row, below its own name band and its own tick labels."""
+        return top - sum(heights[: index + 1]) - (index + 1) * band - index * row_gap
+
     for column, (key, gas, unit) in enumerate(GAS_PANEL):
         panel = panels[key]
         base_x = left + gutter + column * (column_width + column_gap + bar_room)
         step = _scale_step(float(panel["observed"].max() - panel["observed"].min()))
         axes = []
         for index, (_, part, ink, weight) in enumerate(SEASONAL_ROWS):
-            base = top - sum(heights[: index + 1]) - index * row_gap
-            ax = fig.add_axes((base_x, base, column_width, heights[index]))
+            ax = fig.add_axes((base_x, row_base(index), column_width, heights[index]))
             _draw_seasonal_row(ax, panel[part], ink, weight, filled=part == "leftover")
-            ax.set_ylabel(unit, fontsize=ps.LABEL_SIZE - 0.5, color=ps.INK)
             ax.set_xlim(first, last)
             ps.even_year_ticks(ax, first.year, last.year)
-            if index < len(SEASONAL_ROWS) - 1:
-                ax.set_xticklabels([])          # after the locator, or it resets them
             if part == "leftover":
                 _mark_extreme_years(ax, panel)
-            _draw_scale_bar(ax, step, unit, labeled=index == 0)
+            # Beside the middle bar rather than the top one: the bar is the same
+            # length in all three rows, and a label at the top read as the top
+            # row's own.
+            _draw_scale_bar(ax, step, unit, labeled=index == 1)
             if index == 0:
-                ps.panel_name(ax, gas, x=0.5, align="center",
-                              y=1.0 + 34 / (heights[index] * height_px))
+                # Above the row's own name band, not into it: the band sits
+                # directly on the panel and the two frames would otherwise stack.
+                ps.panel_name(ax, f"{gas} ({unit})", x=0.5, align="center",
+                              y=1.0 + (SEASONAL_LABEL_PX + 34)
+                              / (heights[index] * height_px))
             axes.append(ax)
-        columns.append((base_x, axes, unit))
+        columns.append((base_x, axes))
 
-    # One time axis under each column rather than one between them, since a
-    # reader reads a column downward and meets its own axis at the foot of it.
-    for base_x, axes, _ in columns:
+    # One time axis name under each column, since a reader reads a column downward
+    # and meets its own axis at the foot of it. The ticks are labeled on every
+    # panel: a row whose ticks are bare asks the reader to carry them down.
+    for base_x, axes in columns:
         fig.text(base_x + column_width / 2, bottom - 34 / height_px,
                  SEASONAL_TIME_AXIS, ha="center", va="top", fontsize=ps.LABEL_SIZE,
                  fontweight="bold", color=ps.INK)
 
-    # The row names once, in the gutter, since the three rows mean the same thing
-    # in both columns and naming them twice would say so twice. Bold, so they read
-    # as names of rows rather than as another set of tick labels.
-    fig.canvas.draw()
-    clear = max(label.get_window_extent().width for label in columns[0][1][0].get_yticklabels()
-                if label.get_text())
+    # Each row named above itself, in the frame the gas labels use, spanning both
+    # columns because the row means the same thing in each.
     for index, (name, _, _, _) in enumerate(SEASONAL_ROWS):
-        middle = top - sum(heights[: index + 1]) + heights[index] / 2 - index * row_gap
-        fig.text(left + gutter - (clear + SEASONAL_AXIS_PX + SEASONAL_NAME_INSET_PX) / width_px,
-                 middle, name, ha="right", va="center", fontsize=ps.TICK_SIZE,
-                 fontweight="bold", color=ps.INK)
+        fig.text(left, row_base(index) + heights[index] + band / 2, name, ha="left",
+                 va="center", fontsize=ps.TICK_SIZE, color=ps.INK,
+                 bbox=dict(boxstyle="round,pad=0.42", facecolor="white",
+                           edgecolor=ps.BOUNDARY, linewidth=0.9))
     return fig

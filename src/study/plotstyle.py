@@ -196,6 +196,9 @@ SIZES = {
     "standard": (1800, 1200),
     "compact": (1200, 1200),
     "tall": (1800, 1400),
+    #: Three rows of two panels, with a label band over each row. The stacked
+    #: height was set for two rows and leaves these at about half the canvas.
+    "triple": (1800, 1900),
     #: Two panels stacked. Side by side, a panel is too narrow to hold a legend
     #: that names its methods by what they do rather than by their jargon, and the
     #: legend ends up over the data. Full width leaves room beside the curves.

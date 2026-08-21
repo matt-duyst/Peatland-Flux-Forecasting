@@ -2147,6 +2147,10 @@ under the worst simulated deficiency and the gridlines by 56.3; bluish green cle
 the measurements row by 47.6 and the gridlines by 32.2; the two hues clear each
 other by 20.9, on rows that never touch.
 
+**The scale bar label sits beside the middle row.** At the top it read as the top
+row's own, which is the opposite of what a bar drawn at one length in all three
+rows is for.
+
 **The scale bar says what it is.** A gray rectangle with a number beside it was
 the one mark on the panel nothing accounted for. Each column's topmost bar now
 carries a rotated label reading *50 nmol m⁻² s⁻¹ in every row*, and the bars hang
@@ -2161,18 +2165,54 @@ overshoot far while the typical month does not. The bars show range because that
 is what a panel shows; the description gives the standard deviation. Neither the
 panel nor the words claim the leftover is small.
 
+**The marked month was wrong on carbon dioxide, and the sign is why.** The year
+comes from the measured swing, which is what a season's size means. Within that
+year the month marked was the *maximum* departure for the strong year and the
+*minimum* for the weak one — a rule that assumes the flux is positive. Carbon
+dioxide is an uptake: its strongest season is its deepest negative and its
+weakest a high positive. So the 2014 mark landed on +0.20 and the 2021 mark on
+−0.37, both months near zero that meant nothing, while the year's real extremes
+(−0.97 and +1.31) sat unmarked a few months away. The rule is now the largest
+departure in either direction, which gives methane the same months it had and
+carbon dioxide the right ones. A test builds an uptake by flipping the sign of a
+synthetic series and asserts the mark follows.
+
+**The leaders are arrows.** They had been plain stubs, and the methane 2011 stub
+was a short diagonal that did not clearly reach its target.
+
 **Two years are marked, lightly.** The strongest and weakest seasons on each gas,
 at annotation weight in italic muted, with their values left to the description.
 The finding is that the size varies *without direction*, so the marks have to read
 as two labeled points in a scattered field rather than two events against a quiet
 background. Anything heavier would have said the opposite of the panel.
 
-**The row names are literal.** They had been *the flux as measured*, *the part
-that repeats every year* and *what is left over*, which describe rather than name
-and leave the last one vague. They now read *the monthly measurements*, *the
-average shape of a year* and *how far each month sits from it*. The third was
-shortened from *from that average* at 426 px to fit the gutter beside the axis
-name; "it" is the row above, which the eye has just read.
+**The row names are literal, and each says how its row was built.** Three
+versions were tried. The first described rather than named. The second used
+*shape* metaphorically for a row that holds twelve numbers, one per calendar
+month, and left *from it* pointing two rows away. They now read:
+
+- *Monthly flux measured at the tower (each month averaged from its half-hourly
+  readings)*
+- *The average flux for each calendar month (twelve values, repeated every year)*
+- *Each month compared to a typical year (the measurement minus that month's
+  average)*
+
+Each parenthetical carries what the name cannot: how a monthly value is built,
+that the middle row is one fixed set rather than something recomputed, and what
+the subtraction actually is.
+
+**The names moved from the gutter to a band over each row, which is what made the
+panels bigger.** Held beside the rows they needed **517 px for the widest line
+alone**, a quarter of the canvas taken from the panels, and no cut to the
+parentheticals recovered it: the third alone needs 476. Over the row they run the
+full width and cost only the 38 px band they stand in. With a taller canvas as
+well — 1900 px against the 1500 the two-row figures use — the panels went from
+about half the canvas to roughly two thirds, and each column from 495 px wide to
+660.
+
+**Units moved to the column headers.** The row names span both columns and cannot
+carry two units. The six per-row axis names went with the move, since the header
+now says it and nothing else on the panel needed it twice.
 
 **Each column names its own unit on its own axis**, since the two are in different
 units, and the time axis is named once beneath both. The gas labels are centered
