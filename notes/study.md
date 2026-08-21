@@ -2089,46 +2089,41 @@ description instead.
 **The bottom row is the tallest**, at 1.5 against 1.0 and 0.8. It is where the
 finding is, and the row above it is twelve numbers repeated.
 
-**Scale bars, which the first build lacked and needed.** Cleveland, Cleveland,
-McRae and Terpenning (1990), the paper the decomposition comes from, put a bar of
-fixed data length at the right of each panel so component magnitudes can be
-compared; R's `plot.stl` has carried it since and Hyndman's **fabletools** still
-defaults to `scale_bars = TRUE`. Without one, every row stretches to fill its own
-height and the average year and what it leaves look comparably large. Each column
-now carries a bar of one length in that gas's own units — 50 nmol m⁻² s⁻¹ and
-1 μmol m⁻² s⁻¹, both chosen as a round number near a third of the widest row — in
-all three of its rows. Read within a panel, series against bar, then across
-panels in shared units: the measurements span about 165, the average year 71, and
-what it leaves 123. The finding stops being an assertion in the description.
+**Scale bars: three rounds, and then cut.** Cleveland, Cleveland, McRae and
+Terpenning (1990) put a bar of fixed data length at the right of each panel so
+component magnitudes can be compared, and R's `plot.stl` and fabletools carry it
+still. Three builds went into making one work here. The first drew the same data
+length in each row and got three different heights, which says the rows are on
+different scales — the confusion the bar exists to remove. The second put one
+scale through the column so the bars came out identical. The third moved the label
+off the top row, where it read as that row's own.
 
-**The bars sit outside the panels.** Inside, the carbon dioxide record runs to
-the right edge of its axis and the bar would cross the last months of it. Space is
-reserved for them so nothing is drawn over.
+**They were cut anyway, and the argument is about the label.** The bar's meaning
+has to be written somewhere, there is nowhere to write it but the narrow strip the
+bar stands in, and that forces the text to be rotated. A 2024 figure-design
+checklist recommends keeping every label horizontal, since every degree of
+rotation slows reading. And the thing the bars existed to show is already one
+sentence of the description, stated exactly: what the average year leaves is
+**0.54 of the measurements' spread on methane and 0.53 on carbon dioxide**. A
+number in words beats two grey rectangles a reader has to measure.
 
-**A worry about unequal row heights that I talked myself out of, wrongly.** The
-convention assumes panels of equal height, and these were 1.0, 0.8 and 1.5. I
-argued the bar still worked, on the grounds that a reader compares series to bar
-*within* a panel and only then across panels in units. That reading is available
-but it is not the one a reader takes: three bars of three different heights on one
-figure say the three rows are on different scales, which is exactly the confusion
-the bar exists to remove. Drawn that way the methane bars came out at 100, 170 and
-135 px for the same 50 nmol m⁻² s⁻¹.
+**The one scale through the column stayed.** It was introduced for the bars but it
+is worth having without them: the rows are on one scale and their heights are the
+flux each covers, so the middle row is visibly the shortest because the average
+year covers the least. That is the comparison the bars were for, now built into
+the geometry rather than annotated onto it.
 
-**The fix is one scale through a column, with height as flux.** Each column now
-uses the tightest scale that fits every row in the height that row was given, and
-the row heights are the flux each row covers, taken across both gases so the rows
-still line up. Equal height is equal flux, the bars come out identical without
-being made to — 170 px in all three methane rows, 189 in all three carbon dioxide
-rows — and the middle row is visibly the shortest because the average year covers
-the least. A test asserts the units per pixel are equal across a column's rows.
+**The season marks were cut with them.** They named an amplitude — the swing of
+the measurements across a year — and for two builds pointed at a departure from a
+calendar-month average, which is a different quantity whose extremes run the other
+way for an uptake. Moved to the measurements row they were finally correct, and
+still redundant: the description gives the range they illustrated, 33.7 to 150.6
+on methane and 0.8 to 2.4 on carbon dioxide. Two marks that had been wrong twice
+were not worth a third defence.
 
-**The two variance framings pull opposite ways, and the description leads with
-the one the panel exists to make.** The fixed shape accounts for **71%** of the
-variance in both gases, which sounds like most of it; what it leaves is **0.54 and
-0.53 of the measurements' standard deviation**, which says half the variation is
-still there. Variance is a square, so the two are the same fact read at different
-powers. The description gives the spread share first and the variance share as
-context, and a test pins that order.
+**Units sit above each panel rather than rotated beside it.** Rotated they needed
+70 px of gutter the row names had already spent, and the same checklist argues
+against rotation. The top row goes without: its gas label already carries the unit.
 
 ### The palette on the seasonal split, and the hue that carries two meanings
 
