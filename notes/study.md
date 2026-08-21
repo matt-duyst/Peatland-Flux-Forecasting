@@ -2105,11 +2105,22 @@ what it leaves 123. The finding stops being an assertion in the description.
 the right edge of its axis and the bar would cross the last months of it. Space is
 reserved for them so nothing is drawn over.
 
-**A worry about unequal row heights that turned out to be wrong.** The convention
-assumes panels of equal height, and these are 1.0, 0.8 and 1.5. That does not
-break the bar: the reading is series against bar *within* a panel, and only then
-across panels in data units, so the pixel height of each panel cancels. Padding a
-row to make room for a label is harmless for the same reason.
+**A worry about unequal row heights that I talked myself out of, wrongly.** The
+convention assumes panels of equal height, and these were 1.0, 0.8 and 1.5. I
+argued the bar still worked, on the grounds that a reader compares series to bar
+*within* a panel and only then across panels in units. That reading is available
+but it is not the one a reader takes: three bars of three different heights on one
+figure say the three rows are on different scales, which is exactly the confusion
+the bar exists to remove. Drawn that way the methane bars came out at 100, 170 and
+135 px for the same 50 nmol m⁻² s⁻¹.
+
+**The fix is one scale through a column, with height as flux.** Each column now
+uses the tightest scale that fits every row in the height that row was given, and
+the row heights are the flux each row covers, taken across both gases so the rows
+still line up. Equal height is equal flux, the bars come out identical without
+being made to — 170 px in all three methane rows, 189 in all three carbon dioxide
+rows — and the middle row is visibly the shortest because the average year covers
+the least. A test asserts the units per pixel are equal across a column's rows.
 
 **The two variance framings pull opposite ways, and the description leads with
 the one the panel exists to make.** The fixed shape accounts for **71%** of the
@@ -2147,9 +2158,10 @@ under the worst simulated deficiency and the gridlines by 56.3; bluish green cle
 the measurements row by 47.6 and the gridlines by 32.2; the two hues clear each
 other by 20.9, on rows that never touch.
 
-**The scale bar label sits beside the middle row.** At the top it read as the top
-row's own, which is the opposite of what a bar drawn at one length in all three
-rows is for.
+**The scale bar is named once per column, centered on the column.** Beside the top
+row it read as the top row's own; beside the middle row, as the middle row's. It
+now sits in the strip the bars stand in, centered on all three, and reads *each bar
+is 50 nmol m⁻² s⁻¹*.
 
 **The scale bar says what it is.** A gray rectangle with a number beside it was
 the one mark on the panel nothing accounted for. Each column's topmost bar now
@@ -2165,7 +2177,24 @@ overshoot far while the typical month does not. The bars show range because that
 is what a panel shows; the description gives the standard deviation. Neither the
 panel nor the words claim the leftover is small.
 
-**The marked month was wrong on carbon dioxide, and the sign is why.** The year
+**The marks were on the wrong row, and two attempts at the month proved it.** The
+year is chosen from the measured swing, which is what a season's size means. The
+bottom row does not show that: it shows each month's departure from its
+calendar-month average. Marking a departure and labelling it with an amplitude
+conflates two quantities, and no choice of month fixes it — the first rule picked
+months near zero on carbon dioxide, and the second, which took the largest
+departure either way, put *weakest season* on the largest positive excursion and
+*strongest season* on the largest negative one. Both readings are inverted because
+the label names one quantity and points at another.
+
+**They are now on the measurements row**, at each year's own seasonal extreme: the
+month furthest from that year's mean, in whichever direction the gas runs. Methane
+peaks and carbon dioxide troughs, and the rule finds either. A reader sees 2011's
+peak at 158 against 2021's at 46, which is the amplitude claim drawn rather than
+asserted. A test builds an uptake by flipping the sign of a synthetic series and
+requires the mark to follow.
+
+**An earlier attempt at the month, kept for the record.** The year
 comes from the measured swing, which is what a season's size means. Within that
 year the month marked was the *maximum* departure for the strong year and the
 *minimum* for the weak one — a rule that assumes the flux is positive. Carbon
@@ -2201,14 +2230,17 @@ Each parenthetical carries what the name cannot: how a monthly value is built,
 that the middle row is one fixed set rather than something recomputed, and what
 the subtraction actually is.
 
-**The names moved from the gutter to a band over each row, which is what made the
-panels bigger.** Held beside the rows they needed **517 px for the widest line
-alone**, a quarter of the canvas taken from the panels, and no cut to the
-parentheticals recovered it: the third alone needs 476. Over the row they run the
-full width and cost only the 38 px band they stand in. With a taller canvas as
-well — 1900 px against the 1500 the two-row figures use — the panels went from
-about half the canvas to roughly two thirds, and each column from 495 px wide to
-660.
+**The names sit in the gutter, on two lines.** Over the row they competed with the
+gas labels directly above them and crowded the panels. On one line in the gutter
+they needed **517 px**; split, with the name bold above and how the row was built
+beneath it in smaller regular weight, the widest line is **470 px** — and that is
+the bold line, not the parenthetical, on every row. **So the parentheticals are
+free**: dropping them to the subtitle would not have bought back a pixel. The
+gutter is 512 px and the frame is the one the gas labels take, drawn behind both
+lines once their extents are known. A test asserts every frame clears the panels.
+
+**The canvas is taller** — 1900 px against the 1500 the two-row figures use — which
+is where the extra panel height came from.
 
 **Units moved to the column headers.** The row names span both columns and cannot
 carry two units. The six per-row axis names went with the move, since the header

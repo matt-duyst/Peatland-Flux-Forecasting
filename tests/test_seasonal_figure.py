@@ -105,12 +105,26 @@ def test_every_panel_shares_one_time_axis():
     ps.plt.close(fig)
 
 
-def test_the_leftover_row_is_the_tallest():
-    """It is where the finding is; the row above it is twelve numbers repeated."""
+def test_one_scale_runs_through_a_column_and_height_is_flux():
+    """Rows scaled to their own data made three bars of three different heights,
+    which is the opposite of what a reader takes from them. Height is now the flux
+    a row covers, and the bars come out identical rather than being made to."""
+    fig = figures.seasonal_cycle(panels())
+    rows = len(figures.SEASONAL_ROWS)
+    for column in range(len(figures.GAS_PANEL)):
+        scales = []
+        for index in range(rows):
+            ax = fig.axes[column * rows + index]
+            low, high = ax.get_ylim()
+            scales.append((high - low) / ax.get_position().height)
+        assert scales[0] == pytest.approx(scales[1], rel=1e-6) == pytest.approx(scales[2], rel=1e-6)
+    ps.plt.close(fig)
+
+
+def test_the_middle_row_is_the_shortest_because_it_covers_the_least_flux():
     fig = figures.seasonal_cycle(panels())
     heights = [ax.get_position().height for ax in fig.axes[:len(figures.SEASONAL_ROWS)]]
-    assert heights[-1] == max(heights)
-    assert heights[-1] > 1.5 * heights[1]
+    assert heights[1] == min(heights)
     ps.plt.close(fig)
 
 
@@ -124,9 +138,11 @@ def test_only_the_leftover_row_carries_a_zero_line():
 
 def test_each_row_is_named_once_rather_than_once_per_column():
     fig = figures.seasonal_cycle(panels())
-    said = [text.get_text() for text in fig.texts]
-    for name, _, _, _ in figures.SEASONAL_ROWS:
+    said = " ".join(text.get_text() for text in fig.texts)
+    for label, _, _, _ in figures.SEASONAL_ROWS:
+        name, _, aside = label.partition(" (")
         assert said.count(name) == 1
+        assert said.count(f"({aside}") == 1
     ps.plt.close(fig)
 
 
@@ -144,15 +160,22 @@ def test_the_gases_are_named_with_their_units_centered_over_the_column():
     ps.plt.close(fig)
 
 
-def test_each_row_is_named_over_itself_in_the_frame_the_gases_use():
-    """Held in a left gutter the names needed 517 px for the widest line alone,
-    which took a quarter of the canvas from the panels."""
+def test_each_row_is_named_in_the_gutter_on_two_lines_inside_one_frame():
+    """The name bold, how the row was built beneath it, and a frame round both.
+    On one line they needed a quarter of the canvas; the parentheticals are free,
+    since the bold line above them is the wider of the two on every row."""
+    from matplotlib.patches import FancyBboxPatch
+
     fig = figures.seasonal_cycle(panels())
-    framed = {text.get_text(): text for text in fig.texts
-              if text.get_bbox_patch() is not None}
-    assert set(framed) == {name for name, _, _, _ in figures.SEASONAL_ROWS}
-    for text in framed.values():
-        assert text.get_ha() == "left"
+    fig.canvas.draw()
+    frames = [art for art in fig.artists if isinstance(art, FancyBboxPatch)]
+    assert len(frames) == len(figures.SEASONAL_ROWS)
+    heads = [text for text in fig.texts if text.get_fontweight() == "bold"
+             and text.get_ha() == "right"]
+    assert len(heads) == len(figures.SEASONAL_ROWS)
+    panel = fig.axes[0].get_window_extent()
+    for frame in frames:
+        assert frame.get_window_extent().x1 < panel.x0
     ps.plt.close(fig)
 
 
@@ -178,16 +201,14 @@ def test_every_panel_carries_its_own_labeled_time_axis():
     ps.plt.close(fig)
 
 
-def test_the_scale_bar_says_what_it_is_beside_the_middle_row():
-    """It is the same length in all three rows, and a label at the top read as
-    belonging to the top row alone."""
+def test_the_scale_bar_is_named_once_per_column_and_not_beside_one_row():
+    """Beside the middle row it read as that row's own, which is the opposite of
+    what a bar drawn at one length in all three is for."""
     fig = figures.seasonal_cycle(panels())
-    rows = len(figures.SEASONAL_ROWS)
-    for column in range(len(figures.GAS_PANEL)):
-        labeled = [index for index in range(rows)
-                   if any("in every row" in note.get_text()
-                          for note in fig.axes[column * rows + index].texts)]
-        assert labeled == [1]
+    assert not [note for ax in fig.axes for note in ax.texts
+                if "each bar" in note.get_text()]
+    said = [text.get_text() for text in fig.texts if "each bar" in text.get_text()]
+    assert len(said) == len(figures.GAS_PANEL)
     ps.plt.close(fig)
 
 
@@ -292,18 +313,32 @@ def test_the_two_marked_years_are_led_to_their_points_by_arrows():
     ps.plt.close(fig)
 
 
-def test_the_marked_month_is_the_year_s_largest_departure_either_way():
-    """Taking the maximum for the strong year and the minimum for the weak one
-    assumed a positive flux. Carbon dioxide is an uptake, so both of its marks
-    landed on months near zero that meant nothing."""
-    panel = figures.seasonal_parts(-synthetic())           # an uptake, sign flipped
-    swing = panel.attrs["swing"]
-    strongest = panel["leftover"][panel.index.year == swing.idxmax()]
-    assert abs(strongest.min()) > abs(strongest.max())      # its extreme is negative
-    fig = figures.seasonal_cycle({key: panel for key, _, _ in figures.GAS_PANEL})
-    marks = [note for note in fig.axes[2].texts if "strongest" in note.get_text()]
-    assert marks and marks[0].xy[1] == pytest.approx(strongest.min())
+def test_the_seasons_are_marked_on_the_row_that_shows_them():
+    """A season's size is the swing of the measurements across a year. On the
+    bottom row the quantity drawn is a departure from a calendar-month average,
+    which is a different thing, and for an uptake its extremes run the other way,
+    so the labels read as inverted whichever month they picked."""
+    fig = figures.seasonal_cycle(panels())
+    rows = len(figures.SEASONAL_ROWS)
+    for column in range(len(figures.GAS_PANEL)):
+        marked = [index for index in range(rows)
+                  if any("season" in note.get_text()
+                         for note in fig.axes[column * rows + index].texts)]
+        assert marked == [0]
     ps.plt.close(fig)
+
+
+def test_the_marked_month_is_that_year_s_own_seasonal_extreme():
+    """Methane peaks and carbon dioxide troughs, and the mark finds either."""
+    for series in (synthetic(), -synthetic()):              # a source and an uptake
+        panel = figures.seasonal_parts(series)
+        year = panel.attrs["swing"].idxmax()
+        inside = panel["observed"][panel.index.year == year]
+        expected = float(inside[(inside - inside.mean()).abs().idxmax()])
+        fig = figures.seasonal_cycle({key: panel for key, _, _ in figures.GAS_PANEL})
+        marks = [note for note in fig.axes[0].texts if "strongest" in note.get_text()]
+        assert marks and marks[0].xy[1] == pytest.approx(expected)
+        ps.plt.close(fig)
 
 
 def test_the_two_marked_years_are_set_lightly():
