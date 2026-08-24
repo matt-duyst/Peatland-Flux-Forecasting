@@ -2083,16 +2083,42 @@ strongly.
 same reason: it is the horizon most favorable to the fitted methods, so falling
 short of the seasonal average there says more than doing so a year out.
 
+**A key, added after the build.** The first version had none: a reader met green
+bars and black dashes with nothing on the panel to read them by, and had to go to
+the subtitle to learn what they were. A figure that must be read before it can be
+looked at has failed. One key rather than two — the panels are side by side and
+carry the same marks — set below both, framed, in the two-column ruled-heading
+form, naming all three marks.
+
 **No method is identifiable.** Each month is one vertical bar spanning all eight
 fitted predictions. The median spread is 0.23 of the observed standard deviation
 on methane and 0.15 on carbon dioxide, so the bars are short — which is itself
 the finding. Eight separate clouds would have invited the ranking the study
 denies.
 
-**2015 is marked by weight, not by hue.** Colouring six years would have broken
-the palette; one heavier bar per marked month, with the year named once per panel,
-carries the same structure. Carbon dioxide's 2015 looks like every other year,
-and that contrast is the point.
+**Every month of 2015 is marked, by shape and weight rather than by hue.** The
+first build drew one callout pointing at a single bar, which cannot say that the
+rest of the year is scattered across the panel. Each of those months now carries
+an open ring as well as a heavier bar, and the key names them. Colour was not
+available: it already means which mark this is, and a recoloured year would make
+it mean the mark and the year at once, which is the collision this set avoids
+everywhere. Colouring each year separately was considered and rejected — six
+categorical hues that are distinguishable, colour-blind safe and clear of blue,
+orange and green do not exist, and it would assert that year is the organising
+variable when the finding concerns one year. Carbon dioxide's 2015 looks like
+every other year, and that contrast is the point.
+
+**Two numbers on the panel, two in the description.** Four lines of text in each
+panel was more than a reader wants while looking at a point. The two error
+measures stay, because a magnitude is worth having in front of the marks; the two
+shares moved out, because they are statements about the whole cloud rather than
+things read off a position.
+
+**The clearest statement of the finding was buried and is now first.** On methane
+the bars sit above the line at low measured values and below it at high ones —
+too much predicted in the weak months and too little in the strong. That is the
+year-level structure visible without any annotation, and it had been sitting
+behind the 2015 sentence at the end of the description.
 
 **Four numbers, none of which ranks anything.** Pooled mean absolute error and
 root mean square error across all eight methods together, in the gas's own units,

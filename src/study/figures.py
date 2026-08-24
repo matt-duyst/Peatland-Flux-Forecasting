@@ -1931,16 +1931,17 @@ AGREEMENT_TEXT = ps.FigureText(
         "prediction equals the measurement (nothing here is required to reach it)."
     ),
     description=(
-        "The numbers in each panel are for all eight fitted methods together, not "
-        "for any one of them. The root mean square weights large misses more "
-        "heavily than the average miss does, so the gap between the two says a few "
-        "big errors carry the total. Their range holds the measurement in 30% of "
-        "methane months and 11% of carbon dioxide months, and they miss in the "
-        "same direction as the seasonal average in 75% and 87% of them: the "
-        "methods agree with each other and fail on the same months it does. The "
-        "predictions are not compressed toward the middle, the slope against the "
-        "measurements being 1.07 and 0.94. Methane's 2015 is missed three times as "
-        "badly as any other year and mostly from above; carbon dioxide's is not."
+        "The two numbers in each panel are for all eight fitted methods together. "
+        "The root mean square weights large misses more heavily, so the gap "
+        "between them says a few big errors carry the total. On methane the bars "
+        "sit above the line at low measured values and below it at high ones: too "
+        "much predicted in the weak months and too little in the strong. Their "
+        "range holds the measurement in 30% of methane months and 11% of carbon "
+        "dioxide months, and misses the same way as the black mark in 75% and 87%, "
+        "so the methods agree with each other and fail where it fails. They are "
+        "not compressed toward the middle, the slope against the measurements "
+        "being 1.07 and 0.94. Methane's 2015 is missed three times as badly as any "
+        "other year; carbon dioxide's is not."
     ),
 )
 
@@ -1954,9 +1955,17 @@ AGREEMENT_HORIZON = 1
 #: turns the scatter into structure on one of the two panels and not the other.
 MARKED_YEAR = 2015
 
-AGREEMENT_DIAGONAL = "a prediction equal to the measurement"
 AGREEMENT_MEASURED = "Measured"
 AGREEMENT_PREDICTED = "Predicted"
+
+#: The key's three entries. Every mark on the panel is named: a reader meeting
+#: green bars and black dashes with nothing to read them by has to go to the
+#: subtitle, and a figure that must be read before it can be looked at has failed.
+AGREEMENT_KEYS = (
+    "All eight fitted predictions for a month",
+    "The average of that month in earlier years",
+    f"Months of {MARKED_YEAR}, the weakest season here",
+)
 
 
 def agreement_panel(frames: dict[str, pd.DataFrame],
@@ -2007,6 +2016,13 @@ def agreement_panel(frames: dict[str, pd.DataFrame],
 AGREEMENT_AXIS_PX = 96
 AGREEMENT_GAP_PX = 108
 AGREEMENT_HEAD_PX = 44
+AGREEMENT_XAXIS_PX = 74
+AGREEMENT_KEY_PX = 96
+
+#: The ring that marks a month of the year set apart. Shape rather than hue: color
+#: already means which mark this is, and a recolored year would make it mean the
+#: mark and the year at once.
+MARKED_RING = 9.0
 
 
 def _draw_agreement_panel(ax, panel: pd.DataFrame, unit: str) -> None:
@@ -2026,6 +2042,12 @@ def _draw_agreement_panel(ax, panel: pd.DataFrame, unit: str) -> None:
         rows = panel[chosen]
         ax.vlines(rows["measured"], rows["lowest"], rows["highest"], color=ps.FITTED,
                   linewidth=weight, zorder=3)
+    # Every month of the marked year, not one of them: a single callout cannot
+    # say that the rest of the year is scattered elsewhere on the panel.
+    rows = panel[marked]
+    ax.plot(rows["measured"], rows["middle"], linestyle="none", marker="o",
+            markersize=MARKED_RING, markerfacecolor="none", markeredgecolor=ps.FITTED,
+            markeredgewidth=1.3, zorder=5)
     ax.plot(panel["measured"], panel["seasonal"], linestyle="none", marker="_",
             markersize=7, markeredgewidth=1.3, color=ps.INK, zorder=4)
 
@@ -2056,12 +2078,41 @@ def _agreement_numbers(ax, panel: pd.DataFrame, unit: str) -> None:
         "All eight fitted methods together",
         f"average miss {panel.attrs['mean_miss']:.{digits}f}, "
         f"root mean square {panel.attrs['root_mean_square']:.{digits}f}",
-        f"range holds the measurement in {100 * panel.attrs['brackets']:.0f}% of months",
-        f"misses the same way as the black mark in {100 * panel.attrs['same_way']:.0f}%",
     ]
+    # Two lines, not four. A magnitude is worth having while looking at a point;
+    # the two shares are statements about the whole cloud and read as well in the
+    # description, where they are not competing with the marks.
     ax.text(0.975, 0.035, "\n".join(lines), transform=ax.transAxes, ha="right",
             va="bottom", fontsize=ps.ANNOTATION_SIZE - 0.5, color=ps.MUTED,
-            linespacing=1.5, zorder=5)
+            linespacing=1.5, zorder=6)
+
+
+def _agreement_key(fig, left: float, bottom: float, width: float) -> None:
+    """One key for both panels, under them and clear of every mark.
+
+    Two columns with ruled headings, as elsewhere in the set. One key rather than
+    two: the panels are side by side and carry the same three marks, so a second
+    would repeat itself within a glance of the first.
+    """
+    ax = fig.add_axes((left, bottom, width, AGREEMENT_KEY_PX / ps.SIZES["square pair"][1]))
+    ax.set_axis_off()
+    blank = Line2D([], [], linestyle="none", marker="none")
+    entries = [
+        (blank, r"$\bf{What\ each\ mark\ is}$"),
+        (Line2D([], [], color=ps.FITTED, linewidth=2.4), AGREEMENT_KEYS[0]),
+        (Line2D([], [], color=ps.INK, linestyle="none", marker="_", markersize=9,
+                markeredgewidth=1.3), AGREEMENT_KEYS[1]),
+        (blank, r"$\bf{Set\ apart}$"),
+        (Line2D([], [], color=ps.FITTED, linewidth=2.6, marker="o", markersize=9,
+                markerfacecolor="none", markeredgewidth=1.3), AGREEMENT_KEYS[2]),
+        (blank, ""),
+    ]
+    ps.legend(ax, handles=[handle for handle, _ in entries],
+              labels=[label for _, label in entries], loc="center",
+              bbox_to_anchor=(0.5, 0.5), ncol=2, framealpha=1.0, borderpad=0.7,
+              labelspacing=0.42, columnspacing=2.4, handlelength=2.4,
+              handletextpad=0.9, fontsize=ps.LEGEND_SIZE - 1.0)
+    _underline_legend_headings(fig, ax)
 
 
 def predicted_against_measured(panels: dict[str, pd.DataFrame]) -> Figure:
@@ -2082,7 +2133,8 @@ def predicted_against_measured(panels: dict[str, pd.DataFrame]) -> Figure:
     # Square in pixels, not in figure fractions: the canvas is wider than it is
     # tall, so one fraction used for both sides would draw a rectangle.
     side_px = min(((width - axis_room - gap) / 2) * width_px,
-                  (height - head) * height_px)
+                  (height * height_px - AGREEMENT_HEAD_PX - AGREEMENT_XAXIS_PX
+                   - AGREEMENT_KEY_PX))
     across, down = side_px / width_px, side_px / height_px
     for column, (key, gas, unit) in enumerate(GAS_PANEL):
         panel = panels[key]
@@ -2091,12 +2143,5 @@ def predicted_against_measured(panels: dict[str, pd.DataFrame]) -> Figure:
         _draw_agreement_panel(ax, panel, unit)
         _agreement_numbers(ax, panel, unit)
         ps.panel_name(ax, gas, x=0.5, align="center", y=1.0 + 30 / side_px)
-        # Beside its own cluster rather than in a corner: on carbon dioxide the
-        # marked months sit mid-cloud, and a leader from the corner would cross
-        # the panel to reach them.
-        marked = panel[panel.index.year == MARKED_YEAR]
-        ps.annotate(ax, str(MARKED_YEAR),
-                    xy=(float(marked["measured"].mean()), float(marked["middle"].mean())),
-                    xytext=(-34, 30), textcoords="offset points", ha="right",
-                    va="center", color=ps.MUTED)
+    _agreement_key(fig, left, bottom, width)
     return fig

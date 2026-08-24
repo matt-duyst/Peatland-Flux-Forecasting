@@ -40,6 +40,11 @@ def panels() -> dict[str, pd.DataFrame]:
             for index, (key, _, _) in enumerate(figures.GAS_PANEL)}
 
 
+def gas_panels(fig):
+    """The two square panels, which the key's own axes sits below."""
+    return fig.axes[:len(figures.GAS_PANEL)]
+
+
 # --- what the panel is built from ---------------------------------------------
 
 
@@ -94,7 +99,7 @@ def test_each_panel_is_square_and_its_axes_run_together():
     from it cannot be read."""
     fig = figures.predicted_against_measured(panels())
     width_px, height_px = ps.SIZES["square pair"]
-    for ax in fig.axes:
+    for ax in gas_panels(fig):
         box = ax.get_position()
         assert box.width * width_px == pytest.approx(box.height * height_px, rel=0.01)
         assert ax.get_xlim() == pytest.approx(ax.get_ylim())
@@ -104,7 +109,8 @@ def test_each_panel_is_square_and_its_axes_run_together():
 def test_the_gases_never_share_a_scale():
     """Different units, and one of them crosses zero."""
     fig = figures.predicted_against_measured(panels())
-    assert fig.axes[0].get_xlim() != fig.axes[1].get_xlim()
+    left, right = gas_panels(fig)
+    assert left.get_xlim() != right.get_xlim()
     ps.plt.close(fig)
 
 
@@ -118,41 +124,71 @@ def test_the_diagonal_is_named_rather_than_called_a_target():
         assert word not in said.lower()
 
 
-def test_the_marked_year_is_set_apart_by_weight_rather_than_by_hue():
-    """One marked year keeps the palette; colouring six would not."""
-    fig = figures.predicted_against_measured(panels())
-    for ax in fig.axes[:1]:
+def test_every_month_of_the_marked_year_is_set_apart_by_shape_and_weight():
+    """A single callout cannot say that the rest of the year is scattered
+    elsewhere on the panel, and a recolored year would make hue mean the mark and
+    the year at once."""
+    from matplotlib.colors import to_rgb
+
+    built = panels()
+    fig = figures.predicted_against_measured(built)
+    for ax, key in zip(gas_panels(fig), [key for key, _, _ in figures.GAS_PANEL]):
         weights = {round(collection.get_linewidth()[0], 2)
                    for collection in ax.collections}
         assert len(weights) == 2
-    said = [note.get_text() for ax in fig.axes for note in ax.texts]
-    assert said.count(str(figures.MARKED_YEAR)) == len(figures.GAS_PANEL)
+        rings = [line for line in ax.lines if line.get_marker() == "o"]
+        assert len(rings) == 1
+        marked = built[key].index.year == figures.MARKED_YEAR
+        assert len(rings[0].get_xdata()) == int(marked.sum())
+        assert rings[0].get_markerfacecolor() == "none"
+        assert to_rgb(rings[0].get_markeredgecolor()) == to_rgb(ps.FITTED)
+    ps.plt.close(fig)
+
+
+def test_the_key_names_every_mark_on_the_panel():
+    """A reader meeting green bars and black dashes with nothing to read them by
+    has to go to the subtitle, and a figure that must be read before it can be
+    looked at has failed."""
+    fig = figures.predicted_against_measured(panels())
+    keys = [ax.get_legend() for ax in fig.axes if ax.get_legend()]
+    assert len(keys) == 1
+    labels = [text.get_text() for text in keys[0].get_texts()]
+    for entry in figures.AGREEMENT_KEYS:
+        assert entry in labels
+    assert sum(label.startswith("$") for label in labels) == 2      # two headings
+    assert keys[0].axes not in gas_panels(fig)                      # clear of data
     ps.plt.close(fig)
 
 
 def test_no_method_is_identifiable_on_the_panel():
     fig = figures.predicted_against_measured(panels())
     drawn = " ".join(note.get_text() for ax in fig.axes for note in ax.texts).lower()
+    key = " ".join(figures.AGREEMENT_KEYS).lower()
     for method in METHODS + ("ridge", "forest", "boosting"):
-        assert method not in drawn
-    assert not [ax for ax in fig.axes if ax.get_legend()]
+        assert method not in drawn and method not in key
     ps.plt.close(fig)
 
 
 def test_both_axes_of_both_panels_are_named_with_their_units():
     fig = figures.predicted_against_measured(panels())
-    for ax, (_, _, unit) in zip(fig.axes, figures.GAS_PANEL):
+    for ax, (_, _, unit) in zip(gas_panels(fig), figures.GAS_PANEL):
         assert unit in ax.get_xlabel() and figures.AGREEMENT_MEASURED in ax.get_xlabel()
         assert unit in ax.get_ylabel() and figures.AGREEMENT_PREDICTED in ax.get_ylabel()
     ps.plt.close(fig)
 
 
-def test_the_numbers_are_labeled_as_the_whole_cloud():
+def test_the_panel_keeps_the_two_error_numbers_and_not_the_two_shares():
+    """A magnitude is worth having while looking at a point. The shares are
+    statements about the whole cloud and read as well in the description, where
+    they are not competing with the marks."""
     fig = figures.predicted_against_measured(panels())
-    for ax in fig.axes:
-        block = "\n".join(note.get_text() for note in ax.texts)
+    for ax in gas_panels(fig):
+        block = next(note.get_text() for note in ax.texts
+                     if "average miss" in note.get_text())
         assert "All eight fitted methods together" in block
-        assert "average miss" in block and "root mean square" in block
+        assert "root mean square" in block
+        assert "%" not in block
+        assert len(block.splitlines()) == 2
     ps.plt.close(fig)
 
 
@@ -177,7 +213,7 @@ def test_the_slope_is_a_clause_rather_than_a_number_on_the_panel():
     rules out compression toward the middle, which no error metric states."""
     assert "not compressed toward the middle" in figures.AGREEMENT_TEXT.description
     fig = figures.predicted_against_measured(panels())
-    drawn = " ".join(note.get_text() for ax in fig.axes for note in ax.texts)
+    drawn = " ".join(note.get_text() for ax in gas_panels(fig) for note in ax.texts)
     assert "slope" not in drawn.lower()
     ps.plt.close(fig)
 
@@ -189,6 +225,14 @@ def test_no_coefficient_of_determination_appears():
     said = " ".join([text.title, text.subtitle, text.description]).lower()
     for term in ("r2", "r²", "coefficient of determination", "variance explained"):
         assert term not in said
+
+
+def test_the_description_states_the_over_and_under_pattern_the_panel_shows():
+    """It is the clearest statement of the finding available and it was buried
+    behind the 2015 sentence."""
+    said = figures.AGREEMENT_TEXT.description
+    assert "above the line at low measured values and below it at high ones" in said
+    assert "too much predicted in the weak months and too little in the strong" in said
 
 
 def test_the_marked_year_claim_is_year_level_and_methane_only():
