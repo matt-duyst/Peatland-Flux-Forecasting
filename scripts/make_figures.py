@@ -163,9 +163,9 @@ def main() -> None:
     fragments.append(plotstyle.readme_block(figures.STABILITY_TEXT, "coefficient_stability"))
     print(f"wrote {path.relative_to(plotstyle.figures_dir().parent)}")
 
-    # Predicted against measured reads the same scored forecasts, at one horizon
-    # and on the months every method scored, so no method is advantaged by being
-    # asked about a different set.
+    # Prediction error by year reads the same scored forecasts, at one horizon and
+    # on the months every method scored, so no method is advantaged by being asked
+    # about a different set.
     agreement = {}
     for key, _, _ in figures.GAS_PANEL:
         frames = {}
@@ -175,10 +175,10 @@ def main() -> None:
             frames[family] = frame
         agreement[key] = figures.agreement_panel(frames)
 
-    fig = figures.predicted_against_measured(agreement)
-    path = plotstyle.save(fig, "predicted_against_measured")
+    fig = figures.prediction_error_by_year(agreement)
+    path = plotstyle.save(fig, "prediction_error_by_year")
     fragments.append(plotstyle.readme_block(figures.AGREEMENT_TEXT,
-                                            "predicted_against_measured"))
+                                            "prediction_error_by_year"))
     print(f"wrote {path.relative_to(plotstyle.figures_dir().parent)}")
 
     # The seasonal split reads the observed months alone, over the whole record

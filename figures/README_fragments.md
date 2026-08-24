@@ -54,13 +54,13 @@ Two marks stand where a number would mean nothing. The date question does not ap
 
 The same analysis is drawn twice, once weighting each month by how well it was measured and once not. Both fail and neither is the better treatment: weighted, the coefficient rises 51%, from 2.704 to 4.077; unweighted, 38%, from 2.385 to 3.299. Every step's range overlaps the first, so no single step is decisive, and the evidence is that it climbs at all four and never once falls. The soil temperature coefficient moves 16% along the same path, and only without weighting is it flat.
 
-### Predicted against measured monthly flux at Marcell Bog Lake Peatland
+### Prediction error by year at Marcell Bog Lake Peatland (2013 to 2019)
 
-![Predicted against measured monthly flux at Marcell Bog Lake Peatland](figures/predicted_against_measured.png)
+![Prediction error by year at Marcell Bog Lake Peatland (2013 to 2019)](figures/prediction_error_by_year.png)
 
-**Each point is one month, predicted a month ahead. The green bar spans what all eight fitted methods said for that month, so a short bar means they agreed with each other. The black mark beside it is the average of that month in earlier years, which beats every one of them and is drawn to show that the two miss the same months. The diagonal is where a prediction equals the measurement (nothing here is required to reach it).**
+**Each panel is one evaluated year. Each point is one month, placed at the middle of what the eight fitted methods predicted for it. Prediction error is how far a prediction fell from what was measured. It is taken here as the measurement minus the prediction, so a point above the zero line was predicted too low. The grey points are the months of every other year, repeated behind every panel. Carbon dioxide runs negative because the peatland takes up more carbon than it releases, and methane runs positive because peatlands emit it. Every panel in a row shares its axes.**
 
-The two numbers in each panel are for all eight fitted methods together. The root mean square weights large misses more heavily, so the gap between them says a few big errors carry the total. On methane the bars sit above the line at low measured values and below it at high ones: too much predicted in the weak months and too little in the strong. Their range holds the measurement in 30% of methane months and 11% of carbon dioxide months, and misses the same way as the black mark in 75% and 87%, so the methods agree with each other and fail where it fails. They are not compressed toward the middle, the slope against the measurements being 1.07 and 0.94. Methane's 2015 is missed three times as badly as any other year; carbon dioxide's is not.
+Across every evaluated year the methods fail in much the same way, missing by similar amounts and in similar directions regardless of which year they are predicting. The one exception is methane in 2015, and what sets it apart is which months it contains rather than how they were predicted: a weak season holds no large months, so its points sit entirely in the lower half of the axis.
 
 ### The seasonal cycle in monthly flux at Marcell Bog Lake Peatland
 

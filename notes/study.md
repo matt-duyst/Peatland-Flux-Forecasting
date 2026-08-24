@@ -2042,123 +2042,561 @@ and which stay in these notes. Significance marks, since the binomial threshold
 is the published rule rather than a calibrated error rate and stars would imply
 otherwise. A colorbar, since every bar prints its value.
 
-### The predicted-against-measured figure
+### The prediction-error figure
 
-`figures/predicted_against_measured.png`, built by
-`study.figures.predicted_against_measured` from `study.figures.agreement_panel`.
+`figures/prediction_error_by_year.png`, built by
+`study.figures.prediction_error_by_year` from `study.figures.agreement_panel`,
+whose columns `study.figures.agreement_errors` turns into errors.
 
 **Why it exists.** The forecast comparison summarizes error by horizon and the
-observed-and-predicted figure shows when the predictions fail. Neither shows a
-prediction against a measurement directly, which is how much and in which
-direction.
+observed-and-predicted figure shows when the predictions fail. Neither shows how
+much a prediction missed by against the month it missed on, which is where the
+arrangement of the misses is visible.
+
+**Three forms, and the third is the one that is kept.**
+
+1. **Predicted against measured**, a pooled one-to-one scatter with 2015 ringed.
+   The ring asserted a grouping the panel did not show: those months are
+   scattered across the axis rather than clustered. Cut.
+2. **Error against measured**, a pooled residual panel. The residual form was
+   right and is kept: it exaggerates the vertical deviations relative to the
+   scatter they came from, and a one-to-one panel puts the finding at a distance
+   from a diagonal that a reader has to infer while the diagonal's own range
+   compresses it. What it showed was spread without direction, and no year in it.
+3. **Small multiples by year**, this one. Six years told apart by hue would
+   overlap into one cloud; a panel per year separates them. Faceting was chosen
+   over color for exactly that reason.
+
+**What was given up in the move to facets.** The pooled residual build drew a
+three-step band showing the average miss in each third of the months by size,
+which made the widening visible rather than only stated. It is not drawn here:
+the band is the same in every panel, so sixteen copies of it spend ink on
+something that does not vary across the facets, which is the one thing a small
+multiple is for. The widening is now a number in these notes and nowhere on the
+figure. If the year figure is cut, the band goes back.
 
 **No precedent, and this one was searched for rather than assumed.** The notes
-above hold Deventer figures 8, 9 and 10 and Irvin figure 9; none is a
-predicted-against-measured plot, and no paper in this study's grounding carries
-one. Designed from first principles and recorded as such.
+above hold Deventer figures 8, 9 and 10 and Irvin figure 9; none is a residual
+or a predicted-against-measured plot, and no paper in this study's grounding
+carries one. Designed from first principles and recorded as such.
 
-**Two findings this figure carries that no other does.**
+**Three findings this figure carries that no other does.**
 
-1. The eight fitted methods **bracket the measurement in 30% of methane months
-   and 11% of carbon dioxide months**. They agree closely with each other and are
+1. The eight fitted methods **bracket the measurement in 56% of methane months
+   and 16% of carbon dioxide months**. They agree closely with each other and are
    wrong together: the non-separation result arriving from a third direction,
    after the shared-months correction and the Diebold-Mariano margins.
-2. They **miss in the same direction as the seasonal average in 75% and 87% of
+2. They **miss in the same direction as the seasonal average in 81% and 87% of
    months**, at error correlations of 0.79 and 0.90. They fail on the same
    months, which is stronger than either failing alone and is why the seasonal
    average is drawn beside them rather than left to the forecast figure.
+3. The errors **widen with the size of the month**. Pooled over all eight
+   methods, mean absolute error runs **3.1 in methane's smallest third of months
+   against 13.2 in its largest**, and **0.12 against 0.33** on carbon dioxide,
+   with Spearman correlations between miss size and month size of 0.49 and 0.44
+   (p = 5e-29 and 3e-33). The seasonal average's own miss widens with it, 1.4 to
+   15.3 and 0.13 to 0.34. This is what the residual panel made visible and the
+   one-to-one panel did not.
 
-**A premise corrected before the figure was designed.** The claim that the largest
-misses are over-predictions does not survive pooling: over-prediction runs 31 of
-57 methane months and 41 of 85 carbon dioxide, and among the ten largest misses
-it is 6 of 10 and 3 of 10. The structure is real but **year-level and methane
-only**: 2015, the weakest evaluated season at 0.45 of the average year, is missed
-three times as badly as any other year (mean absolute error 14.7 against 4.0 to
-8.3) with 62% of its misses from above, while 2018 at 1.12 is missed mostly from
-below. That is what a fixed seasonal shape does, and it averages to a coin flip
-over the pooled sample. The figure says it at year level and nowhere more
-strongly.
+**What a widening residual cloud licenses, and what it does not. This was got
+wrong once and the wrong version was published in the figure.** The first
+residual build's description said a non-random arrangement of residuals means the
+model is **under-specified** — a missing variable or an unspecified curve — and
+concluded that what the methods lack is whatever sets the size of a season. That
+is not what a widening cloud shows. **The under-specification diagnostic is a
+pattern in the mean of the residuals**: a slope, or a curve, in where they sit.
+Non-constant spread around a flat mean is a different diagnostic with a different
+name and different consequences. The claim rested on a slope, and the same
+description reported, three sentences later, that there is no slope: −0.08 and
++0.06, neither separable from flat. It contradicted itself and the stronger half
+was the unsupported one. The wording is corrected and a test now refuses the term
+anywhere in the figure's words.
+
+**What the widening does mean, on its own terms.** The size of the miss scales
+with the size of the month while its direction stays centred on zero. Regressing
+log absolute error on log absolute measurement gives an exponent of **0.81 on
+methane (95% CI 0.66 to 0.97) and 0.75 on carbon dioxide (0.63 to 0.87)** — close
+to proportional, a little below it. Three consequences, none of which is a claim
+about a missing variable:
+
+1. **A pooled error figure describes no month.** Methane's 8.3 is an average over
+   a regime running 3.1 and one running 13.2. Quoting it alone overstates the
+   accuracy on big months and understates it on small ones.
+2. **The methods are about equally wrong in relative terms everywhere.** Mean
+   absolute error over mean measurement runs 0.25, 0.28 and 0.21 across methane's
+   thirds. They are not doing disproportionately badly on the large seasons; the
+   absolute misses simply follow the size of the month. This is the sentence that
+   most directly kills the earlier reading — if something specific to big seasons
+   were missing, the relative miss would climb, and it does not.
+3. **Constant-width uncertainty would be wrong at both ends.** Anything this
+   study reports as a single interval is too wide for small months and too narrow
+   for large ones.
+
+Carbon dioxide's relative miss is not quotable in the smallest third: those
+months sit near zero flux, so the ratio blows up (1.56 against 0.33 and 0.26).
+That is an artifact of the denominator and not a finding, and it is why the
+relative-miss argument above is made on methane.
+
+**A premise corrected three times.** Each correction cut a claim the figure could
+not carry: the first cut a pooled direction claim, the second cut the tilt, the
+third cut the year-level direction claim and the three-times factor with it. The
+first, made before the one-to-one figure was designed: the claim
+that the largest misses are over-predictions does not survive pooling, at 31 of
+57 methane months and 41 of 85 carbon dioxide, and 6 of 10 and 3 of 10 among the
+ten largest. The residual form forced the second. Redrawn against zero, **there
+is no tilt**: the slope of error against measurement is **−0.08 on methane
+(p = 0.24) and +0.06 on carbon dioxide (p = 0.27)**, both confidence intervals
+straddling zero and the two signs opposite each other. So the pattern a reader is
+taught to look for on a residual plot — negative residuals at small values and
+positive at large — **is not present here in either gas**, and the description
+says so rather than leaving its absence to be discovered. The old description's
+"too much predicted in the weak months and too little in the strong" was a
+reading of a handful of bars and is gone; it was also inconsistent with the same
+description's slope of 1.07, which says the opposite.
+
+**The year-level structure, measured again on the corrected panel.** Pooled over
+all eight methods, methane's mean absolute error by year runs **16.5 in 2015,
+5.9, 10.1, 7.7 and 4.6 in 2016 to 2019**, and 2.9 on the single scored month of
+2020. So 2015 is the worst year by a clear margin, but **not by the factor this
+study has been quoting**: 16.5 against the mean of 7.1 across the other years is
+**2.3 times**, not three. The three-times figure compared 2015 against the *best*
+other year rather than against their average, and it was computed on the
+middle-of-four the pivot bug produced. Against the best year, 2019 at 4.6, it is
+3.5 times. The honest statement is a range and it is quoted as 2.3 here.
+
+**The direction half of the year claim does not survive at all.** "2015 is missed
+mostly from above" is true of the eight methods pooled, at 64% of its 64
+predictions. It is **not** true of the points the figure draws, which are one
+median per month: **5 of 2015's 8 months fall below the line, against 9 of 2016's
+12.** By that measure 2016 is the more over-predicted year. Singling 2015 out for
+direction is therefore not something any form of this figure has shown, and the
+description no longer says it. Carbon dioxide's yearly mean errors run −0.12 to
++0.13 and its below-the-line counts run 3 of 12 to 9 of 12 with no order to them.
+
+**What 2015 separates on, and the reading that replaced the earlier one.** An
+earlier build of this description said 2015 "separates, and it separates
+sideways", quoting that its months span **36% of methane's evaluated range against
+76% to 98% for the other years**. The span figures are right and are kept, but
+the framing was wrong twice over. It was a rhetorical construction rather than a
+statement, and more importantly **it is a fact about which months occurred, not
+about prediction quality at all**: a weak season contains no large months, so of
+course its points sit in one part of the axis. Read as a finding about the
+methods it says nothing. It is now stated as what it is, a property of that
+year's data, and the prediction claim is made separately.
+
+**The prediction claim, controlled for the widening.** A raw yearly miss cannot
+separate a year that was predicted badly from one that happened to hold large
+months, because the miss grows with the size of the month. Dividing each year's
+miss by what months of that size are missed by across the record does separate
+them. `agreement_panel` computes it as `year_ratio`:
+
+| gas | year | ratio |
+|---|---|---|
+| methane | **2015** | **1.68** |
+| methane | 2017 | 1.16 |
+| methane | 2018 | 0.97 |
+| methane | 2020 (one month) | 0.96 |
+| methane | 2016 | 0.71 |
+| methane | 2019 | 0.59 |
+| carbon dioxide | widest, 2020 (one month) | 1.23 |
+| carbon dioxide | widest full year, 2014 | 1.18 |
+
+2015's months sit in the **middle** third of methane's size distribution, not the
+smallest: 6 of its 8 fall between 17 and 44 and 2 above 44, none below 17. Months
+of that size are missed by **9.8** across the record and 2015's by **16.5**, so
+it is missed **1.7 times worse than its own months' size accounts for** while no
+other methane year passes 1.16. That is the claim the description makes, and it
+is the one claim about 2015 that survives every correction: it is not about
+direction, not about the raw yearly average, and not about where its months sit.
+
+**The deepest single error on the panel is 2015's**, 49 too much predicted where
+40 was measured, in July 2015. Kept in these notes; it is one point and the
+description no longer spends a clause on it.
+
+**Regressing the four full methane years' mean error on their amplitude gives
+p = 0.33 on four points**, which is not a result and is not quoted anywhere on
+the figure.
+
+**Why the 2020 column holds one month, checked rather than assumed.** Both 2020
+panels show a single point and it is correct. The panel takes only the months
+**every family scored**, and the three families reach very different distances:
+
+| gas | benchmarks | autoregressive | exogenous |
+|---|---|---|---|
+| methane | to 2021-12 | to 2021-12 | **to 2020-01** |
+| carbon dioxide | to 2024-12 | to 2024-12 | **to 2020-01** |
+
+The exogenous family stops at **2020-01** on both gases because the drivers it
+needs stop before it: `atm_temp_f` and `precip_in` in
+`data/processed/monthly_bog_lake_fen.csv` run 2009-04 to **2019-12**. At a
+one-month horizon the last target reachable from a 2019-12 origin is 2020-01, so
+that is the last month the driver-using models can score and therefore the last
+month every family shares. The shared set runs 2015-03 to 2020-01 on methane and
+2013-01 to 2020-01 on carbon dioxide, giving **{2015: 8, 2016: 12, 2017: 12,
+2018: 12, 2019: 12, 2020: 1}** and **{2013: 12 ... 2019: 12, 2020: 1}**. Not a
+defect. It does mean a full grid column carries two months out of 142, and
+dropping or folding 2020 is available if the column is judged not to earn its
+width; it is kept because a thin panel is a true statement about where the record
+ends.
+
+**January 2020 was scorable and is omitted, with the reason.** It is the last
+month all three families could reach. The benchmarks and the autoregressive
+family run to 2021-12 on methane and 2024-12 on carbon dioxide, but the exogenous
+family needs air temperature and precipitation, and both stop at **2019-12** in
+`data/processed/monthly_bog_lake_fen.csv`. At a one-month horizon the last target
+reachable from a 2019-12 origin is 2020-01, so that is the last month the
+driver-using models can score and the last the three families share. It is a real
+scored month and it was dropped anyway: **one month out of 142 on each row would
+have occupied a full grid column for a single point.**
+
+**What dropping it bought.** The grid went from eight columns to seven and the
+panels from **243.6 px wide to 280.3 px**, a gain of 36.7 px or **15%** on every
+one of the twelve, at no cost in height. The rule is a constant rather than a
+hardcoded year: `YEAR_MIN_MONTHS = 3`, so a year needs a quarter of itself before
+it earns a column.
+
+**It is dropped from the background as well, and the title follows the columns.**
+An earlier pass kept January 2020 in the grey behind every panel and titled the
+figure *(2013 to 2020)* on the set's convention that the parenthesis gives the
+span of the record drawn. That was defensible but it named a year no column
+carried, and a reader counting columns would have looked for a panel that is not
+there. The month is now out of the figure entirely, foreground and background,
+and the title reads **(2013 to 2019)**, which is the span of everything drawn.
+The scored set behind the figure is unchanged: `agreement_panel` still returns 57
+methane months and 85 carbon dioxide months, and every pooled figure in these
+notes is computed over those.
+
+**The description was cut from six lines to two.** Under twelve small panels,
+six lines of text put the words over more of the canvas than the data, which
+fails the whitespace test from the other side. What went is everything precise
+that **cannot be checked against a panel**: the pooled error measures, the 1.7
+ratio, the 16.5 against 9.8 comparison, the bracketing and same-side shares, and
+the January 2020 explanation. All of it is in these notes.
+
+**And then rewritten, because two lines can still say nothing.** The first cut
+read *"The panels look alike: the methods fail in much the same way in every
+year"*, which states that the panels resemble each other without saying what the
+resemblance means. What it means is that **nothing about a particular year makes
+the methods better or worse at predicting it**, and that is the finding. The
+description now says it: they miss by similar amounts and in similar directions
+regardless of which year they are predicting.
+
+**The gap under the last row was half again the gap over the first.** Measured on
+the built canvas, the subtitle-to-first-row gap was 43.6 px and the last-row-to-
+description gap 88.5 px. The excess is `XAXIS_BLOCK_PX`, the 74 px `canvas_area`
+reserves under the drawing area for tick labels and an axis name. This figure
+does not use it: each row carries its own axis name inside its own band. Taking
+**45 px** of it back levels the two gaps at 43.6 and 43.5, and the canvas came
+down from 1230 to **1185 px** by the same amount, so the panels kept their height
+at 280.3 by 229.8 px.
+
+**The description block is a fixed allocation, so cutting the text leaves the
+space empty rather than giving it to the panels.** `DESCRIPTION_BLOCK_PX` is 156
+across the set so that figures keep the same proportions whatever they say, and a
+two-line description uses about 58 of it. The remaining 98 px reads as bottom
+margin. Sizing the block to its contents would recover it and would break the
+proportions rule this set holds everywhere else, so it was not done.
+
+**Ecological context, added here and missing everywhere else in the set.** No
+figure in this set said **why carbon dioxide runs negative and methane runs
+positive**. A reader meets one axis below zero and one above with nothing to tell
+them that is the ecosystem doing two different things rather than a plotting
+convention. The subtitle now says it: carbon dioxide runs negative because the
+peatland takes up more carbon than it releases, and methane runs positive because
+peatlands emit it.
+
+**The same context is missing from two other figures and was not added to them.**
+`figures/seasonal_cycle.png` draws both gases' cycles with carbon dioxide's
+inverted against methane's and never says why. `figures/observed_and_predicted.png`
+does the same on a time axis. Either they each carry the clause, or the README
+carries it once above the figure set and the individual figures rely on it. The
+second is probably right, since it is a fact about the site rather than about any
+one figure. **Not changed now**; recorded so it is not lost.
+
+**Prediction error is defined on the figure rather than assumed.** The title
+names it and nothing said what it was, which left a reader meeting an axis called
+"Error" to work out what it was the error of. The subtitle now defines it before
+giving the sign convention: how far a prediction fell from what was measured,
+taken as the measurement minus the prediction.
 
 **One horizon, at one month**, matching the observed-and-predicted figure for the
 same reason: it is the horizon most favorable to the fitted methods, so falling
 short of the seasonal average there says more than doing so a year out.
 
-**A key, added after the build.** The first version had none: a reader met green
+**A key, added after the first build.** That build had none: a reader met green
 bars and black dashes with nothing on the panel to read them by, and had to go to
 the subtitle to learn what they were. A figure that must be read before it can be
-looked at has failed. One key rather than two — the panels are side by side and
-carry the same marks — set below both, framed, in the two-column ruled-heading
-form, naming all three marks.
+looked at has failed. **The zero line had been left out of it** for two builds,
+which was the worst of the omissions: it is the reference every panel is read
+against, and the subtitle explaining the sign convention is not the same thing as
+naming the line.
 
-**No method is identifiable.** Each month is one vertical bar spanning all eight
-fitted predictions. The median spread is 0.23 of the observed standard deviation
-on methane and 0.15 on carbon dioxide, so the bars are short — which is itself
-the finding. Eight separate clouds would have invited the ranking the study
-denies.
+**The key is held right of and below the middle of its region.** Centered
+exactly, it sat at the same height as the row's rotated axis name, which is also
+centered on the row, and two blocks at one height read as a single band however
+far apart they are. Dropping the key below that line is what separates them;
+moving it right of center keeps it in the empty columns rather than against the
+canvas edge.
 
-**Every month of 2015 is marked, by shape and weight rather than by hue.** The
-first build drew one callout pointing at a single bar, which cannot say that the
-rest of the year is scattered across the panel. Each of those months now carries
-an open ring as well as a heavier bar, and the key names them. Colour was not
-available: it already means which mark this is, and a recoloured year would make
-it mean the mark and the year at once, which is the collision this set avoids
-everywhere. Colouring each year separately was considered and rejected — six
-categorical hues that are distinguishable, colour-blind safe and clear of blue,
-orange and green do not exist, and it would assert that year is the organising
-variable when the finding concerns one year. Carbon dioxide's 2015 looks like
-every other year, and that contrast is the point.
+**The key moved into the gap the methane row leaves.** It sat in a band under
+both rows, which cost 96 px of height for a block of three entries. Methane has
+no forecasts before 2015, so the two columns at the left of its row are blank
+anyway, and the key standing in them costs nothing. That height went to the
+panels, and the canvas came down from 1350 to 1230 px at the same time. The key
+also now sits where a reader meets it before the panels rather than past them.
+Two things had to be got right: it stops 84 px short of the methane row's rotated
+axis name, which stands in the gutter beside the first panel and was otherwise
+drawn straight through the frame, and its font is two points below the set's
+legend size, since it has two grid columns to fit in rather than the whole canvas.
 
-**Two numbers on the panel, two in the description.** Four lines of text in each
-panel was more than a reader wants while looking at a point. The two error
-measures stay, because a magnitude is worth having in front of the marks; the two
-shares moved out, because they are statements about the whole cloud rather than
-things read off a position.
+**The key does not depend on that gap existing.** Methane happening to start two
+years after carbon dioxide is what leaves the columns free, and a figure whose key
+existed only because of an accident of the record would lose it the moment the
+record changed. The layout decides where the key goes **before** it computes the
+row height: if some row leaves `YEAR_KEY_COLUMNS` columns empty at its left the
+key takes them, and otherwise a band under the rows is reserved and the rows are
+made shorter to pay for it. A test covers both paths.
 
-**The clearest statement of the finding was buried and is now first.** On methane
-the bars sit above the line at low measured values and below it at high ones —
-too much predicted in the weak months and too little in the strong. That is the
-year-level structure visible without any annotation, and it had been sitting
-behind the 2015 sentence at the end of the description.
+**The heading is a label and it is centered.** It reads `What each mark shows`.
+It was "What each mark is" for a build, a sentence fragment doing a label's job,
+then `Marks`, a placeholder rather than a label, then "What each point shows",
+which is plain but not exact: one of the three entries is a line rather than a
+point. The current wording is both. Centering needed a change to `_underline_legend_headings`:
+matplotlib left-aligns every legend label including a heading, which puts the
+heading off to one side of the column it heads and makes it read as another
+entry. The helper now recovers the columns from the drawn artists, since
+matplotlib does not expose which entry went into which column, and moves each
+heading to the middle of its own before ruling it.
 
-**Four numbers, none of which ranks anything.** Pooled mean absolute error and
-root mean square error across all eight methods together, in the gas's own units,
-labeled as the whole cloud; plus the two shares above. The gap between the two
-error measures is itself informative — 8.3 against 13.3 on methane, a ratio of
-1.60, against 0.21 and 0.28 on carbon dioxide at 1.32 — because the root mean
-square weights large misses more heavily, so a wide gap says a few big errors
-carry the total, which is what a failure concentrated in one weak season
-produces. The description says that rather than leaving it to be inferred.
+**One column, after a build with two.** The key was split between `Points` and
+`Reference`, which put the zero line on its own away from the two kinds of point.
+That division is one a reader cannot see on the panel and does not need: all
+three are simply what is drawn. Three entries under one heading is shorter to
+read than two lists with a rule to work out between them. The zero line's gloss
+is parenthesized rather than set off by a comma, since the comma made the entry
+read as two things named rather than one thing and what it means.
+
+**Both rows carry year labels, and the columns really do align.** For one build
+only the top row was labeled. The rows are drawn on one eight-column grid indexed
+by year, so 2015 sits at the same x in both, but with the lower row unlabeled a
+reader has nothing to check that against and will reasonably assume the rows are
+offset, since methane's first panel is 2015 and carbon dioxide's is 2013. Every
+panel in both rows is labeled now and a test asserts the alignment holds.
+
+**Nothing is drawn in methane's 2013 and 2014 columns.** An earlier build put a
+"no forecasts before 2015" note in them. It stood where every other column
+carries a year label, so it read as a third kind of mark rather than as an
+absence. The columns are empty and the fact moved to the description, where it is
+a statement about the record: methane has no forecasts before 2015, when its
+record first reached the sixty months a forecast needs.
+
+**The gas names are framed, as they are across the set.** They were plain rotated
+text in the gutter for one build, which matched nothing else and did not read as
+a row heading. Each row now carries the bordered bold label the gas panels take
+elsewhere, centered over that row's own panels. The rotated axis name stays in
+the gutter and is now one line rather than two, since it no longer has to carry
+the gas name as well.
+
+**The background points were too heavy.** At `#D3D3D3` and 3.0 pt against a
+foreground at 4.6 pt they competed with the year they exist to give context for,
+which is most visible on the carbon dioxide row where 12 foreground months sit
+among 73 background ones. They are `#DEDEDE` at 2.6 pt now and the foreground is
+5.0 pt.
+
+**Panel size: eight columns kept, height raised instead.** The panels were 244 px
+wide and **191 px tall**, and the complaint that they were narrow was really that
+they were short: these are residual panels and vertical position is what is read
+off them. Fewer columns buys width, not height. Measured, at this canvas width:
+
+| layout | panel width | canvas height for square panels | panel area |
+|---|---|---|---|
+| **8 columns, 2 rows** | 244 px | 1296 px | 59k px² |
+| 4 columns, 4 rows | 500 px | 3153 px | 250k px² |
+| 3 columns, 6 rows | 671 px | 5524 px | 451k px² |
+
+Four columns would give **4.2 times the panel area** but needs a canvas **2.4
+times taller** than the one in use, well past the 1900 px of the tallest figure
+in this set, and it would split each gas into its own grid so the two could no
+longer be compared column by column. Raising the canvas from 1250 to 1350 px
+instead brings the panels to **244 by 241 px**, square, for an 8% increase in
+height. If the points are still judged too crowded, four columns is the next
+move and the cost is recorded here.
+
+**No method is identifiable, and at this size no method is drawn.** The pooled
+builds drew each month as a vertical bar spanning all eight fitted errors; the
+median spread is 0.37 of the observed standard deviation on methane and 0.22 on
+carbon dioxide, so the bars were short, which was itself the finding. Here each
+month is **one point at the middle of the eight**. Two reasons, and the first is
+decisive: the background-context device repeats every other year behind each
+panel, so a panel carries about 140 background months, and drawn as segments that
+is a grey wash the foreground year cannot be picked out of. Second, at a 263 px
+panel against the 642 px of the pooled build, segments shrink by a factor of
+0.41: the median falls from 28.6 px to about 11.7 px and the shortest from 5.2 px
+to about 2.1 px, below the 2.9 px the line is drawn wide, so the shortest few
+would stop encoding their own length. What the segments carried is a pooled
+statement about method agreement, and the description makes it in numbers.
+
+**The seasonal average is not drawn here either.** It was one of the two marks on
+the pooled panel and it earned its place there. At this size a third mark type
+doubles the foreground ink in exactly the place the year signal has to be legible,
+and the comparison it carries — the eight fall the same side of zero as the
+seasonal average in 81% and 87% of months — is pooled rather than year-level, so
+repeating it in sixteen panels shows nothing that varies across them. It is a
+number in the description.
+
+**A bug in what the bar spanned, found by asking why some dashes looked
+unaccompanied.** `agreement_panel` built the range with
+`pivot_table(index="target", columns="method", values="forecast")`. Both fitted
+families run **the same four method names**, so the pivot's default `aggfunc` of
+`mean` silently averaged each method's autoregressive and exogenous prediction
+and left a range over **four numbers where the figure said eight**. Nothing
+errored and nothing looked wrong; the bar was simply shorter than it should have
+been. What it cost:
+
+| | drawn before | correct |
+|---|---|---|
+| median bar, methane | 5.58 | **9.06** (×1.57) |
+| median bar, carbon dioxide | 0.082 | **0.118** (×1.22) |
+| brackets the measurement, methane | 30% | **56%** |
+| brackets the measurement, carbon dioxide | 11% | **16%** |
+| same side as the seasonal average, methane | 75% | **81%** |
+| median bar / observed sd, methane | 0.23 | **0.37** |
+
+The fix pivots on `["family", "method"]`. The pooled error measures were never
+affected — they are taken from the raw scored rows, so 8.3, 13.3, 0.21 and 0.28
+stand, as do the tercile misses. **The bracketing share published in the earlier
+figure was wrong by roughly a factor of two on methane** and every place it
+appeared has been corrected. A test now asserts the range reaches the extremes of
+all eight predictions, and a second asserts that the collapsing pivot would
+shrink both the bar and the bracketing share, so the mistake cannot return
+quietly. The two other pivots on `method` in the codebase were checked and are
+both safe: `evaluation.per_origin` pivots inside one family, and
+`model_examinations.errors_at` pivots per family and prefixes the columns.
+
+**Why the black dashes looked unaccompanied, which is what started the check.**
+Neither of the two explanations offered was right. No segment is too short to
+draw — the shortest renders at 5.2 px against a 2.9 px line width, and none is
+sub-pixel — and no month carries a seasonal average without eight fitted
+predictions behind it. The dash sits at **the same horizontal position as its
+bar** but often far from it vertically: 34 of 57 methane dashes and 57 of 85
+carbon dioxide dashes fall outside their bar's span, 16 and 36 of them by more
+than 10 px, up to 100 px. The dash is also drawn **five times wider** than the bar
+(7 pt against 1.4 pt, 14.6 px against 2.9 px), so a separated dash reads as a
+standalone mark with nothing beside it. It is a consequence of the finding rather
+than a defect: the seasonal average and the fitted methods disagree, which is why
+both are drawn.
+
+**No year is set apart, and the mark that did it is gone.** An earlier build gave
+every month of 2015 an open ring and a heavier bar. Checked against the panel,
+those months sit at measured values from 12 to 52 rather than clustered, so the
+ring grouped points the panel shows as ungrouped. On the residual panel the
+year-level structure would have to arrive as a slope to be readable, and it does
+not arrive at all — see the tilt above. Nothing was added back in its place.
+
+**No numbers on the panel at all.** The one-to-one build carried two lines in each
+panel, the pooled mean absolute error and root mean square error, on the argument
+that a magnitude is worth having in front of the marks. The residual form retires
+that argument: the vertical axis **is** the error, in the gas's own units, so a
+magnitude is now read off a position and a corner block would restate the axis a
+reader is already looking at. Both lines moved to the description. The zero
+returned is deliberate — the question asked was whether one number should come
+back, and on this form none should.
+
+**What the numbers cost to move.** The description block holds five lines and it
+is full. The sentence explaining why both error measures are quoted — the root
+mean square weights large misses more heavily, so the gap between 8.3 and 13.3
+(ratio 1.60) and between 0.21 and 0.28 (1.32) says a few big errors carry the
+total — did not fit alongside the widening, the absent tilt, the two shares and
+the magnitudes themselves. It was cut rather than the panel being given a
+number back. The ratios are recorded here, and the widening sentence now carries
+the same point in a form a reader can act on: the big errors are the big months.
 
 **No coefficient of determination.** It inflates on a strongly seasonal series:
 predicting the seasonal mean alone would score well while adding nothing, which
 is the exact confusion this study exists to avoid.
 
-**The slope is a clause in the description, not a number on the panel.** At 1.07
-and 0.94 it rules out compression toward the middle — the predictions span the
-observed range rather than shrinking to it — which is a statement about shape
-that no error measure makes. On the panel it would have read as a fifth score.
+**The tilt is a clause in the description, not a number on the panel.** At −0.08
+and +0.06 it is a statement about shape that no error measure makes, and it is
+reported because it is **absent**: a reader who has been told the errors are
+patterned will look for a slope first, since that is the pattern the diagnostic
+is usually taught with. On the panel it would have read as a score.
 
-**The diagonal is named rather than called a target.** The seasonal average does
-not sit on it either, and a figure that framed it as the thing to hit would be
-asserting what this study denies.
+**The widening was drawn on the pooled build and is not drawn here.** That build
+carried three flat levels per panel, each the average miss inside one third of the
+months by size, mirrored above and below zero and stepped across the axis, drawn
+from the same numbers the description quoted: 3.1, 8.7, 13.2 on methane and 0.12,
+0.18, 0.33 on carbon dioxide. A step and not a fitted envelope, because a smooth
+curve would assert a functional form for how the miss grows with the month and
+the log-log exponent's confidence interval runs 0.66 to 0.97 on methane, wide
+enough to admit several. It is recorded here in full because it is the one device
+this figure has lost to the facets, and because it is what should return if the
+year figure is cut.
+
+**The zero line is named rather than called a target.** It replaces the diagonal
+and inherits its style, light and dashed, for the same reason: the seasonal
+average does not sit on it either, and a figure that framed it as the thing to
+hit would be asserting what this study denies.
+
+**The sign convention is stated in both directions.** Error is the measurement
+minus the prediction, so above the line the prediction was too low and below it
+too high, and the subtitle says both halves. One half stated leaves the other to
+be inferred, and that inference is the thing a reader gets wrong. The axis name
+carried it too on the pooled build, as "Error, measured − predicted"; at this
+panel size the name has to sit beside a 263 px panel, so it is now "Error" and
+the subtitle does the work alone. A test checks the drawn values against the
+panel they come from rather than trusting the labels: drawn the other way round,
+every reading inverts.
+
+**Two rows aligned by year, not two blocks.** Methane has six evaluated years and
+carbon dioxide eight, so the grid is eight columns wide and methane's first two
+cells are empty. The alternative, a block per gas each starting at its own first
+year, would have avoided the empty cells but would have made the two rows'
+columns mean different years and their panels different widths. Aligning by year
+buys a reader the vertical comparison — was 2016 a bad year for both gases — and
+the empty cells state a true fact about the record, which one note across them
+gives in words: methane has no forecasts before 2015, when its record first
+reached the sixty months a forecast needs. Nothing is drawn in those cells, since
+a panel with axes and grey context but no year in it reads as a year that was
+forecast and missed everywhere.
+
+**Shared axes within a row and not across rows.** The two gases are in different
+units, so one scale through all sixteen panels is not available. Within a row
+every panel shares both axes, which is what makes the columns comparable and is
+the whole point of the form; a test holds it. The vertical axis is centered on
+zero in every row, so the line meaning no error sits at the middle.
+
+**One axis name per row rather than one per panel.** Eight copies of
+"Measured (nmol m⁻² s⁻¹)" would say eight times over what the shared scale
+already says once. Tick labels are kept on every panel, at three across and four
+up, because a panel a reader is looking at should be readable without counting
+columns back to the left edge. The row name and the axis name are set together at
+the left of each row, against that row's own first panel rather than the grid's
+left edge, which is two empty columns away on the methane row.
 
 ### Which variable goes on which axis, and the dispute about it
 
-Measured on the x-axis, predicted on the y. There is a live disagreement in the
-modelling literature about this. Piñeiro, G., Perelman, S., Guerschman, J. P. and
-Paruelo, J. M. (2008), *How to evaluate models: observed vs. predicted or
-predicted vs. observed?*, **Ecological Modelling** 216, 316-322, argue that
-regressing observed on predicted is the correct arrangement and that the reverse
-produces erroneous slope and intercept estimates. A 2019 rebuttal in the same
-journal argues their result is an artifact of how their simulation was set up and
-defends observations on the horizontal axis.
+Measured on the x-axis, error on the y. Measured stayed on the horizontal through
+the redraw, and the disagreement it belongs to is about the vertical it used to
+carry. Piñeiro, G., Perelman, S., Guerschman, J. P. and Paruelo, J. M. (2008),
+*How to evaluate models: observed vs. predicted or predicted vs. observed?*,
+**Ecological Modelling** 216, 316-322, argue that regressing observed on predicted
+is the correct arrangement and that the reverse produces erroneous slope and
+intercept estimates. A 2019 rebuttal in the same journal argues their result is an
+artifact of how their simulation was set up and defends observations on the
+horizontal axis.
 
 **The dispute concerns slope and intercept estimated from a fitted regression,
-and no regression line is drawn here.** The one slope this study quotes, 1.07 and
-0.94, is reported in the description as a shape diagnostic and is computed once,
-not read off the panel. So the disagreement does not bite on this figure. The
-choice was made knowingly and both sides are named, so a reader who holds the
-other position can see that it was considered rather than missed.
+and no regression line is drawn here.** The one slope this study quotes, the tilt
+at −0.08 and +0.06, is reported in the description as a shape diagnostic and is
+computed once, not read off the panel. So the disagreement does not bite on this
+figure. The choice was made knowingly and both sides are named, so a reader who
+holds the other position can see that it was considered rather than missed.
+
+**Plotting residuals against the observation rather than against the fitted value
+is the arrangement the diagnostic is described in**, and it is what makes the
+widening readable here: the horizontal axis is the size of the month, which is the
+variable the errors are being asked to be independent of. Against the fitted value
+the same cloud would answer a question about the model's own output instead.
 
 ### Three things from the grounding literature that bear on this figure
 

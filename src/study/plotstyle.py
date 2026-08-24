@@ -209,6 +209,15 @@ SIZES = {
     #: that names its methods by what they do rather than by their jargon, and the
     #: legend ends up over the data. Full width leaves room beside the curves.
     "stacked": (1800, 1500),
+    #: One row of small multiples per gas, one column per evaluated year. Wider
+    #: than the standard so eight columns each keep about 244 px, which is what a
+    #: panel needs before its points start to merge. The height is set so those
+    #: panels come out a little taller than they are wide rather than half as
+    #: tall: these are residual panels and vertical position is what is read off
+    #: them, so height is the dimension that cannot be given away. It came down
+    #: 120 px when the key moved into the gap the methane row leaves at its left,
+    #: which freed the band that had held the key under both rows.
+    "year grid": (2300, 1185),
 }
 
 #: Fixed pixel allocations, so a figure's proportions do not depend on how much

@@ -19,7 +19,7 @@ from matplotlib.colors import LinearSegmentedColormap, to_rgba
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 from matplotlib.patches import Rectangle
-from matplotlib.ticker import NullFormatter, ScalarFormatter
+from matplotlib.ticker import MaxNLocator, NullFormatter, ScalarFormatter
 from matplotlib.transforms import blended_transform_factory
 
 from forecast import evaluation, experiment, features, screening
@@ -582,22 +582,65 @@ def _forecast_legend(ax) -> None:
               handletextpad=0.8, fontsize=ps.LEGEND_SIZE - 1.0, framealpha=1.0)
 
 
-def _underline_legend_headings(fig, ax) -> None:
+def _underline_legend_headings(fig, ax, center: bool = False) -> None:
     """Rule each legend heading, which mathtext cannot do itself.
 
     Drawn on the figure rather than the axes so it does not appear in `ax.lines`,
     where the checks that keep the legend off the data would then see it.
+
+    With `center`, each heading is first moved to the middle of the column it
+    heads. A legend column runs from the left edge of its handles to the right
+    edge of its longest label, and a heading left-aligned with the labels sits
+    off to one side of that, reading as another entry rather than as the name of
+    the group. The rule is drawn after the move so it follows the text.
     """
     fig.canvas.draw()
     legend = ax.get_legend()
-    for text in legend.get_texts():
-        if not text.get_text().startswith("$"):
-            continue
+    headings = [text for text in legend.get_texts()
+                if text.get_text().startswith("$")]
+    if center:
+        _center_legend_headings(fig, legend, headings)
+        fig.canvas.draw()
+    for text in headings:
         box = text.get_window_extent().transformed(fig.transFigure.inverted())
         y = box.y0 - 0.10 * (box.y1 - box.y0)
         fig.add_artist(Line2D([box.x0, box.x1], [y, y], transform=fig.transFigure,
                               color=ps.INK, linewidth=0.9,
                               zorder=legend.get_zorder() + 1))
+
+
+def _center_legend_headings(fig, legend, headings) -> None:
+    """Move each heading to the middle of its own column.
+
+    Columns are recovered from the drawn artists rather than from the layout
+    arguments: matplotlib does not expose which entry went into which column,
+    but every entry in one column shares a label left edge, so grouping on that
+    edge recovers the columns whatever `ncol` was.
+    """
+    renderer = fig.canvas.get_renderer()
+    columns: dict[int, list] = {}
+    for handle, text in zip(legend.legend_handles, legend.get_texts()):
+        label = text.get_window_extent()
+        try:
+            mark = handle.get_window_extent(renderer)
+            left = min(mark.x0, label.x0)
+        except (AttributeError, TypeError, RuntimeError):
+            left = label.x0
+        columns.setdefault(round(label.x0), []).append((text, left, label.x1))
+
+    for heading in headings:
+        column = next(rows for rows in columns.values()
+                      if any(text is heading for text, _, _ in rows))
+        spans = [(left, right) for text, left, right in column
+                 if text is not heading]
+        if not spans:
+            continue
+        middle = (min(left for left, _ in spans) + max(right for _, right in spans)) / 2
+        box = heading.get_window_extent()
+        _, y = heading.get_position()
+        moved = heading.get_transform().inverted().transform(
+            (box.x0 + middle - (box.x0 + box.x1) / 2, box.y0))
+        heading.set_position((moved[0], y))
 
 
 # --------------------------------------------------------------------------
@@ -1917,31 +1960,29 @@ def seasonal_cycle(panels: dict[str, pd.DataFrame]) -> Figure:
 
 
 # --------------------------------------------------------------------------
-# Predicted against measured
+# Prediction error by year
 # --------------------------------------------------------------------------
 
 AGREEMENT_TEXT = ps.FigureText(
-    title="Predicted against measured monthly flux at Marcell Bog Lake Peatland",
+    title=("Prediction error by year at Marcell Bog Lake Peatland "
+           "(2013 to 2019)"),
     subtitle=(
-        "Each point is one month, predicted a month ahead. The green bar spans "
-        "what all eight fitted methods said for that month, so a short bar means "
-        "they agreed with each other. The black mark beside it is the average of "
-        "that month in earlier years, which beats every one of them and is drawn "
-        "to show that the two miss the same months. The diagonal is where a "
-        "prediction equals the measurement (nothing here is required to reach it)."
+        "Each panel is one evaluated year. Each point is one month, placed at the "
+        "middle of what the eight fitted methods predicted for it. Prediction "
+        "error is how far a prediction fell from what was measured. It is taken "
+        "here as the measurement minus the prediction, so a point above the zero "
+        "line was predicted too low. The grey points are the months of every other "
+        "year, repeated behind every panel. Carbon dioxide runs negative because "
+        "the peatland takes up more carbon than it releases, and methane runs "
+        "positive because peatlands emit it. Every panel in a row shares its axes."
     ),
     description=(
-        "The two numbers in each panel are for all eight fitted methods together. "
-        "The root mean square weights large misses more heavily, so the gap "
-        "between them says a few big errors carry the total. On methane the bars "
-        "sit above the line at low measured values and below it at high ones: too "
-        "much predicted in the weak months and too little in the strong. Their "
-        "range holds the measurement in 30% of methane months and 11% of carbon "
-        "dioxide months, and misses the same way as the black mark in 75% and 87%, "
-        "so the methods agree with each other and fail where it fails. They are "
-        "not compressed toward the middle, the slope against the measurements "
-        "being 1.07 and 0.94. Methane's 2015 is missed three times as badly as any "
-        "other year; carbon dioxide's is not."
+        "Across every evaluated year the methods fail in much the same way, "
+        "missing by similar amounts and in similar directions regardless of which "
+        "year they are predicting. The one exception is methane in 2015, and what "
+        "sets it apart is which months it contains rather than how they were "
+        "predicted: a weak season holds no large months, so its points sit "
+        "entirely in the lower half of the axis."
     ),
 )
 
@@ -1950,21 +1991,23 @@ AGREEMENT_TEXT = ps.FigureText(
 #: and the forecast comparison already carries the horizon story.
 AGREEMENT_HORIZON = 1
 
-#: The weakest season either gas has inside the evaluated window, at 0.45 of the
-#: average year for methane and 0.59 for carbon dioxide. Marked because it is what
-#: turns the scatter into structure on one of the two panels and not the other.
-MARKED_YEAR = 2015
-
 AGREEMENT_MEASURED = "Measured"
-AGREEMENT_PREDICTED = "Predicted"
+#: The vertical axis of every panel. Which side of zero a point falls on is the
+#: whole reading, and at this panel size the name has to be short enough to sit
+#: beside a 260 px panel, so it carries the quantity and the subtitle carries the
+#: direction of the subtraction.
+AGREEMENT_ERROR = "Error"
 
-#: The key's three entries. Every mark on the panel is named: a reader meeting
-#: green bars and black dashes with nothing to read them by has to go to the
-#: subtitle, and a figure that must be read before it can be looked at has failed.
+#: The key's three entries. Everything drawn is named: a reader meeting green and
+#: grey points with nothing to read them by has to go to the subtitle, and a
+#: figure that must be read before it can be looked at has failed. The zero line
+#: is named too. It is not a mark, but every panel is read against it, and the
+#: reference a figure is read against is the last thing that should go
+#: unexplained.
 AGREEMENT_KEYS = (
-    "All eight fitted predictions for a month",
-    "The average of that month in earlier years",
-    f"Months of {MARKED_YEAR}, the weakest season here",
+    "The months of this panel's year",
+    "The months of every other year",
+    "Zero error (where a prediction matched the measurement)",
 )
 
 
@@ -1981,11 +2024,17 @@ def agreement_panel(frames: dict[str, pd.DataFrame],
 
     keys = {key for key in evaluation.shared_targets(list(frames.values()))
             if key[0] == horizon}
-    fitted = pd.concat([evaluation.restrict(frames[family], keys)
+    fitted = pd.concat([evaluation.restrict(frames[family], keys).assign(family=family)
                         for family in ("autoregressive", "exogenous")])
     benchmarks = evaluation.restrict(frames["benchmarks"], keys)
 
-    spread = fitted.pivot_table(index="target", columns="method", values="forecast")
+    # Spread across family *and* method, not method alone. The two families run
+    # the same four method names, so pivoting on the name silently averaged each
+    # method's two predictions and left a range over four numbers where the
+    # figure said eight. It understated the bar by a median factor of 1.57 on
+    # methane and 1.22 on carbon dioxide, and halved the bracketing share.
+    spread = fitted.pivot_table(index="target", columns=["family", "method"],
+                                values="forecast")
     panel = pd.DataFrame({
         "measured": fitted.groupby("target")["actual"].first(),
         "lowest": spread.min(axis=1),
@@ -2005,60 +2054,144 @@ def agreement_panel(frames: dict[str, pd.DataFrame],
                                      & (panel["measured"] <= panel["highest"])).mean())
     panel.attrs["same_way"] = float(
         (np.sign(fitted_error) == np.sign(seasonal_error)).mean())
-    panel.attrs["slope"] = float(stats.linregress(panel["measured"].to_numpy(),
-                                                  panel["middle"].to_numpy()).slope)
+
+    # How the errors are arranged against the measurement, which is what the
+    # residual panel is for. Two things are asked of them and they answer
+    # differently: whether they tilt, and whether they widen.
+    tilt = stats.linregress(panel["measured"].to_numpy(),
+                            -fitted_error.to_numpy())
+    panel.attrs["tilt"] = float(tilt.slope)
+    panel.attrs["tilt_p_value"] = float(tilt.pvalue)
+
+    # Thirds of the months by how large the month is, so carbon dioxide's uptake
+    # sorts by size rather than by sign. Every method's miss is counted, not the
+    # middle one's, so these are on the same footing as `mean_miss` above.
+    size = panel["measured"].abs()
+    edges = np.quantile(size, [0.0, 1 / 3, 2 / 3, 1.0])
+    thirds = pd.cut(fitted["actual"].abs(), edges, labels=False, include_lowest=True)
+    by_size = missed.abs().groupby(thirds).mean()
+    panel.attrs["miss_smallest_third"] = float(by_size.iloc[0])
+    panel.attrs["miss_largest_third"] = float(by_size.iloc[-1])
+    panel.attrs["relative_miss"] = [
+        float(v) for v in (missed.abs() / fitted["actual"].abs()).groupby(thirds).mean()]
+
+    # Each year's miss against what months of its size are missed by across the
+    # record. The raw yearly miss cannot separate a year that was predicted badly
+    # from one that simply held large months, because the miss grows with the
+    # size of the month; dividing by the size-matched expectation does.
+    by_size = missed.abs().groupby(thirds).mean()
+    expected = thirds.map(by_size).groupby(fitted["target"].dt.year).mean()
+    actual = missed.abs().groupby(fitted["target"].dt.year).mean()
+    panel.attrs["year_ratio"] = {int(year): float(value)
+                                 for year, value in (actual / expected).items()}
     return panel
 
 
-#: Room at the left of each panel for its axis name and tick labels, and between
-#: the two panels. The panels are square: on a one-to-one plot the diagonal has to
-#: sit at 45 degrees or distance from it cannot be read.
-AGREEMENT_AXIS_PX = 96
-AGREEMENT_GAP_PX = 108
-AGREEMENT_HEAD_PX = 44
-AGREEMENT_XAXIS_PX = 74
-AGREEMENT_KEY_PX = 96
-
-#: The ring that marks a month of the year set apart. Shape rather than hue: color
-#: already means which mark this is, and a recolored year would make it mean the
-#: mark and the year at once.
-MARKED_RING = 9.0
 
 
-def _draw_agreement_panel(ax, panel: pd.DataFrame, unit: str) -> None:
-    """One gas: every month's measurement against what was predicted for it."""
-    low = min(panel[["measured", "lowest", "seasonal"]].min())
-    high = max(panel[["measured", "highest", "seasonal"]].max())
-    room = 0.06 * (high - low)
-    limits = (low - room, high + room)
+def agreement_errors(panel: pd.DataFrame) -> pd.DataFrame:
+    """The panel as errors: measurement minus prediction, so a positive error
+    means the prediction was too low.
 
-    # Light, and named rather than called perfect: the seasonal average does not
-    # sit on it either, and nothing on this panel is being held to it.
-    ax.plot(limits, limits, color=ps.BOUNDARY, linewidth=1.0, linestyle=(0, (5, 3)),
-            zorder=1)
+    Subtracting this way round rather than the other is the convention the axis
+    name and the subtitle both state. It is chosen so that the vertical axis runs
+    the same way as the flux does: a point high on the panel is a month the
+    methods left short.
+    """
+    measured = panel["measured"]
+    return pd.DataFrame({
+        "measured": measured,
+        # The bar's ends swap: the highest prediction is the lowest error.
+        "lowest": measured - panel["highest"],
+        "highest": measured - panel["lowest"],
+        "middle": measured - panel["middle"],
+        "seasonal": measured - panel["seasonal"],
+    }, index=panel.index)
 
-    marked = panel.index.year == MARKED_YEAR
-    for chosen, weight in ((~marked, 1.2), (marked, 2.6)):
-        rows = panel[chosen]
-        ax.vlines(rows["measured"], rows["lowest"], rows["highest"], color=ps.FITTED,
-                  linewidth=weight, zorder=3)
-    # Every month of the marked year, not one of them: a single callout cannot
-    # say that the rest of the year is scattered elsewhere on the panel.
-    rows = panel[marked]
-    ax.plot(rows["measured"], rows["middle"], linestyle="none", marker="o",
-            markersize=MARKED_RING, markerfacecolor="none", markeredgecolor=ps.FITTED,
-            markeredgewidth=1.3, zorder=5)
-    ax.plot(panel["measured"], panel["seasonal"], linestyle="none", marker="_",
-            markersize=7, markeredgewidth=1.3, color=ps.INK, zorder=4)
 
-    ax.set_xlim(*limits)
-    ax.set_ylim(*limits)
-    ax.set_xlabel(f"{AGREEMENT_MEASURED} ({unit})", fontsize=ps.LABEL_SIZE - 0.5,
-                  color=ps.INK)
-    ax.set_ylabel(f"{AGREEMENT_PREDICTED} ({unit})", fontsize=ps.LABEL_SIZE - 0.5,
-                  color=ps.INK)
-    ax.tick_params(which="both", top=False, right=False)
-    ax.grid(color=ps.GRID, linewidth=0.6, zorder=0)
+#: Room at the left for the gas name and the axis name beside it, above the top
+#: row for the year labels, under each row for its own tick labels and axis name,
+#: between the rows, and under both for the key. Each row carries its own
+#: horizontal axis because the two gases are in different units and cannot share
+#: one; within a row every panel does share it, which is what makes the columns
+#: comparable.
+YEAR_AXIS_PX = 112
+#: The band over each row holding its framed gas name, and the band under that
+#: holding one year label per panel. Both rows carry both: a row of panels whose
+#: columns are unlabeled cannot be checked against the row above it, and a reader
+#: who cannot check will assume the columns do not line up.
+YEAR_GAS_PX = 46
+YEAR_HEAD_PX = 30
+#: Tick labels and the row's axis name under them, with the name set close enough
+#: to the labels to read as belonging to them.
+YEAR_XAXIS_PX = 74
+YEAR_ROW_GAP_PX = 26
+YEAR_COLUMN_GAP_PX = 13
+
+#: The key sits in the columns the methane row leaves empty, at the top left,
+#: rather than in a band of its own under both rows. Those columns are already
+#: blank and a key standing in them costs nothing, where a band under the rows
+#: cost 96 px of height that the panels now have instead. How many leading empty
+#: columns a row needs before the key will fit in them.
+YEAR_KEY_COLUMNS = 2
+
+#: The band under both rows the key falls back to when no row leaves that many
+#: columns empty. Nothing in the data guarantees one does: methane happens to
+#: start two years after carbon dioxide, and a figure whose key exists only
+#: because of that would lose it the moment the record changed.
+YEAR_KEY_PX = 96
+
+#: Scored months a year needs before it earns a column of its own. 2020 has one
+#: on each gas, because the drivers the fitted methods need stop at the end of
+#: 2019 and the last month they can reach is January 2020. A column carrying a
+#: single point shows nothing about the year and costs its width in every row.
+#: A year below this is left out of the figure entirely, background included, so
+#: that the span in the title is the span of everything drawn.
+YEAR_MIN_MONTHS = 3
+
+#: Reclaimed from the horizontal-axis block `canvas_area` reserves under the
+#: drawing area. Each row carries its own axis name inside its own band, so that
+#: reserve is unused here, and leaving it there put half again as much space
+#: between the last row and the description as sits between the subtitle and the
+#: first row. Taking this much levels the two.
+YEAR_FOOT_PX = 45
+
+#: The months of every year but the panel's own, repeated behind each panel.
+#: Light enough that the panel's own year is what the eye lands on: at a hundred
+#: and forty background points against eight to twelve in front, anything heavier
+#: competes with the year it exists to give context for.
+YEAR_CONTEXT = "#DEDEDE"
+YEAR_CONTEXT_SIZE = 2.6
+YEAR_FOREGROUND_SIZE = 5.0
+
+
+def _draw_year_panel(ax, errors: pd.DataFrame, year: int,
+                     limits: tuple[tuple[float, float], tuple[float, float]]) -> None:
+    """One year of one gas, against every other year of it.
+
+    The panel's own year is drawn last and largest. Everything else is drawn
+    first in grey, at every panel, so the comparison a reader needs is inside the
+    panel they are looking at rather than spread across the row.
+    """
+    (low, high), reach = limits
+    chosen = errors.index.year == year
+
+    ax.axhline(0.0, color=ps.BOUNDARY, linewidth=0.9, linestyle=(0, (5, 3)),
+               zorder=2)
+    ax.plot(errors.loc[~chosen, "measured"], errors.loc[~chosen, "middle"],
+            linestyle="none", marker="o", markersize=YEAR_CONTEXT_SIZE,
+            markerfacecolor=YEAR_CONTEXT, markeredgecolor="none", zorder=1)
+    ax.plot(errors.loc[chosen, "measured"], errors.loc[chosen, "middle"],
+            linestyle="none", marker="o", markersize=YEAR_FOREGROUND_SIZE,
+            markerfacecolor=ps.FITTED, markeredgecolor="none", zorder=3)
+
+    ax.set_xlim(low, high)
+    ax.set_ylim(-reach, reach)
+    ax.xaxis.set_major_locator(MaxNLocator(3))
+    ax.yaxis.set_major_locator(MaxNLocator(4))
+    ax.tick_params(which="both", top=False, right=False, labelsize=ps.TICK_SIZE - 2.0,
+                   length=3, pad=2)
+    ax.grid(color=ps.GRID, linewidth=0.5, zorder=0)
     ax.set_axisbelow(True)
     for side in ("top", "right"):
         ax.spines[side].set_visible(False)
@@ -2066,82 +2199,173 @@ def _draw_agreement_panel(ax, panel: pd.DataFrame, unit: str) -> None:
         ax.spines[side].set_color(ps.BOUNDARY)
 
 
-def _agreement_numbers(ax, panel: pd.DataFrame, unit: str) -> None:
-    """The four numbers, in the corner the cloud leaves empty.
+def _year_key(fig, rect: tuple[float, float, float, float]) -> None:
+    """One key for every panel, standing in the columns the methane row leaves
+    empty at its left.
 
-    All four are properties of the whole cloud rather than of any method: an
-    error measure that could be read as a ranking would say the opposite of what
-    this figure is for.
+    Those columns are blank because methane has no forecasts before 2015, so a
+    key in them costs nothing, where the band it used to occupy under both rows
+    cost height the panels now have. It also puts the key where a reader meets it
+    first, above the panels rather than past them.
+
+    One column under one centered ruled heading. It was split across two columns
+    for a build, between what is drawn from the data and what it is drawn
+    against, which put the zero line on its own away from the two kinds of point.
+    That division is one a reader cannot see on the panel and does not need: all
+    three are simply what is drawn, and one list of three is shorter to read than
+    two lists with a rule to work out between them.
     """
-    digits = 2 if panel.attrs["mean_miss"] < 1 else 1
-    lines = [
-        "All eight fitted methods together",
-        f"average miss {panel.attrs['mean_miss']:.{digits}f}, "
-        f"root mean square {panel.attrs['root_mean_square']:.{digits}f}",
-    ]
-    # Two lines, not four. A magnitude is worth having while looking at a point;
-    # the two shares are statements about the whole cloud and read as well in the
-    # description, where they are not competing with the marks.
-    ax.text(0.975, 0.035, "\n".join(lines), transform=ax.transAxes, ha="right",
-            va="bottom", fontsize=ps.ANNOTATION_SIZE - 0.5, color=ps.MUTED,
-            linespacing=1.5, zorder=6)
-
-
-def _agreement_key(fig, left: float, bottom: float, width: float) -> None:
-    """One key for both panels, under them and clear of every mark.
-
-    Two columns with ruled headings, as elsewhere in the set. One key rather than
-    two: the panels are side by side and carry the same three marks, so a second
-    would repeat itself within a glance of the first.
-    """
-    ax = fig.add_axes((left, bottom, width, AGREEMENT_KEY_PX / ps.SIZES["square pair"][1]))
+    ax = fig.add_axes(rect)
     ax.set_axis_off()
-    blank = Line2D([], [], linestyle="none", marker="none")
+    dot = dict(linestyle="none", marker="o", markeredgecolor="none")
     entries = [
-        (blank, r"$\bf{What\ each\ mark\ is}$"),
-        (Line2D([], [], color=ps.FITTED, linewidth=2.4), AGREEMENT_KEYS[0]),
-        (Line2D([], [], color=ps.INK, linestyle="none", marker="_", markersize=9,
-                markeredgewidth=1.3), AGREEMENT_KEYS[1]),
-        (blank, r"$\bf{Set\ apart}$"),
-        (Line2D([], [], color=ps.FITTED, linewidth=2.6, marker="o", markersize=9,
-                markerfacecolor="none", markeredgewidth=1.3), AGREEMENT_KEYS[2]),
-        (blank, ""),
+        (Line2D([], [], linestyle="none", marker="none"),
+         r"$\bf{What\ each\ mark\ shows}$"),
+        (Line2D([], [], markerfacecolor=ps.FITTED, markersize=7, **dot),
+         AGREEMENT_KEYS[0]),
+        (Line2D([], [], markerfacecolor=YEAR_CONTEXT, markersize=6, **dot),
+         AGREEMENT_KEYS[1]),
+        (Line2D([], [], color=ps.BOUNDARY, linewidth=1.0, linestyle=(0, (5, 3))),
+         AGREEMENT_KEYS[2]),
     ]
+    # Smaller than the set's legend size: the key now stands in two grid columns
+    # rather than across the whole canvas, and its longest entry has to fit them.
+    # Held right of and below the middle of its region. The row's rotated axis
+    # name is centered on the row, so a key centered there too sits at the same
+    # height and the two read as one band however far apart they are; dropping
+    # the key below that line is what separates them. Right of center as well,
+    # so it sits in the empty columns rather than against the canvas edge.
     ps.legend(ax, handles=[handle for handle, _ in entries],
               labels=[label for _, label in entries], loc="center",
-              bbox_to_anchor=(0.5, 0.5), ncol=2, framealpha=1.0, borderpad=0.7,
-              labelspacing=0.42, columnspacing=2.4, handlelength=2.4,
-              handletextpad=0.9, fontsize=ps.LEGEND_SIZE - 1.0)
-    _underline_legend_headings(fig, ax)
+              bbox_to_anchor=(0.54, 0.34), ncol=1, framealpha=1.0, borderpad=0.7,
+              labelspacing=0.5, handlelength=1.9,
+              handletextpad=0.7, fontsize=ps.LEGEND_SIZE - 2.0)
+    _underline_legend_headings(fig, ax, center=True)
 
 
-def predicted_against_measured(panels: dict[str, pd.DataFrame]) -> Figure:
-    """Every scored month, measured against predicted, one month ahead.
+def prediction_error_by_year(panels: dict[str, pd.DataFrame]) -> Figure:
+    """One small panel per evaluated year, each year against the whole record.
 
-    The eight fitted methods are one green bar per month and no method is named:
-    the result is that they do not separate, and a panel that identified them
-    would invite the ranking the study denies. The seasonal average is drawn
-    beside them because it beats them, and because the two miss the same months.
+    Faceted rather than colored. Six years told apart by hue would overlap into
+    one cloud, which is what the pooled builds of this figure showed: the first
+    marked a single year and could not say the rest of it was scattered
+    elsewhere, and the second showed spread without direction. A panel per year
+    separates them, and drawing every other year behind each one in grey means a
+    reader sees where a year sits without a callout naming it.
+
+    A point per month rather than a segment per month. At this panel size the
+    background context is a hundred and forty months in every panel, and drawn
+    as segments it fills the panel and buries the year in it. What the segments
+    carried is a pooled statement about method agreement, which the description
+    now makes in numbers.
     """
     fig, (left, bottom, width, height) = ps.canvas_area(AGREEMENT_TEXT,
-                                                        size="square pair")
-    width_px, height_px = ps.SIZES["square pair"]
-    axis_room = AGREEMENT_AXIS_PX / width_px
-    gap = AGREEMENT_GAP_PX / width_px
-    head = AGREEMENT_HEAD_PX / height_px
+                                                        size="year grid")
+    width_px, height_px = ps.SIZES["year grid"]
+    # The reserve under the drawing area is not used here, so the rows take it.
+    bottom -= YEAR_FOOT_PX / height_px
+    height += YEAR_FOOT_PX / height_px
 
-    # Square in pixels, not in figure fractions: the canvas is wider than it is
-    # tall, so one fraction used for both sides would draw a rectangle.
-    side_px = min(((width - axis_room - gap) / 2) * width_px,
-                  (height * height_px - AGREEMENT_HEAD_PX - AGREEMENT_XAXIS_PX
-                   - AGREEMENT_KEY_PX))
-    across, down = side_px / width_px, side_px / height_px
-    for column, (key, gas, unit) in enumerate(GAS_PANEL):
-        panel = panels[key]
-        ax = fig.add_axes((left + axis_room + column * (across + gap),
-                           bottom + height - head - down, across, down))
-        _draw_agreement_panel(ax, panel, unit)
-        _agreement_numbers(ax, panel, unit)
-        ps.panel_name(ax, gas, x=0.5, align="center", y=1.0 + 30 / side_px)
-    _agreement_key(fig, left, bottom, width)
+    errors = {key: agreement_errors(panels[key]) for key, _, _ in GAS_PANEL}
+    # Only years with enough months to say anything are drawn at all. A year
+    # below the threshold is dropped from the background as well as from the
+    # foreground, so the span the title gives is the span of what is drawn.
+    months = {key: frame.index.year.value_counts() for key, frame in errors.items()}
+    years = sorted({int(year) for frame in errors.values()
+                    for year in frame.index.year
+                    if max(count.get(year, 0) for count in months.values())
+                    >= YEAR_MIN_MONTHS})
+    errors = {key: frame[frame.index.year.isin(years)]
+              for key, frame in errors.items()}
+    months = {key: frame.index.year.value_counts() for key, frame in errors.items()}
+
+    axis_room = YEAR_AXIS_PX / width_px
+    gap = YEAR_COLUMN_GAP_PX / width_px
+    across = (width - axis_room - (len(years) - 1) * gap) / len(years)
+    gas_band = YEAR_GAS_PX / height_px
+    head = YEAR_HEAD_PX / height_px
+    x_room = YEAR_XAXIS_PX / height_px
+    row_gap = YEAR_ROW_GAP_PX / height_px
+    # Each row is a framed gas name, a band of year labels, the panels, and the
+    # row's own horizontal axis. The key takes what is left at the foot, so the
+    # last row's axis name can never reach it.
+    # The columns each gas occupies, worked out before the layout because where
+    # the key goes decides how much height the rows have. Methane starts at 2015,
+    # so its names hang off its own first panel rather than off the grid's left
+    # edge, which is two empty columns away from anything it names.
+    occupied = {}
+    for key, _, _ in GAS_PANEL:
+        occupied[key] = [column for column, year in enumerate(years)
+                         if months[key].get(year, 0) >= YEAR_MIN_MONTHS]
+    in_gap = next((key for key, filled in occupied.items()
+                   if filled[0] >= YEAR_KEY_COLUMNS), None)
+
+    banding = len(GAS_PANEL) * (gas_band + head + x_room)
+    foot = 0.0 if in_gap else YEAR_KEY_PX / height_px
+    down = (height - foot - banding
+            - (len(GAS_PANEL) - 1) * row_gap) / len(GAS_PANEL)
+
+    for row, (key, gas, unit) in enumerate(GAS_PANEL):
+        frame = errors[key]
+        # One scale for the row, so a year that sits low is low against every
+        # other year rather than against its own panel.
+        span = frame["measured"].max() - frame["measured"].min()
+        limits = ((frame["measured"].min() - 0.08 * span,
+                   frame["measured"].max() + 0.08 * span),
+                  1.08 * frame["middle"].abs().max())
+        row_top = bottom + height - row * (gas_band + head + down + x_room + row_gap)
+        top = row_top - gas_band - head
+        # Nothing at all is drawn in the columns this gas does not occupy: a panel
+        # with axes and grey context but no year in it reads as a year that was
+        # forecast and missed everywhere, and a note standing where the other
+        # columns carry year labels reads as a third kind of mark. That methane
+        # starts late is a fact about the record and it is in the description.
+        filled = occupied[key]
+
+        for column in filled:
+            at = left + axis_room + column * (across + gap)
+            ax = fig.add_axes((at, top - down, across, down))
+            _draw_year_panel(ax, frame, years[column], limits)
+            if column != filled[0]:
+                ax.set_yticklabels([])
+            # Every panel in both rows, so the columns can be checked against
+            # each other. They do line up by year; unlabeled, a reader has no way
+            # of knowing that and will assume they do not.
+            ax.set_title(str(years[column]), fontsize=ps.LABEL_SIZE - 0.5,
+                         fontweight="bold", color=ps.INK, pad=5)
+
+        first = left + axis_room + filled[0] * (across + gap)
+        last = left + axis_room + filled[-1] * (across + gap) + across
+        # Framed and centered over the row, the treatment the gas labels take
+        # across this set. Set high in its band rather than at the middle of it,
+        # so the frame clears the year labels standing under it.
+        fig.text((first + last) / 2, row_top - 20 / height_px, gas, ha="center",
+                 va="center", fontsize=ps.LEGEND_SIZE + 1.6, fontweight="bold",
+                 color=ps.INK, zorder=9,
+                 bbox=dict(boxstyle="round,pad=0.42", facecolor="white",
+                           edgecolor=ps.BOUNDARY, linewidth=0.9))
+        # One axis name for the row, centered under the panels it belongs to,
+        # since every panel in the row shares the scale and one copy per panel
+        # would say so eight times. Close under the tick labels, so it reads as
+        # belonging to them rather than floating between the rows.
+        fig.text((first + last) / 2, top - down - 34 / height_px,
+                 f"{AGREEMENT_MEASURED} ({unit})", ha="center", va="top",
+                 fontsize=ps.LABEL_SIZE - 0.5, fontweight="bold", color=ps.INK)
+        # Clear of the tick labels beside it: one rotated line is about 30 px
+        # wide and a signed two-decimal tick label about 34 px, so anything
+        # closer than this puts the minus sign under the axis name.
+        fig.text(first - 68 / width_px, top - down / 2,
+                 f"{AGREEMENT_ERROR} ({unit})", ha="center", va="center",
+                 rotation=90, fontsize=ps.LABEL_SIZE - 0.5, fontweight="bold",
+                 color=ps.INK)
+
+        # The key stands in the columns this row leaves empty at its left. It
+        # stops short of the row's rotated axis name, which stands in the gutter
+        # beside the first panel and would otherwise be drawn through the frame.
+        if key == in_gap:
+            _year_key(fig, (left, top - down,
+                            first - 84 / width_px - left, down))
+
+    if not in_gap:
+        _year_key(fig, (left, bottom, width, YEAR_KEY_PX / height_px))
     return fig
