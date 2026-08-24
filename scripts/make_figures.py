@@ -163,6 +163,24 @@ def main() -> None:
     fragments.append(plotstyle.readme_block(figures.STABILITY_TEXT, "coefficient_stability"))
     print(f"wrote {path.relative_to(plotstyle.figures_dir().parent)}")
 
+    # Predicted against measured reads the same scored forecasts, at one horizon
+    # and on the months every method scored, so no method is advantaged by being
+    # asked about a different set.
+    agreement = {}
+    for key, _, _ in figures.GAS_PANEL:
+        frames = {}
+        for family in ("benchmarks", "autoregressive", "exogenous"):
+            frame = pd.read_csv(root / f"data/processed/forecasts_{key}_{family}.csv")
+            frame["target"] = pd.PeriodIndex(frame["target"], freq="M")
+            frames[family] = frame
+        agreement[key] = figures.agreement_panel(frames)
+
+    fig = figures.predicted_against_measured(agreement)
+    path = plotstyle.save(fig, "predicted_against_measured")
+    fragments.append(plotstyle.readme_block(figures.AGREEMENT_TEXT,
+                                            "predicted_against_measured"))
+    print(f"wrote {path.relative_to(plotstyle.figures_dir().parent)}")
+
     # The seasonal split reads the observed months alone, over the whole record
     # rather than the fitting window: methane's weakest season is 2021, which the
     # fitting window ends before, and it is half of what the amplitude range says.

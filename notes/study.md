@@ -2042,6 +2042,121 @@ and which stay in these notes. Significance marks, since the binomial threshold
 is the published rule rather than a calibrated error rate and stars would imply
 otherwise. A colorbar, since every bar prints its value.
 
+### The predicted-against-measured figure
+
+`figures/predicted_against_measured.png`, built by
+`study.figures.predicted_against_measured` from `study.figures.agreement_panel`.
+
+**Why it exists.** The forecast comparison summarizes error by horizon and the
+observed-and-predicted figure shows when the predictions fail. Neither shows a
+prediction against a measurement directly, which is how much and in which
+direction.
+
+**No precedent, and this one was searched for rather than assumed.** The notes
+above hold Deventer figures 8, 9 and 10 and Irvin figure 9; none is a
+predicted-against-measured plot, and no paper in this study's grounding carries
+one. Designed from first principles and recorded as such.
+
+**Two findings this figure carries that no other does.**
+
+1. The eight fitted methods **bracket the measurement in 30% of methane months
+   and 11% of carbon dioxide months**. They agree closely with each other and are
+   wrong together: the non-separation result arriving from a third direction,
+   after the shared-months correction and the Diebold-Mariano margins.
+2. They **miss in the same direction as the seasonal average in 75% and 87% of
+   months**, at error correlations of 0.79 and 0.90. They fail on the same
+   months, which is stronger than either failing alone and is why the seasonal
+   average is drawn beside them rather than left to the forecast figure.
+
+**A premise corrected before the figure was designed.** The claim that the largest
+misses are over-predictions does not survive pooling: over-prediction runs 31 of
+57 methane months and 41 of 85 carbon dioxide, and among the ten largest misses
+it is 6 of 10 and 3 of 10. The structure is real but **year-level and methane
+only**: 2015, the weakest evaluated season at 0.45 of the average year, is missed
+three times as badly as any other year (mean absolute error 14.7 against 4.0 to
+8.3) with 62% of its misses from above, while 2018 at 1.12 is missed mostly from
+below. That is what a fixed seasonal shape does, and it averages to a coin flip
+over the pooled sample. The figure says it at year level and nowhere more
+strongly.
+
+**One horizon, at one month**, matching the observed-and-predicted figure for the
+same reason: it is the horizon most favorable to the fitted methods, so falling
+short of the seasonal average there says more than doing so a year out.
+
+**No method is identifiable.** Each month is one vertical bar spanning all eight
+fitted predictions. The median spread is 0.23 of the observed standard deviation
+on methane and 0.15 on carbon dioxide, so the bars are short — which is itself
+the finding. Eight separate clouds would have invited the ranking the study
+denies.
+
+**2015 is marked by weight, not by hue.** Colouring six years would have broken
+the palette; one heavier bar per marked month, with the year named once per panel,
+carries the same structure. Carbon dioxide's 2015 looks like every other year,
+and that contrast is the point.
+
+**Four numbers, none of which ranks anything.** Pooled mean absolute error and
+root mean square error across all eight methods together, in the gas's own units,
+labeled as the whole cloud; plus the two shares above. The gap between the two
+error measures is itself informative — 8.3 against 13.3 on methane, a ratio of
+1.60, against 0.21 and 0.28 on carbon dioxide at 1.32 — because the root mean
+square weights large misses more heavily, so a wide gap says a few big errors
+carry the total, which is what a failure concentrated in one weak season
+produces. The description says that rather than leaving it to be inferred.
+
+**No coefficient of determination.** It inflates on a strongly seasonal series:
+predicting the seasonal mean alone would score well while adding nothing, which
+is the exact confusion this study exists to avoid.
+
+**The slope is a clause in the description, not a number on the panel.** At 1.07
+and 0.94 it rules out compression toward the middle — the predictions span the
+observed range rather than shrinking to it — which is a statement about shape
+that no error measure makes. On the panel it would have read as a fifth score.
+
+**The diagonal is named rather than called a target.** The seasonal average does
+not sit on it either, and a figure that framed it as the thing to hit would be
+asserting what this study denies.
+
+### Which variable goes on which axis, and the dispute about it
+
+Measured on the x-axis, predicted on the y. There is a live disagreement in the
+modelling literature about this. Piñeiro, G., Perelman, S., Guerschman, J. P. and
+Paruelo, J. M. (2008), *How to evaluate models: observed vs. predicted or
+predicted vs. observed?*, **Ecological Modelling** 216, 316-322, argue that
+regressing observed on predicted is the correct arrangement and that the reverse
+produces erroneous slope and intercept estimates. A 2019 rebuttal in the same
+journal argues their result is an artifact of how their simulation was set up and
+defends observations on the horizontal axis.
+
+**The dispute concerns slope and intercept estimated from a fitted regression,
+and no regression line is drawn here.** The one slope this study quotes, 1.07 and
+0.94, is reported in the description as a shape diagnostic and is computed once,
+not read off the panel. So the disagreement does not bite on this figure. The
+choice was made knowingly and both sides are named, so a reader who holds the
+other position can see that it was considered rather than missed.
+
+### Three things from the grounding literature that bear on this figure
+
+**Irvin et al. (2021) report gap-filled methane fluxes reaching a mean
+coefficient of determination of 0.68 and a mean root mean square error of
+6 nmol m⁻² s⁻¹ across sites.** That is the closest published performance figure
+in this study's grounding, and it is **not directly comparable**: it is
+half-hourly gap-filling inside a record, where the model interpolates between
+observed neighbours, against monthly forecasting beyond the origin here. The
+numbers are recorded so nobody reads this study's 8.3 against their 6 as a like
+comparison.
+
+**They also found decision tree algorithms performing best in cross-validation.**
+That is the same family as the gradient boosting and random forest which, here,
+do not separate from a seasonal average. The contrast is the point: filling a gap
+inside a record is a different problem from forecasting past its end, and a method
+family that wins the first need not win the second.
+
+**Knox et al. (2021) found soil and air temperature the strongest predictors of
+annual flux across wetland sites globally, with water table correlating only where
+sites were not consistently inundated.** That is this study's screening result at
+network scale, and it is recorded here as well as in the screening section because
+this figure is where the fitted methods' failure is most visible.
+
 ### The seasonal split figure
 
 `figures/seasonal_cycle.png`, built by `study.figures.seasonal_cycle` from

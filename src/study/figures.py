@@ -1914,3 +1914,189 @@ def seasonal_cycle(panels: dict[str, pd.DataFrame]) -> Figure:
                  [row_base(index) + heights[index] / 2
                   for index in range(len(SEASONAL_ROWS))])
     return fig
+
+
+# --------------------------------------------------------------------------
+# Predicted against measured
+# --------------------------------------------------------------------------
+
+AGREEMENT_TEXT = ps.FigureText(
+    title="Predicted against measured monthly flux at Marcell Bog Lake Peatland",
+    subtitle=(
+        "Each point is one month, predicted a month ahead. The green bar spans "
+        "what all eight fitted methods said for that month, so a short bar means "
+        "they agreed with each other. The black mark beside it is the average of "
+        "that month in earlier years, which beats every one of them and is drawn "
+        "to show that the two miss the same months. The diagonal is where a "
+        "prediction equals the measurement (nothing here is required to reach it)."
+    ),
+    description=(
+        "The numbers in each panel are for all eight fitted methods together, not "
+        "for any one of them. The root mean square weights large misses more "
+        "heavily than the average miss does, so the gap between the two says a few "
+        "big errors carry the total. Their range holds the measurement in 30% of "
+        "methane months and 11% of carbon dioxide months, and they miss in the "
+        "same direction as the seasonal average in 75% and 87% of them: the "
+        "methods agree with each other and fail on the same months it does. The "
+        "predictions are not compressed toward the middle, the slope against the "
+        "measurements being 1.07 and 0.94. Methane's 2015 is missed three times as "
+        "badly as any other year and mostly from above; carbon dioxide's is not."
+    ),
+)
+
+#: The one horizon drawn. It is the one most favorable to the fitted methods, so
+#: falling short of the seasonal average there says more than doing so a year out,
+#: and the forecast comparison already carries the horizon story.
+AGREEMENT_HORIZON = 1
+
+#: The weakest season either gas has inside the evaluated window, at 0.45 of the
+#: average year for methane and 0.59 for carbon dioxide. Marked because it is what
+#: turns the scatter into structure on one of the two panels and not the other.
+MARKED_YEAR = 2015
+
+AGREEMENT_DIAGONAL = "a prediction equal to the measurement"
+AGREEMENT_MEASURED = "Measured"
+AGREEMENT_PREDICTED = "Predicted"
+
+
+def agreement_panel(frames: dict[str, pd.DataFrame],
+                    horizon: int = AGREEMENT_HORIZON) -> pd.DataFrame:
+    """Each month's measurement, the range the fitted methods gave it, and the
+    seasonal average, on the months every method scored.
+
+    The eight fitted methods are collapsed to a range rather than drawn apart: no
+    method is identifiable on the panel, because the study's result is that they
+    do not separate and a figure naming them would invite the ranking it denies.
+    """
+    from scipy import stats
+
+    keys = {key for key in evaluation.shared_targets(list(frames.values()))
+            if key[0] == horizon}
+    fitted = pd.concat([evaluation.restrict(frames[family], keys)
+                        for family in ("autoregressive", "exogenous")])
+    benchmarks = evaluation.restrict(frames["benchmarks"], keys)
+
+    spread = fitted.pivot_table(index="target", columns="method", values="forecast")
+    panel = pd.DataFrame({
+        "measured": fitted.groupby("target")["actual"].first(),
+        "lowest": spread.min(axis=1),
+        "highest": spread.max(axis=1),
+        "middle": spread.median(axis=1),
+        "seasonal": benchmarks[benchmarks["method"] == "climatology"]
+        .set_index("target")["forecast"],
+    })
+
+    missed = fitted["forecast"] - fitted["actual"]
+    fitted_error = panel["middle"] - panel["measured"]
+    seasonal_error = panel["seasonal"] - panel["measured"]
+    panel.attrs["months"] = len(panel)
+    panel.attrs["mean_miss"] = float(missed.abs().mean())
+    panel.attrs["root_mean_square"] = float(np.sqrt((missed ** 2).mean()))
+    panel.attrs["brackets"] = float(((panel["measured"] >= panel["lowest"])
+                                     & (panel["measured"] <= panel["highest"])).mean())
+    panel.attrs["same_way"] = float(
+        (np.sign(fitted_error) == np.sign(seasonal_error)).mean())
+    panel.attrs["slope"] = float(stats.linregress(panel["measured"].to_numpy(),
+                                                  panel["middle"].to_numpy()).slope)
+    return panel
+
+
+#: Room at the left of each panel for its axis name and tick labels, and between
+#: the two panels. The panels are square: on a one-to-one plot the diagonal has to
+#: sit at 45 degrees or distance from it cannot be read.
+AGREEMENT_AXIS_PX = 96
+AGREEMENT_GAP_PX = 108
+AGREEMENT_HEAD_PX = 44
+
+
+def _draw_agreement_panel(ax, panel: pd.DataFrame, unit: str) -> None:
+    """One gas: every month's measurement against what was predicted for it."""
+    low = min(panel[["measured", "lowest", "seasonal"]].min())
+    high = max(panel[["measured", "highest", "seasonal"]].max())
+    room = 0.06 * (high - low)
+    limits = (low - room, high + room)
+
+    # Light, and named rather than called perfect: the seasonal average does not
+    # sit on it either, and nothing on this panel is being held to it.
+    ax.plot(limits, limits, color=ps.BOUNDARY, linewidth=1.0, linestyle=(0, (5, 3)),
+            zorder=1)
+
+    marked = panel.index.year == MARKED_YEAR
+    for chosen, weight in ((~marked, 1.2), (marked, 2.6)):
+        rows = panel[chosen]
+        ax.vlines(rows["measured"], rows["lowest"], rows["highest"], color=ps.FITTED,
+                  linewidth=weight, zorder=3)
+    ax.plot(panel["measured"], panel["seasonal"], linestyle="none", marker="_",
+            markersize=7, markeredgewidth=1.3, color=ps.INK, zorder=4)
+
+    ax.set_xlim(*limits)
+    ax.set_ylim(*limits)
+    ax.set_xlabel(f"{AGREEMENT_MEASURED} ({unit})", fontsize=ps.LABEL_SIZE - 0.5,
+                  color=ps.INK)
+    ax.set_ylabel(f"{AGREEMENT_PREDICTED} ({unit})", fontsize=ps.LABEL_SIZE - 0.5,
+                  color=ps.INK)
+    ax.tick_params(which="both", top=False, right=False)
+    ax.grid(color=ps.GRID, linewidth=0.6, zorder=0)
+    ax.set_axisbelow(True)
+    for side in ("top", "right"):
+        ax.spines[side].set_visible(False)
+    for side in ("left", "bottom"):
+        ax.spines[side].set_color(ps.BOUNDARY)
+
+
+def _agreement_numbers(ax, panel: pd.DataFrame, unit: str) -> None:
+    """The four numbers, in the corner the cloud leaves empty.
+
+    All four are properties of the whole cloud rather than of any method: an
+    error measure that could be read as a ranking would say the opposite of what
+    this figure is for.
+    """
+    digits = 2 if panel.attrs["mean_miss"] < 1 else 1
+    lines = [
+        "All eight fitted methods together",
+        f"average miss {panel.attrs['mean_miss']:.{digits}f}, "
+        f"root mean square {panel.attrs['root_mean_square']:.{digits}f}",
+        f"range holds the measurement in {100 * panel.attrs['brackets']:.0f}% of months",
+        f"misses the same way as the black mark in {100 * panel.attrs['same_way']:.0f}%",
+    ]
+    ax.text(0.975, 0.035, "\n".join(lines), transform=ax.transAxes, ha="right",
+            va="bottom", fontsize=ps.ANNOTATION_SIZE - 0.5, color=ps.MUTED,
+            linespacing=1.5, zorder=5)
+
+
+def predicted_against_measured(panels: dict[str, pd.DataFrame]) -> Figure:
+    """Every scored month, measured against predicted, one month ahead.
+
+    The eight fitted methods are one green bar per month and no method is named:
+    the result is that they do not separate, and a panel that identified them
+    would invite the ranking the study denies. The seasonal average is drawn
+    beside them because it beats them, and because the two miss the same months.
+    """
+    fig, (left, bottom, width, height) = ps.canvas_area(AGREEMENT_TEXT,
+                                                        size="square pair")
+    width_px, height_px = ps.SIZES["square pair"]
+    axis_room = AGREEMENT_AXIS_PX / width_px
+    gap = AGREEMENT_GAP_PX / width_px
+    head = AGREEMENT_HEAD_PX / height_px
+
+    # Square in pixels, not in figure fractions: the canvas is wider than it is
+    # tall, so one fraction used for both sides would draw a rectangle.
+    side_px = min(((width - axis_room - gap) / 2) * width_px,
+                  (height - head) * height_px)
+    across, down = side_px / width_px, side_px / height_px
+    for column, (key, gas, unit) in enumerate(GAS_PANEL):
+        panel = panels[key]
+        ax = fig.add_axes((left + axis_room + column * (across + gap),
+                           bottom + height - head - down, across, down))
+        _draw_agreement_panel(ax, panel, unit)
+        _agreement_numbers(ax, panel, unit)
+        ps.panel_name(ax, gas, x=0.5, align="center", y=1.0 + 30 / side_px)
+        # Beside its own cluster rather than in a corner: on carbon dioxide the
+        # marked months sit mid-cloud, and a leader from the corner would cross
+        # the panel to reach them.
+        marked = panel[panel.index.year == MARKED_YEAR]
+        ps.annotate(ax, str(MARKED_YEAR),
+                    xy=(float(marked["measured"].mean()), float(marked["middle"].mean())),
+                    xytext=(-34, 30), textcoords="offset points", ha="right",
+                    va="center", color=ps.MUTED)
+    return fig

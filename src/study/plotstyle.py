@@ -201,6 +201,10 @@ SIZES = {
     #: Wider than the rest of the set: three rows of two time series, each needing
     #: a name in the gutter and a unit on its axis, do not fit the standard width.
     "triple": (2300, 1900),
+    #: Two square panels side by side. A one-to-one plot has to be square, so the
+    #: height is set by what the width leaves rather than chosen: any more and the
+    #: canvas carries empty ground under the panels.
+    "square pair": (1800, 1220),
     #: Two panels stacked. Side by side, a panel is too narrow to hold a legend
     #: that names its methods by what they do rather than by their jargon, and the
     #: legend ends up over the data. Full width leaves room beside the curves.

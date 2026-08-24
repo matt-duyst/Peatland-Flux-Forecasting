@@ -54,6 +54,14 @@ Two marks stand where a number would mean nothing. The date question does not ap
 
 The same analysis is drawn twice, once weighting each month by how well it was measured and once not. Both fail and neither is the better treatment: weighted, the coefficient rises 51%, from 2.704 to 4.077; unweighted, 38%, from 2.385 to 3.299. Every step's range overlaps the first, so no single step is decisive, and the evidence is that it climbs at all four and never once falls. The soil temperature coefficient moves 16% along the same path, and only without weighting is it flat.
 
+### Predicted against measured monthly flux at Marcell Bog Lake Peatland
+
+![Predicted against measured monthly flux at Marcell Bog Lake Peatland](figures/predicted_against_measured.png)
+
+**Each point is one month, predicted a month ahead. The green bar spans what all eight fitted methods said for that month, so a short bar means they agreed with each other. The black mark beside it is the average of that month in earlier years, which beats every one of them and is drawn to show that the two miss the same months. The diagonal is where a prediction equals the measurement (nothing here is required to reach it).**
+
+The numbers in each panel are for all eight fitted methods together, not for any one of them. The root mean square weights large misses more heavily than the average miss does, so the gap between the two says a few big errors carry the total. Their range holds the measurement in 30% of methane months and 11% of carbon dioxide months, and they miss in the same direction as the seasonal average in 75% and 87% of them: the methods agree with each other and fail on the same months it does. The predictions are not compressed toward the middle, the slope against the measurements being 1.07 and 0.94. Methane's 2015 is missed three times as badly as any other year and mostly from above; carbon dioxide's is not.
+
 ### The seasonal cycle in monthly flux at Marcell Bog Lake Peatland
 
 ![The seasonal cycle in monthly flux at Marcell Bog Lake Peatland](figures/seasonal_cycle.png)
