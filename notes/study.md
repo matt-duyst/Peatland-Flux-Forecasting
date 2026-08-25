@@ -2244,6 +2244,17 @@ eight months is a coarse instrument and it is recorded rather than hidden. The
 description quotes **1.7**, the most conservative of the mean-based figures, and
 the range across controls is 1.4 to 2.1.
 
+**The baseline includes the year it is measuring, which understates the ratio.**
+`year_ratio` divides a year's mean absolute error by what months of its size are
+missed by **across the whole record**, 2015 included. Since 2015's own large
+misses inflate the bin means it is compared against, the comparison is
+conservative. Leaving each year out of its own baseline gives methane
+**2015: 2.23**, 2016: 0.66, 2017: 1.22, 2018: 0.98, 2019: 0.54. The figure quotes
+**1.7**, the conservative form, and the description says *months of the same size
+across the record* rather than *elsewhere in the record* for that reason: the
+second phrasing would describe the leave-one-out baseline and would go with 2.2,
+not 1.7. Both are recorded; the smaller claim is the one drawn.
+
 **Carbon dioxide has nothing of the kind.** Its widest ratio on a full year is
 1.18 in 2014, and 2015 sits at 1.07. No carbon dioxide year separates on either
 count, which is why the description names only methane.
@@ -2603,6 +2614,24 @@ units, so one scale through all sixteen panels is not available. Within a row
 every panel shares both axes, which is what makes the columns comparable and is
 the whole point of the form; a test holds it. The vertical axis is centered on
 zero in every row, so the line meaning no error sits at the middle.
+
+**Two labeled ticks per panel was not enough to place a point against.** A
+three-bin locator left methane showing only 40 and 80 and carbon dioxide only
+-1.5 and 0.0, so a reader had nothing between them but the panel edges. Raised to
+seven bins with the step set constrained to 1, 2, 5 and 10, which is what keeps
+the values round: left to itself the locator offered carbon dioxide -2.4, -1.6
+and -0.8. Methane now carries 0, 20, 40, 60, 80, 100 and carbon dioxide -2.5
+through 0.0 in halves. Measured on the built panel, the tightest gap between
+adjacent carbon dioxide labels is **7.9 px** and methane's is 25.3 px, so the
+carbon dioxide row is close but clear.
+
+**Methane's axis is carried to zero.** Its flux never crosses zero, so the axis
+would otherwise begin at whatever its smallest evaluated month happens to be,
+which is 9.7 and is nothing in particular. Carrying it to zero costs about 2% of
+the row's width and is what puts a labeled tick at 0 rather than one at 25 or 30
+inside the data. Carbon dioxide already crosses zero and is left alone; the rule
+is written as *extend to zero when the flux does not cross it* rather than as a
+special case for one gas.
 
 **One axis name per row rather than one per panel.** Eight copies of
 "Measured (nmol m⁻² s⁻¹)" would say eight times over what the shared scale

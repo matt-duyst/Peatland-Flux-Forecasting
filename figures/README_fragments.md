@@ -60,7 +60,7 @@ The same analysis is drawn twice, once weighting each month by how well it was m
 
 **Each panel is one evaluated year. Each point is one month, placed at the middle of what the eight fitted methods predicted for it. Prediction error is how far a prediction fell from what was measured. It is taken here as the measurement minus the prediction, so a point above the zero line was predicted too low. The grey points are the months of every other year, repeated behind every panel. Carbon dioxide runs negative because the peatland takes up more carbon than it releases, and methane runs positive because peatlands emit it. Every panel in a row shares its axes.**
 
-Across every evaluated year the methods fail in much the same way, missing by similar amounts and in similar directions regardless of which year they are predicting. Methane in 2015 is the one exception, and it differs twice over: its months are all small ones, so a weak season holding no large months puts its points entirely in the lower half of the axis, and it is also missed about 1.7 times as badly as months of its size are across the record.
+Across every evaluated year the methods fail in much the same way, missing by similar amounts and in similar directions regardless of which year they are predicting. Methane in 2015 is the one exception, and it differs twice over: its months are all small ones, so a weak season holding no large months puts its points entirely in the lower half of the axis, and its months are also missed about 1.7 times as badly as months of the same size across the record.
 
 ### The seasonal cycle in monthly flux at Marcell Bog Lake Peatland
 

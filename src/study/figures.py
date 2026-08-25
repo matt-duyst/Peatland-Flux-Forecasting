@@ -1982,8 +1982,8 @@ AGREEMENT_TEXT = ps.FigureText(
         "year they are predicting. Methane in 2015 is the one exception, and it "
         "differs twice over: its months are all small ones, so a weak season "
         "holding no large months puts its points entirely in the lower half of "
-        "the axis, and it is also missed about 1.7 times as badly as months of "
-        "its size are across the record."
+        "the axis, and its months are also missed about 1.7 times as badly as "
+        "months of the same size across the record."
     ),
 )
 
@@ -2161,6 +2161,13 @@ YEAR_FOOT_PX = 45
 #: Light enough that the panel's own year is what the eye lands on: at a hundred
 #: and forty background points against eight to twelve in front, anything heavier
 #: competes with the year it exists to give context for.
+#: Labeled ticks across a panel. Two of them, which is what a three-bin locator
+#: left on both rows, gives a reader nothing to place a point against but the
+#: panel edges. The steps keep the values round: left to itself the locator
+#: offered carbon dioxide -2.4, -1.6 and -0.8.
+YEAR_X_TICKS = 7
+YEAR_X_STEPS = (1, 2, 5, 10)
+
 YEAR_CONTEXT = "#DEDEDE"
 YEAR_CONTEXT_SIZE = 2.6
 YEAR_FOREGROUND_SIZE = 5.0
@@ -2188,7 +2195,7 @@ def _draw_year_panel(ax, errors: pd.DataFrame, year: int,
 
     ax.set_xlim(low, high)
     ax.set_ylim(-reach, reach)
-    ax.xaxis.set_major_locator(MaxNLocator(3))
+    ax.xaxis.set_major_locator(MaxNLocator(YEAR_X_TICKS, steps=list(YEAR_X_STEPS)))
     ax.yaxis.set_major_locator(MaxNLocator(4))
     ax.tick_params(which="both", top=False, right=False, labelsize=ps.TICK_SIZE - 2.0,
                    length=3, pad=2)
@@ -2311,8 +2318,13 @@ def prediction_error_by_year(panels: dict[str, pd.DataFrame]) -> Figure:
         # One scale for the row, so a year that sits low is low against every
         # other year rather than against its own panel.
         span = frame["measured"].max() - frame["measured"].min()
-        limits = ((frame["measured"].min() - 0.08 * span,
-                   frame["measured"].max() + 0.08 * span),
+        low = frame["measured"].min() - 0.08 * span
+        high = frame["measured"].max() + 0.08 * span
+        # Carried to zero when the flux does not cross it, which methane's never
+        # does. It gives the row an anchor a reader can count from, and it is
+        # what puts a labeled tick at 0 rather than at whatever the locator
+        # picked inside the data.
+        limits = ((min(low, 0.0), max(high, 0.0)),
                   1.08 * frame["middle"].abs().max())
         row_top = bottom + height - row * (gas_band + head + down + x_room + row_gap)
         top = row_top - gas_band - head

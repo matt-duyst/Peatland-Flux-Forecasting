@@ -487,7 +487,9 @@ def test_the_2015_claim_carries_both_halves_of_what_separates_it():
     said = figures.AGREEMENT_TEXT.description
     assert "differs twice over" in said
     assert "no large months" in said and "lower half of the axis" in said
-    assert "1.7 times as badly as months of its size" in said
+    assert "1.7 times as badly as months of the same size across the record" in said
+    # Not "1.7x": an abbreviation reads as informal shorthand mid-sentence.
+    assert "1.7x" not in said and "1.7 x" not in said
     # The overcorrection this replaced: crediting the whole difference to which
     # months occurred, which denies a claim the data supports.
     assert "rather than how they were predicted" not in said
@@ -581,3 +583,38 @@ def test_the_title_names_the_span_the_columns_actually_cover():
     cut the panels end at 2019, and a title naming 2020 would describe something
     not on the canvas."""
     assert figures.AGREEMENT_TEXT.title.endswith("(2013 to 2019)")
+
+
+def test_every_panel_carries_enough_labeled_ticks_to_place_a_point():
+    """Two labeled ticks across a panel leave a reader nothing to place a point
+    against but the panel edges."""
+    fig = figures.prediction_error_by_year(panels())
+    fig.canvas.draw()
+    for ax in year_panels(fig):
+        low, high = ax.get_xlim()
+        shown = [tick for tick in ax.get_xaxis().get_majorticklocs()
+                 if low <= tick <= high]
+        assert len(shown) >= 3
+    ps.plt.close(fig)
+
+
+def test_a_row_whose_flux_never_crosses_zero_is_carried_to_zero():
+    """Methane's flux is always positive, so its axis would otherwise start at
+    whatever its smallest month happens to be. Carrying it to zero gives the row
+    an anchor a reader can count from, and puts a labeled tick there."""
+    built = panels()
+    fig = figures.prediction_error_by_year(built)
+    fig.canvas.draw()
+    axes = year_panels(fig)
+    start = 0
+    for key, _, _ in figures.GAS_PANEL:
+        frame = built[key]
+        ax = axes[start]
+        low, high = ax.get_xlim()
+        if frame["measured"].min() > 0:
+            assert low == 0.0
+            assert 0.0 in set(ax.get_xaxis().get_majorticklocs())
+        else:
+            assert low < frame["measured"].min()
+        start += len(drawn_years(frame))
+    ps.plt.close(fig)
