@@ -2389,7 +2389,12 @@ def prediction_error_by_year(panels: dict[str, pd.DataFrame]) -> Figure:
 # --------------------------------------------------------------------------
 
 DISTRIBUTION_TEXT = ps.FigureText(
-    title=("Diagnostic check on the model's errors at Marcell Bog Lake Peatland "
+    #: One line at this canvas width. "the model's errors" wrapped it, leaving
+    #: "2019)" alone on a second line, which is the fault this figure spent a
+    #: pass fixing elsewhere. The year range keeps the set's "2009 to 2019" form
+    #: rather than taking a dash, since every other title in the set reads that
+    #: way and the two words saved by dropping the possessive were enough.
+    title=("Diagnostic check on model errors at Marcell Bog Lake Peatland "
            "(2009 to 2019)"),
     subtitle=(
         "This is a quantile-quantile plot, which compares the errors the model "

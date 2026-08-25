@@ -179,7 +179,6 @@ def test_the_text_blocks_are_measured_rather_than_allotted():
                    key=lambda t: len(t.get_text()) if "quantile-quantile" in t.get_text() else 0)
     gap = title.get_window_extent().y0 - subtitle.get_window_extent().y1
     assert gap == pytest.approx(ps.TEXT_GAP_PX, abs=2.0)
-    assert title.get_text().count("\n") == 1        # the two-line title
     ps.plt.close(fig)
 
 
@@ -224,9 +223,43 @@ def test_the_title_names_this_a_diagnostic():
     against the shapes it might follow", "Whether the model's errors follow the
     distribution its estimator assumes") implied a finding it does not carry."""
     title = figures.DISTRIBUTION_TEXT.title
-    assert title.startswith("Diagnostic check on the model's errors")
+    assert title.startswith("Diagnostic check on model errors")
     assert "Marcell Bog Lake Peatland" in title
+    # The set's year form, not a dash: every other title in the set reads this way.
     assert title.endswith("(2009 to 2019)")
+
+
+def test_the_title_fits_on_one_line_at_this_canvas_width():
+    """It wrapped with "2019)" alone on a second line, which is the fault this
+    figure spent a pass fixing between its subtitle and its panels."""
+    width_px = ps.SIZES["quad"][0]
+    assert ps.wrap_title(figures.DISTRIBUTION_TEXT.title, width_px).count("\n") == 0
+
+    fig = figures.residual_distribution_check(four_panels())
+    fig.canvas.draw()
+    drawn = max(fig.texts,
+                key=lambda t: len(t.get_text()) if "Diagnostic" in t.get_text() else 0)
+    assert drawn.get_text().count("\n") == 0
+    drawable = width_px - ps.MARGIN_PX["left"] - ps.MARGIN_PX["right"]
+    assert drawn.get_window_extent().width < drawable
+    ps.plt.close(fig)
+
+
+def test_the_reference_line_stays_achromatic():
+    """Coloured, it competes with the points for a panel whose points are the
+    finding, and every hue in the set already carries a meaning: blue is inside
+    or retained, orange outside or discarded, green the fitted models, yellow the
+    site. Solid and coloured it reads as a fitted line, which is the one reading
+    this figure has to refuse, since nothing here is regressed."""
+    from matplotlib.colors import to_rgb
+
+    fig = figures.residual_distribution_check(four_panels())
+    for ax in [a for a in fig.axes if a.get_legend() is None]:
+        line = next(l for l in ax.lines if len(l.get_xdata()) == 2)
+        red, green, blue = to_rgb(line.get_color())
+        assert red == green == blue           # grey, whatever its lightness
+        assert line.get_linestyle() != "-"    # dashed, so it reads as reference
+    ps.plt.close(fig)
 
 
 def test_nothing_the_figure_says_calls_a_distribution_a_shape():

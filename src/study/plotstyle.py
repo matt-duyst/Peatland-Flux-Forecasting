@@ -226,7 +226,7 @@ SIZES = {
     #: the panels shrink and leave empty margins either side of the pair. Two rows
     #: of square panels under a text stack of about 750 px is a taller canvas than
     #: it is wide, which is why this is the one portrait size in the set.
-    "quad": (1560, 2102),
+    "quad": (1560, 2065),
 }
 
 #: Fixed pixel allocations, so a figure's proportions do not depend on how much

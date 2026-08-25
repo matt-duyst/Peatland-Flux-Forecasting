@@ -62,9 +62,9 @@ The same analysis is drawn twice, once weighting each month by how well it was m
 
 Across every evaluated year the methods fail in much the same way, missing by similar amounts and in similar directions regardless of which year they are predicting. Methane in 2015 is the one exception, and it differs twice over: its months are all small ones, so a weak season holding no large months puts its points entirely in the lower half of the axis, and its months are also missed about 1.7 times as badly as months of the same size across the record.
 
-### Diagnostic check on the model's errors at Marcell Bog Lake Peatland (2009 to 2019)
+### Diagnostic check on model errors at Marcell Bog Lake Peatland (2009 to 2019)
 
-![Diagnostic check on the model's errors at Marcell Bog Lake Peatland (2009 to 2019)](figures/residual_distribution_check.png)
+![Diagnostic check on model errors at Marcell Bog Lake Peatland (2009 to 2019)](figures/residual_distribution_check.png)
 
 **This is a quantile-quantile plot, which compares the errors the model made against the errors a named distribution predicts, on a log scale. Points falling on the 1:1 line are errors matching the distribution exactly; the band covers all 115 points at once, so a single point outside it is enough to say the distribution does not hold. The weighted fit counts a month resting on many measurements more heavily than one resting on few, and the study runs both throughout.**
 

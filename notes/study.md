@@ -2876,6 +2876,41 @@ above. At an anchor of 0.30 it clears them by 41 px and the description below by
 that the square constraint could not spend, since the panel side is set by the
 width, so the canvas came down rather than leaving the gap above the key to grow.
 
+**The title fits one line, by dropping two words rather than a dash.** It read
+*Diagnostic check on the model's errors at Marcell Bog Lake Peatland (2009 to
+2019)* and wrapped with *2019)* alone on the second line. The wrap budget is a
+character count taken from an average glyph width, which said 82; measured as
+ink, the limit at this canvas is **76 characters**. Dropping the possessive gives
+*Diagnostic check on model errors...* at 76 characters and 1388 px of the 1412
+available. An en-dash in the year range was the other option and was not taken:
+every other title in the set reads *(1990 to 2019)* or *(2013 to 2019)*, and
+changing one of them would be the only figure spelling it differently. A test
+holds the title to one line at this width, since a character budget that is 6
+characters optimistic will not catch the next one.
+
+**The one-line title freed 37 px, which the canvas gave back.** It came from
+2102 to **2065**. The panel side is set by the width, so height the square
+constraint cannot spend only opens a gap above the key: the same reclaim as when
+the subtitle was shortened.
+
+**The 1:1 line was tried in color and left achromatic.** The band was considered
+for color first and rejected — blue at `#0072B2` means inside or retained across
+the whole set, and a blue fill would be a fourth blue meaning something unrelated
+— so the line was the next candidate, being a reference mark rather than a filled
+region. Rendered against the achromatic version at panel size, it does not help:
+
+- **Blue dashed** competes with the points on a panel whose points are the
+  finding, and blue sits close enough to the green that the line and the points
+  read as related when one is data and the other is apparatus.
+- **Blue solid** reads as a **fitted line**, which is the one reading this figure
+  has to refuse. Both distributions are fitted to these errors by maximum
+  likelihood, so agreement is the line of equality and nothing here is regressed.
+- **Achromatic** keeps the hierarchy the set uses everywhere: apparatus in gray,
+  data in color, one colored element per panel.
+
+The panels were not reading as flat, which was the condition for trying it. A
+test now holds the line gray and dashed.
+
 **The description bounds the null rather than leaving it open.** Every earlier
 version stated the negative result and stopped, which leaves a reader working out
 what a failed assumption breaks. The last sentence answers it: least absolute
