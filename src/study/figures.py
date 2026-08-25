@@ -1979,10 +1979,11 @@ AGREEMENT_TEXT = ps.FigureText(
     description=(
         "Across every evaluated year the methods fail in much the same way, "
         "missing by similar amounts and in similar directions regardless of which "
-        "year they are predicting. The one exception is methane in 2015, and what "
-        "sets it apart is which months it contains rather than how they were "
-        "predicted: a weak season holds no large months, so its points sit "
-        "entirely in the lower half of the axis."
+        "year they are predicting. Methane in 2015 is the one exception, and it "
+        "differs twice over: its months are all small ones, so a weak season "
+        "holding no large months puts its points entirely in the lower half of "
+        "the axis, and it is also missed about 1.7 times as badly as months of "
+        "its size are across the record."
     ),
 )
 

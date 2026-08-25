@@ -2209,6 +2209,45 @@ other methane year passes 1.16. That is the claim the description makes, and it
 is the one claim about 2015 that survives every correction: it is not about
 direction, not about the raw yearly average, and not about where its months sit.
 
+**2015 differs on two counts, and the description states both.** A pass of the
+description credited the whole difference to which months the year contains, on
+the reasoning that a weak season holds no large months. That is true and it is
+half the story. Stated alone it **denies the prediction claim, which the data
+supports**, and it is the exact mirror of the earlier overcorrection in the other
+direction, where the figure claimed 2015 was predicted worse without controlling
+for the size of its months. Both are true and independent:
+
+1. **Which months it holds.** Its eight months run 17 to 52 where methane's
+   evaluated record runs 10 to 104, so its points sit entirely in the lower half
+   of the axis. A property of the year.
+2. **How well they were predicted.** Controlling for size, it is missed about
+   **1.7 times** as badly as months of its size are across the record. A property
+   of the predictions.
+
+**The size-controlled ratio was checked six ways before it went on the figure**,
+because a ratio built on binned means can be an artifact of where the bin edges
+fall or of one bad month. Methane's 2015 against every other methane year:
+
+| control | 2015 | next highest |
+|---|---|---|
+| 3 size bins, mean (the reported figure) | **1.68** | 1.16 (2017) |
+| 4 size bins, mean | 1.93 | 1.10 (2017) |
+| 5 size bins, mean | 1.99 | 1.13 (2017) |
+| 3 size bins, median | 1.37 | **1.37 (2017)** |
+| 3 bins, each year's worst month dropped | 1.62 | 1.18 (2017) |
+| continuous log-log fit, no bins at all | 2.08 | 1.16 (2017) |
+
+It holds under every control, and **dropping each year's worst month still leaves
+1.62**, so it is not the single July 2015 miss carrying it. The one measure where
+2015 does not stand alone is the median, where it ties 2017 at 1.37; a median over
+eight months is a coarse instrument and it is recorded rather than hidden. The
+description quotes **1.7**, the most conservative of the mean-based figures, and
+the range across controls is 1.4 to 2.1.
+
+**Carbon dioxide has nothing of the kind.** Its widest ratio on a full year is
+1.18 in 2014, and 2015 sits at 1.07. No carbon dioxide year separates on either
+count, which is why the description names only methane.
+
 **The deepest single error on the panel is 2015's**, 49 too much predicted where
 40 was measured, in July 2015. Kept in these notes; it is one point and the
 description no longer spends a clause on it.

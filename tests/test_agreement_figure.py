@@ -463,7 +463,7 @@ def test_the_description_is_short_enough_to_leave_the_panels_room():
     said = figures.AGREEMENT_TEXT.description
     sentences = [s.strip() for s in said.split(". ") if s.strip()]
     assert len(sentences) <= 3
-    assert len(said) < 400
+    assert len(said) < 500
 
 
 def test_the_description_keeps_only_what_can_be_read_off_the_panels():
@@ -474,11 +474,28 @@ def test_the_description_keeps_only_what_can_be_read_off_the_panels():
     assert said.startswith("Across every evaluated year the methods fail in much "
                            "the same way")
     assert "regardless of which year they are predicting" in said
-    assert "The one exception is methane in 2015" in said
-    assert "which months it contains rather than how they were predicted" in said
+    assert "Methane in 2015 is the one exception" in said
     assert "lower half of the axis" in said
+
+
+def test_the_2015_claim_carries_both_halves_of_what_separates_it():
+    """It differs on two counts and they are independent. Which months it holds
+    is a fact about the year: a weak season contains no large months, so its
+    points sit low on the axis. How well it was predicted is a separate fact and
+    survives controlling for the first, at 1.7 times what months of its size are
+    missed by. Naming either one alone misstates the year."""
+    said = figures.AGREEMENT_TEXT.description
+    assert "differs twice over" in said
+    assert "no large months" in said and "lower half of the axis" in said
+    assert "1.7 times as badly as months of its size" in said
+    # The overcorrection this replaced: crediting the whole difference to which
+    # months occurred, which denies a claim the data supports.
+    assert "rather than how they were predicted" not in said
     # Every precise figure moved out: none of them is checkable against a panel.
-    for moved in ("16.5", "9.8", "1.7 times", "8.3", "13.3", "0.21", "0.28",
+    # The size-controlled ratio stays: it is the one figure that says the year
+    # was predicted badly rather than merely made of small months. Everything
+    # else precise went to the notes.
+    for moved in ("16.5", "9.8", "8.3", "13.3", "0.21", "0.28",
                   "56%", "16%", "81%", "87%", "January 2020", "sixty months",
                   "2020"):
         assert moved not in said
