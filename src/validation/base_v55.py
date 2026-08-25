@@ -198,6 +198,28 @@ def coverage_against_sector(product: pd.DataFrame, methane: pd.Series) -> pd.Dat
     return frame
 
 
+def load_methane(path: Path | None = None) -> pd.DataFrame:
+    """The three methane columns in the shape `ingest.raw.load_halfhourly` returns.
+
+    The ingestion layer reads methane from here rather than from the 2022
+    workbook export, because this product carries the same values and three more
+    years of them. Every one of the 66,946 half-hours the two share is identical
+    and neither holds a value the other lacks, so the change is additive rather
+    than a reprocessing; `compare_columns` is what establishes that and
+    `notes/base_v55.md` records it.
+
+    The Excel path in `ingest.raw` is not dead. `scripts/01_investigate_raw.py`
+    characterises the derived `CSVs/FCH4 Data.csv` subset against the workbook it
+    was cut from, which is a question about that file rather than about the
+    flux, and this product cannot answer it.
+    """
+    product = load_base(path)
+    missing = [column for column in raw.FCH4_COLUMNS if column not in product.columns]
+    if missing:
+        raise ValueError(f"BASE product {BASE_FILENAME!r} is missing columns: {missing}")
+    return product[list(raw.FCH4_COLUMNS)].reset_index()
+
+
 def merged_methane(product: pd.DataFrame, precedence: tuple[str, ...]) -> pd.Series:
     """One methane series under the precedence the ingestion layer applies."""
     series = product[precedence[0]]

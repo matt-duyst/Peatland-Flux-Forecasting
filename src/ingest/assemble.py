@@ -12,7 +12,11 @@ import pandas as pd
 from . import aggregate, covariates, paths, raw
 
 TARGET_START = "2009-04"
-TARGET_END = "2021-12"
+#: The last month the BASE product carries. Methane is read from the 2025
+#: product rather than the 2022 workbook export, which stopped at 2021-12;
+#: leaving the grid there would truncate this table three years short of
+#: the series every other output carries.
+TARGET_END = "2024-12"
 
 
 def build_monthly(

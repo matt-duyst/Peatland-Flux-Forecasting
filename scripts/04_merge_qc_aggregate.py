@@ -4,6 +4,12 @@ Produces the merged half-hourly series with per-value provenance, negative-flux
 and coverage diagnostics, daily and monthly aggregates under the minimum-coverage
 rule, and annual budgets integrated from observed half-hours.
 
+Methane is read from the 2025 BASE product rather than the 2022 workbook export,
+as carbon dioxide already is. The two hold identical values over every shared
+half-hour and the product carries three further years, so the change adds record
+without reprocessing any of it. The Excel path in `ingest.raw` stays: script 01
+needs it to characterise the derived FCH4 Data.csv subset.
+
 Run: .venv/bin/python scripts/04_merge_qc_aggregate.py
 Writes: data/processed/{halfhourly_merged,daily_fch4,monthly_fch4_from_daily}.*
 """
@@ -17,12 +23,13 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from ingest import budgets, coverage, daily, merge, paths, qc, raw, site  # noqa: E402
+from ingest import budgets, coverage, daily, merge, paths, qc, site  # noqa: E402
+from validation import base_v55  # noqa: E402
 
 
 def main() -> None:
     pd.set_option("display.width", 220)
-    frame = raw.load_halfhourly()
+    frame = base_v55.load_methane()
     # The site-aggregated series is treated as independent of both replicates,
     # so precedence should never have to arbitrate against it.
     merge.assert_disjoint(frame, (site.BASE_COLUMN, site.TGA_COLUMN))

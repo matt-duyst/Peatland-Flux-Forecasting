@@ -44,6 +44,46 @@ Cleaning, aggregation, and covariate assembly are separate modules with no
 cross-imports except through `paths` and `site`. Scripts in `scripts/`
 orchestrate only. `qc.py` reports and never filters.
 
+## Which product methane is read from, and why the Excel path stays
+
+**Methane is read from the 2025 BASE product, version 5-5, not from the 2022
+workbook export.** Carbon dioxide already was, for the different reason that the
+export carries no carbon dioxide column at all. Both gases now come from the same
+product.
+
+**The switch is additive, not a reprocessing.** The two sources were compared
+half-hour by half-hour before it was made: **227,904 shared timestamps, 66,946
+where both carry a methane value, zero values differing, and none present in one
+and absent from the other.** Monthly means over the shared months agree to
+1.4 x 10^-14, which is floating-point noise. What the product adds is **2022,
+2023 and 2024** — 22,571 further half-hours, a 34% increase, at 43.0%, 43.8% and
+41.9% annual coverage, higher than any year the export held. All 36 additional
+months clear the eight-half-hour daily rule with 11 to 31 qualifying days each.
+
+**What decided it was the availability figure.** That figure exists to show what
+was measured and which months each analysis could use. Reading the export made it
+show methane stopping in 2021 while the tower ran to 2024, which is an artifact
+of which file the pipeline opened rather than a fact about the site. The same
+applied to the observed-and-predicted figure.
+
+**The Excel path in `ingest.raw` is not dead code and must not be removed.**
+`raw.load_halfhourly` no longer feeds `scripts/04_merge_qc_aggregate.py`, which
+now calls `validation.base_v55.load_methane`. It is still the only reader for
+`scripts/01_investigate_raw.py`, which characterises the derived
+`CSVs/FCH4 Data.csv` subset **against the workbook it was cut from**: how many
+valid observations each of the three columns holds in that workbook, which column
+supplied each value in the derived file, and whether any threshold or dispersion
+rule reproduces its row selection. Those are questions about that file and its
+parent, and the 2025 product cannot answer them: it is a different export, and
+the derived subset was cut from the 2022 one. Anything that deletes the Excel
+reader as unreferenced will break script 01 silently, because the failure is a
+missing file rather than a missing symbol.
+
+**`assemble.TARGET_END` moved from 2021-12 to 2024-12** for the same reason. The
+monthly grid exists so the series is regularly spaced by construction over the
+target span; leaving it at the export's last month would have truncated
+`monthly_bog_lake_fen.csv` three years short of every other methane output.
+
 ## The three methane columns
 
 **They are disjoint in time, not redundant and not processing levels of one another.**

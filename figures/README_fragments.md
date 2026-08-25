@@ -62,14 +62,6 @@ The same analysis is drawn twice, once weighting each month by how well it was m
 
 Across every evaluated year the methods fail in much the same way, missing by similar amounts and in similar directions regardless of which year they are predicting. Methane in 2015 is the one exception, and it differs twice over: its months are all small ones, so a weak season holding no large months puts its points entirely in the lower half of the axis, and its months are also missed about 1.7 times as badly as months of the same size across the record.
 
-### Diagnostic check on model errors at Marcell Bog Lake Peatland (2009 to 2019)
-
-![Diagnostic check on model errors at Marcell Bog Lake Peatland (2009 to 2019)](figures/residual_distribution_check.png)
-
-**This is a quantile-quantile plot, which compares the errors the model made against the errors a named distribution predicts, on a log scale. Points falling on the 1:1 line are errors matching the distribution exactly; the band covers all 115 points at once, so a single point outside it is enough to say the distribution does not hold. The weighted fit counts a month resting on many measurements more heavily than one resting on few, and the study runs both throughout.**
-
-Fitting by least absolute deviations is optimal when errors follow a Laplace distribution, which is why this study chose it. Tested directly, the errors are equally consistent with Laplace and with Gaussian, so the choice is not supported by the model's own residuals. The published Laplace result came from comparing two instruments against each other, which is a different quantity. Least absolute deviations remains robust either way, and the study's intervals are empirical rather than distributional, so nothing downstream changes.
-
 ### The seasonal cycle in monthly flux at Marcell Bog Lake Peatland
 
 ![The seasonal cycle in monthly flux at Marcell Bog Lake Peatland](figures/seasonal_cycle.png)
@@ -85,3 +77,11 @@ What the repeating shape leaves is half the variation in the record: 0.54 of the
 **Each row in the upper block is one measurement, and the bar covers the months it exists. They are ordered by where each record ends, latest first. The rows below are what each analysis covers: the months the model used, and the months its forecasts were checked on. Those spans were chosen from what was available rather than being facts about the site. The study's boundaries fall where the shortest records end.**
 
 Air temperature and precipitation stop at the end of 2019. That ends the months the model could learn from, and discards 25 months of methane the tower recorded. Forecasts cannot be checked until 48 months of flux have accumulated. For methane that took 62 calendar months, because of the gaps in 2013 and 2014. The check ends in 2020, which is as far as the models that use the drivers can run. The seasonal benchmarks alone reach 2021 and 2024. Blue marks the range the model was fitted on, as it does across this set. The two hollow marks are decisions rather than absences. The water table is set aside from January 2020 for a gauge change. Two months of 2019 are set aside for instrument error.
+
+### Diagnostic check on model errors at Marcell Bog Lake Peatland (2009 to 2019)
+
+![Diagnostic check on model errors at Marcell Bog Lake Peatland (2009 to 2019)](figures/residual_distribution_check.png)
+
+**This is a quantile-quantile plot, which compares the errors the model made against the errors a named distribution predicts, on a log scale. Points falling on the 1:1 line are errors matching the distribution exactly; the band covers all 115 points at once, so a single point outside it is enough to say the distribution does not hold. The weighted fit counts a month resting on many measurements more heavily than one resting on few, and the study runs both throughout.**
+
+Fitting by least absolute deviations is optimal when errors follow a Laplace distribution, which is why this study chose it. Tested directly, the errors are equally consistent with Laplace and with Gaussian, so the choice is not supported by the model's own residuals. The published Laplace result came from comparing two instruments against each other, which is a different quantity. Least absolute deviations remains robust either way, and the study's intervals are empirical rather than distributional, so nothing downstream changes.
