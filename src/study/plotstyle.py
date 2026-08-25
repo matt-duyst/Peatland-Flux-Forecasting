@@ -218,6 +218,11 @@ SIZES = {
     #: 120 px when the key moved into the gap the methane row leaves at its left,
     #: which freed the band that had held the key under both rows.
     "year grid": (2300, 1185),
+    #: Two rows of two square panels, each holding one comparison of the same
+    #: residuals against one distribution. Square because the reference is a line
+    #: of equality, which has to sit at 45 degrees or distance from it cannot be
+    #: read, and four of them at a size worth reading sets both dimensions.
+    "quad": (1560, 1840),
 }
 
 #: Fixed pixel allocations, so a figure's proportions do not depend on how much

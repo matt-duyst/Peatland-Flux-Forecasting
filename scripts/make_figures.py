@@ -17,8 +17,8 @@ import pandas as pd
 
 from ingest import covariates
 from forecast import evaluation
-from study import (bias, features, figures, holdout, plotstyle, reconstruct, sitemap,
-                   targets, weights as weighting, windows)
+from study import (bias, features, figures, holdout, plotstyle, reconstruct,
+                   residuals, sitemap, targets, weights as weighting, windows)
 
 MONTHLY = "data/processed/monthly_fch4_from_daily.csv"
 
@@ -261,6 +261,32 @@ def main() -> None:
     path = plotstyle.save(fig, "covariate_availability")
     fragments.append(plotstyle.readme_block(figures.AVAILABILITY_TEXT,
                                             "covariate_availability"))
+    print(f"wrote {path.relative_to(plotstyle.figures_dir().parent)}")
+
+    # Whether the model's own error follows the shape its estimator assumes.
+    # Methane and the reconstruction fit only: that fit minimizes absolute
+    # deviations, so it is the one the assumption belongs to. Both weightings,
+    # since the study reports both everywhere else, and the weighted row is
+    # scaled by its own weights because that is what the weighted fit assumes.
+    # One level serves all four panels: it depends on the number of months and
+    # the level asked of the band, not on which shape is being tested.
+    level = residuals.local_level(len(built["fit"]))
+    shape_panels = {}
+    for treatment, w in (("weighted", inverse_variance), ("unweighted", None)):
+        shape_fit, _ = reconstruct.fit_variant(cov, monthly, built["fit"], "clamped", w)
+        error = shape_fit.residuals
+        if w is not None:
+            error = error * w.reindex(error.index)
+        for family in residuals.FAMILIES:
+            shape_panels[(treatment, family)] = residuals.quantile_comparison(
+                error, family, level=level)
+        gap = residuals.distribution_comparison(error)
+        print(f"  {treatment} residuals: Laplace against Gaussian, "
+              f"difference in AIC {gap['delta_aic']:+.2f}")
+
+    fig = figures.residual_shape(shape_panels)
+    path = plotstyle.save(fig, "residual_shape")
+    fragments.append(plotstyle.readme_block(figures.SHAPE_TEXT, "residual_shape"))
     print(f"wrote {path.relative_to(plotstyle.figures_dir().parent)}")
 
     target = plotstyle.figures_dir() / "README_fragments.md"

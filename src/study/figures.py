@@ -2382,3 +2382,178 @@ def prediction_error_by_year(panels: dict[str, pd.DataFrame]) -> Figure:
     if not in_gap:
         _year_key(fig, (left, bottom, width, YEAR_KEY_PX / height_px))
     return fig
+
+
+# --------------------------------------------------------------------------
+# Whether the model's error follows the shape the estimator assumes
+# --------------------------------------------------------------------------
+
+SHAPE_TEXT = ps.FigureText(
+    title=("Model error against the shapes it might follow at Marcell Bog Lake "
+           "Peatland (2009 to 2019)"),
+    subtitle=(
+        "Each point is one of the 115 months the model was fitted on. Its height "
+        "is the error the model made there. Its position across is the error the "
+        "named shape expects at that rank. Points on the line follow that shape "
+        "exactly. Errors are on a log scale (0.3 means the prediction was out by "
+        "about a third). The band covers every point at once (one point outside "
+        "it is enough to say the shape does not hold). The upper row scales each "
+        "month by how well it was measured (which is what the weighted fit "
+        "assumes about it)."
+    ),
+    description=(
+        "Unweighted, no month escapes the Laplace band and one escapes the "
+        "Gaussian, and neither shape fits better than the other (a gap of 0.3, "
+        "where 2 is the least worth remarking on). Weighted, both fail: 11 "
+        "months escape the Laplace band and 61 the Gaussian. That row's apparent "
+        "preference for Laplace, a gap of 96, is what errors of one constant "
+        "size become once multiplied by weights spanning a factor of 554. So the "
+        "model's own error does not carry the shape the estimator assumes. That "
+        "shape was established for the difference between two instruments, which "
+        "is a different quantity."
+    ),
+)
+
+#: What the four panels hold. Each names its distribution and its weighting, so
+#: a panel lifted out of the figure still says what it is.
+SHAPE_PANELS = (
+    ("weighted", "Laplace (weighted)"),
+    ("weighted", "Gaussian (weighted)"),
+    ("unweighted", "Laplace (unweighted)"),
+    ("unweighted", "Gaussian (unweighted)"),
+)
+
+SHAPE_EXPECTED = "Error the shape expects"
+SHAPE_OBSERVED = "Error the model made"
+SHAPE_UNIT = "log flux"
+
+#: The band is the region every point has to stay inside, so it is drawn as
+#: ground rather than as a pair of lines: two edges read as two series.
+SHAPE_BAND_FILL = "#ECECEC"
+SHAPE_BAND_EDGE = "#A6A6A6"
+
+SHAPE_KEYS = (
+    "One month the model was fitted on",
+    "Where a point falls if the errors follow that shape",
+    "Where every point falls together, 19 times in 20",
+)
+
+SHAPE_AXIS_PX = 118
+SHAPE_HEAD_PX = 46
+SHAPE_XAXIS_PX = 76
+SHAPE_COLUMN_GAP_PX = 76
+SHAPE_ROW_GAP_PX = 34
+SHAPE_KEY_PX = 92
+#: Reclaimed from the horizontal-axis block `canvas_area` reserves below the
+#: drawing area, which this figure does not use: each row carries its own axis
+#: name inside its own band.
+SHAPE_FOOT_PX = 52
+
+
+def _draw_shape_panel(ax, frame: pd.DataFrame, unit: str) -> None:
+    """One comparison: ordered errors against the quantiles one shape expects."""
+    # Set by the points and the line they are read against, not by the band. The
+    # band's outermost step runs to the quantile a level of 0.002 puts on the
+    # first of 115 order statistics, which is far outside anything observed and
+    # would squash the cloud into the middle of the panel. It is clipped instead.
+    low = min(frame["expected"].min(), frame["observed"].min())
+    high = max(frame["expected"].max(), frame["observed"].max())
+    room = 0.08 * (high - low)
+    limits = (low - room, high + room)
+
+    ax.fill_between(frame["expected"], frame["lowest"], frame["highest"],
+                    facecolor=SHAPE_BAND_FILL, linewidth=0.0, zorder=1)
+    ax.plot(frame["expected"], frame["lowest"], color=SHAPE_BAND_EDGE,
+            linewidth=1.0, zorder=1)
+    ax.plot(frame["expected"], frame["highest"], color=SHAPE_BAND_EDGE,
+            linewidth=1.0, zorder=1)
+    # Equality, not a fitted line: both shapes are fitted to these errors by
+    # maximum likelihood, so agreement is the line rather than a slope.
+    ax.plot(limits, limits, color=ps.BOUNDARY, linewidth=1.0,
+            linestyle=(0, (5, 3)), zorder=2)
+    ax.plot(frame["expected"], frame["observed"], linestyle="none", marker="o",
+            markersize=4.2, markerfacecolor=ps.FITTED, markeredgecolor="none",
+            zorder=3)
+
+    ax.set_xlim(*limits)
+    ax.set_ylim(*limits)
+    ax.set_xlabel(f"{SHAPE_EXPECTED} ({unit})", fontsize=ps.LABEL_SIZE - 1.0,
+                  color=ps.INK)
+    ax.set_ylabel(f"{SHAPE_OBSERVED} ({unit})", fontsize=ps.LABEL_SIZE - 1.0,
+                  color=ps.INK)
+    ax.xaxis.set_major_locator(MaxNLocator(5, steps=[1, 2, 5, 10]))
+    ax.yaxis.set_major_locator(MaxNLocator(5, steps=[1, 2, 5, 10]))
+    ax.tick_params(which="both", top=False, right=False,
+                   labelsize=ps.TICK_SIZE - 1.5)
+    ax.grid(color=ps.GRID, linewidth=0.6, zorder=0)
+    ax.set_axisbelow(True)
+    for side in ("top", "right"):
+        ax.spines[side].set_visible(False)
+    for side in ("left", "bottom"):
+        ax.spines[side].set_color(ps.BOUNDARY)
+
+
+def _shape_key(fig, left: float, bottom: float, width: float) -> None:
+    """One key for all four panels, under them and clear of every mark."""
+    ax = fig.add_axes((left, bottom, width, SHAPE_KEY_PX / ps.SIZES["quad"][1]))
+    ax.set_axis_off()
+    entries = [
+        (Line2D([], [], linestyle="none", marker="none"),
+         r"$\bf{What\ each\ mark\ shows}$"),
+        (Line2D([], [], linestyle="none", marker="o", markersize=6,
+                markerfacecolor=ps.FITTED, markeredgecolor="none"), SHAPE_KEYS[0]),
+        (Line2D([], [], color=ps.BOUNDARY, linewidth=1.0, linestyle=(0, (5, 3))),
+         SHAPE_KEYS[1]),
+        (Patch(facecolor=SHAPE_BAND_FILL, edgecolor=SHAPE_BAND_EDGE,
+               linewidth=1.0), SHAPE_KEYS[2]),
+    ]
+    ps.legend(ax, handles=[handle for handle, _ in entries],
+              labels=[label for _, label in entries], loc="center",
+              bbox_to_anchor=(0.5, 0.5), ncol=1, framealpha=1.0, borderpad=0.7,
+              labelspacing=0.5, handlelength=2.0, handletextpad=0.8,
+              fontsize=ps.LEGEND_SIZE - 1.5)
+    _underline_legend_headings(fig, ax, center=True)
+
+
+def residual_shape(panels: dict[tuple[str, str], pd.DataFrame]) -> Figure:
+    """The reconstruction model's own error against the two shapes it might follow.
+
+    Methane only, and the reconstruction fit only. That fit minimizes absolute
+    deviations, which is maximum likelihood under Laplace error, so it is the one
+    the assumption belongs to. The forecast methods minimize squared error or
+    have no likelihood at all, and carbon dioxide has no fit of this kind: it
+    crosses zero, so the log target the model needs does not exist for it.
+    """
+    fig, (left, bottom, width, height) = ps.canvas_area(SHAPE_TEXT, size="quad")
+    width_px, height_px = ps.SIZES["quad"]
+    bottom -= SHAPE_FOOT_PX / height_px
+    height += SHAPE_FOOT_PX / height_px
+
+    axis_room = SHAPE_AXIS_PX / width_px
+    gap = SHAPE_COLUMN_GAP_PX / width_px
+    head = SHAPE_HEAD_PX / height_px
+    x_room = SHAPE_XAXIS_PX / height_px
+    row_gap = SHAPE_ROW_GAP_PX / height_px
+
+    # Square in pixels rather than in figure fractions, and set by whichever of
+    # the two directions runs out first. The reference is a line of equality, so
+    # a panel that is not square puts it at some other angle and distance from it
+    # stops being readable.
+    side_px = min(((width - axis_room - gap) / 2) * width_px,
+                  (height * height_px - SHAPE_KEY_PX
+                   - 2 * (SHAPE_HEAD_PX + SHAPE_XAXIS_PX) - SHAPE_ROW_GAP_PX) / 2)
+    across, down = side_px / width_px, side_px / height_px
+    # Centered in what is left, so the slack sits either side of the pair rather
+    # than all of it at the right.
+    slack = (width - axis_room - 2 * across - gap) / 2
+    for index, (weighting, name) in enumerate(SHAPE_PANELS):
+        row, column = divmod(index, 2)
+        family = name.split(" ")[0]
+        at = left + slack + axis_room + column * (across + gap)
+        top = bottom + height - row * (head + down + x_room + row_gap) - head
+        ax = fig.add_axes((at, top - down, across, down))
+        _draw_shape_panel(ax, panels[(weighting, family)], SHAPE_UNIT)
+        ps.panel_name(ax, name, x=0.5, align="center", y=1.0 + 30 / (down * height_px))
+
+    _shape_key(fig, left, bottom, width)
+    return fig

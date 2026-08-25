@@ -101,3 +101,139 @@ def extreme_months(
     out = frame.nlargest(n, "standardized")[["flux", "reference_mean", "reference_sd", "standardized"]]
     out.index = out.index.astype(str)
     return out.round(3)
+
+
+# --------------------------------------------------------------------------
+# What shape the error has, against the shape the estimator assumes
+# --------------------------------------------------------------------------
+
+#: The two the estimator choice was made between. Least absolute deviations is
+#: maximum likelihood under Laplace error; least squares is maximum likelihood
+#: under Gaussian. Each is fitted to the residuals by maximum likelihood, so the
+#: reference on a quantile plot is the line of equality rather than a fitted one.
+FAMILIES = ("Laplace", "Gaussian")
+
+
+def _laplace(values: np.ndarray) -> tuple[float, float]:
+    """Location and scale of the maximum likelihood Laplace fit."""
+    location = float(np.median(values))
+    return location, float(np.abs(values - location).mean())
+
+
+def _gaussian(values: np.ndarray) -> tuple[float, float]:
+    return float(values.mean()), float(values.std(ddof=0))
+
+
+def log_likelihood(values: np.ndarray, family: str) -> float:
+    """Log likelihood of the residuals under the maximum likelihood fit."""
+    n = len(values)
+    if family == "Laplace":
+        location, scale = _laplace(values)
+        return -n * np.log(2 * scale) - float(np.abs(values - location).sum()) / scale
+    location, scale = _gaussian(values)
+    return (-0.5 * n * np.log(2 * np.pi * scale**2)
+            - float(((values - location) ** 2).sum()) / (2 * scale**2))
+
+
+def distribution_comparison(values: pd.Series) -> dict[str, float]:
+    """Akaike information criterion for each family, and the gap between them.
+
+    Two free parameters each, so the comparison is on log likelihood alone. The
+    gap is positive when Laplace is preferred, matching the sign the ingestion
+    layer reports for the analyzer differences.
+    """
+    array = np.asarray(values, dtype=float)
+    scores = {family: 4.0 - 2.0 * log_likelihood(array, family) for family in FAMILIES}
+    return {
+        "n": len(array),
+        "aic_laplace": scores["Laplace"],
+        "aic_gaussian": scores["Gaussian"],
+        "delta_aic": scores["Gaussian"] - scores["Laplace"],
+    }
+
+
+def _all_inside(low: np.ndarray, high: np.ndarray, n: int) -> float:
+    """P(low[k] <= U(k) <= high[k] for every k), for n uniform order statistics.
+
+    Followed through the counting process: the number of draws at or below a
+    point. Between two bounds the count gains a binomial number of the draws not
+    yet placed, and at a bound the counts that would violate it are dropped. The
+    result is exact, so nothing here is simulated and no seed is involved.
+    """
+    from scipy import stats
+
+    bounds = sorted([(t, True, k) for k, t in enumerate(high, 1)]
+                    + [(t, False, k) for k, t in enumerate(low, 1)])
+    counts = np.arange(n + 1)
+    gained = counts[None, :] - counts[:, None]
+    left = (n - counts)[:, None]
+
+    state = np.zeros(n + 1)
+    state[0] = 1.0
+    at = 0.0
+    for point, is_upper, k in bounds:
+        if point > at:
+            share = (point - at) / (1.0 - at)
+            move = np.where(gained >= 0, stats.binom.pmf(gained, left, share), 0.0)
+            state = state @ move
+            at = point
+        if is_upper:
+            state[:k] = 0.0        # fewer than k draws this low: U(k) is above it
+        else:
+            state[k:] = 0.0        # k or more draws this low: U(k) is below it
+        if not state.any():
+            return 0.0
+    return float(state.sum())
+
+
+def local_level(n: int, overall: float = 0.05, tolerance: float = 1e-7) -> float:
+    """The level each point needs so that the whole band holds at `overall`.
+
+    Testing every point at the level wanted for the band is the mistake this
+    exists to avoid: at 115 points, bounds drawn point by point at 0.05 are
+    escaped by 57% of samples that follow the distribution exactly. The level is
+    lowered until the chance of any point escaping is the level asked for, which
+    is the equal local levels construction of Weine, McPeek and Abney (2023).
+    """
+    from scipy import stats
+
+    k = np.arange(1, n + 1)
+
+    def escapes(level: float) -> float:
+        return 1.0 - _all_inside(stats.beta.ppf(level / 2, k, n - k + 1),
+                                 stats.beta.ppf(1 - level / 2, k, n - k + 1), n)
+
+    low, high = overall / (20 * n), overall
+    while high - low > tolerance:
+        middle = 0.5 * (low + high)
+        if escapes(middle) < overall:
+            low = middle
+        else:
+            high = middle
+    return 0.5 * (low + high)
+
+
+def quantile_comparison(values: pd.Series, family: str,
+                        level: float | None = None) -> pd.DataFrame:
+    """Ordered residuals against the quantiles the family puts them at.
+
+    The band is the one every point has to stay inside for the figure to be read
+    as agreement, rather than one each point holds on its own.
+    """
+    from scipy import stats
+
+    array = np.sort(np.asarray(values, dtype=float))
+    n = len(array)
+    location, scale = _laplace(array) if family == "Laplace" else _gaussian(array)
+    shape = stats.laplace(location, scale) if family == "Laplace" \
+        else stats.norm(location, scale)
+
+    k = np.arange(1, n + 1)
+    if level is None:
+        level = local_level(n)
+    return pd.DataFrame({
+        "expected": shape.ppf((k - 0.5) / n),
+        "observed": array,
+        "lowest": shape.ppf(stats.beta.ppf(level / 2, k, n - k + 1)),
+        "highest": shape.ppf(stats.beta.ppf(1 - level / 2, k, n - k + 1)),
+    })

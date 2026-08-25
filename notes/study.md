@@ -2689,6 +2689,146 @@ sites were not consistently inundated.** That is this study's screening result a
 network scale, and it is recorded here as well as in the screening section because
 this figure is where the fitted methods' failure is most visible.
 
+### The residual shape figure
+
+`figures/residual_shape.png`, built by `study.figures.residual_shape` from
+`study.residuals.quantile_comparison`, `study.residuals.local_level` and
+`study.residuals.distribution_comparison`.
+
+**Why it exists.** The estimator is least absolute deviations, which is maximum
+likelihood under Laplace error, and it was chosen because Deventer et al. (2019)
+established that flux errors at this site are Laplace. **Nothing had tested
+whether the model's own residuals follow that distribution.** The published
+result concerns paired differences between two analyzers; the estimator
+assumption concerns model error. Those are different quantities and this study
+has conflated them before.
+
+**No precedent for the form, and the notes said otherwise.** This figure was
+briefed as following Deventer's own, and it does not. Deventer figure 4 is a
+histogram with a fitted Laplace density (panel a) and a cumulative comparison
+against a normal (panel b). Neither is a quantile plot. The only quantile plots
+anywhere in these notes come from the superseded analysis, and `ingestion.md`
+records that no cell in that notebook ever called `qqplot` or `probplot`. **The
+comparison and the site follow Deventer; the form is from first principles.**
+The histogram and cumulative views were considered as companions and cut: three
+views of one assumption over four fits is twelve panels for a question the
+quantile plot answers alone, and it is the form most sensitive in the tails,
+which is where Laplace and Gaussian differ.
+
+**Which residuals, and why not the others.** The reconstruction fit only. It is
+the fit that minimizes absolute deviations, so it is the one the assumption
+belongs to. The forecast methods minimize squared error or carry no likelihood at
+all, so the assumption was never theirs. **The residuals are on the log scale**,
+because `features.log_target` is what the model fits: the assumption the
+estimator encodes is Laplace error in log flux, and a quantile plot of
+flux-scale residuals would test a different claim.
+
+**Methane only, and the reason is doubled.** Carbon dioxide was never fitted this
+way — `log_target` requires strictly positive values and the series crosses zero,
+so no fit of this kind exists for it anywhere in `reconstruct.py`, `holdout.py`
+or `stability.py`. And the assumption was never established for it: Deventer's
+finding came from paired analyzers, and `ingestion.md` records that carbon
+dioxide has one column and no pair, so nothing tests the distribution of its
+error. A carbon dioxide panel would test an assumption nobody made using an
+estimator nobody used.
+
+**Both weightings, and the weighted row is scaled.** Weighted least absolute
+deviations minimizes the weighted sum of absolute errors, which is maximum
+likelihood under Laplace with a scale of `b / w` for each month. So under the
+weighted fit it is `w * residual` that should be Laplace, not the residual
+itself, and that is what the upper row draws. The stability figure already sets
+the convention of drawing both weightings when weighting matters.
+
+**Three residuals are exactly zero and that is the estimator, not the data.** A
+least-absolute-deviation fit with `k` parameters interpolates `k` observations
+exactly. The clamped design has three columns, so three of the 115 residuals are
+zero by construction. It is 2.6% of the sample and it shows as a flat step
+through the middle of each panel.
+
+**These are in-sample residuals and they are shrunk by fitting.** They are not
+draws from the error distribution. At 115 months against three parameters the
+effect is small, but the figure is a diagnostic rather than a formal test and
+nothing here claims more than that.
+
+### The band, and why it is not drawn point by point
+
+**A band drawn point by point is the wrong instrument and the error is large.**
+Bounds that each hold 95% of their own order statistic are escaped somewhere by
+**56.8% of samples that follow the distribution exactly** at n = 115. A reader
+shown such a band and told it is a 95% band would read ordinary sampling noise as
+a failed assumption, more often than not.
+
+**The band is the equal local levels construction** of Weine, McPeek and Abney
+(2023), *Journal of Statistical Software* 106(10), implemented in R as `qqconf`.
+Every order statistic is tested at one common level chosen so that the chance of
+*any* point escaping is the level asked for the whole figure. At n = 115 and a
+5% global level that local level is **0.002079**: each point is held about
+twenty-four times tighter than the band as a whole.
+
+**It is computed exactly rather than simulated.** `residuals._all_inside` follows
+the counting process — the number of draws at or below a point — forward through
+the sorted bounds. Between two bounds the count gains a binomial number of the
+draws not yet placed; at a bound the counts that would violate it are dropped.
+The solve is a bisection on the local level, about 55 lines and **3.6 s at
+n = 115**, and it introduces no stochastic step: the study's only one remains the
+seeded bootstrap in `stability.py`. It was checked against 40,000 simulated
+samples, which escaped the solved bounds 5.09% of the time against the 5.00% the
+recursion reports.
+
+**Cost of the alternatives, for the record.** Calibrating the local level by
+Monte Carlo would have been shorter but would have added a second seeded step for
+a quantity that has a closed recursion. Building no band at all was the fallback
+if the exact route proved substantial; at 3.6 s and 55 lines it did not.
+
+### What the figure found, which is not what was assumed
+
+| fit | months outside the Laplace band | outside the Gaussian band | gap in fit |
+|---|---|---|---|
+| unweighted | **0 of 115** | 1 of 115 | **−0.31** |
+| weighted (scaled) | 11 of 115 | 61 of 115 | **+95.84** |
+
+**The unweighted residuals do not distinguish the two shapes.** A gap of 0.31 in
+the Akaike information criterion is nothing: 2 is the conventional floor for
+remarking on a difference at all. Laplace passes the band test and Gaussian fails
+it by a single point, which at a 5% global level is the coin-flip end of the
+scale. **The model's own error carries no Laplace signature.**
+
+**The weighted row looks strongly Laplace and it is an artifact.** The
+inverse-variance weights span a factor of **554**, and multiplying residuals of
+one constant size by weights that variable produces a scale mixture, which any
+heavy-tailed shape fits better. Simulated against the actual weights, 400 draws
+each:
+
+| what the errors really are | gap the scaled residuals produce |
+|---|---|
+| Gaussian, scale ∝ 1/w (weights right) | −11.9 [−20.0, −1.9] |
+| Laplace, scale ∝ 1/w (weights right) | +15.8 [+0.2, +35.2] |
+| **Gaussian, one constant scale (weights wrong)** | **+97.9 [+65.7, +133.3]** |
+| Laplace, one constant scale (weights wrong) | +114.6 [+77.5, +167.9] |
+
+The observed **+95.84** sits on top of the third row and far outside the second.
+So the weighted row is evidence that **the weights do not match the dispersion of
+the errors**, not that the errors are Laplace. Both shapes fail its band test,
+which says the same thing.
+
+**Set beside the published finding, with the distinction stated.** The ingestion
+layer reproduced Deventer's result at **ΔAIC = 7,028 in favor of Laplace**, on
+36,000-odd paired analyzer differences. This figure finds **ΔAIC = −0.31** on 115
+model residuals. The two numbers are the same statistic on different quantities:
+measurement disagreement between two instruments against the error of a fitted
+model, and the first was never evidence for the second.
+
+**What does not follow from the negative result.** Least absolute deviations
+stays consistent and robust whether or not the errors are Laplace; it stops being
+maximum likelihood, which is a claim about efficiency and not about validity. The
+study's primary prediction intervals are the **empirical quantiles** of the
+training residuals, which assume no shape at all, so they are untouched. What is
+touched is the **Laplace interval variant** in `fitting.laplace_interval`, which
+should now be read as a convenience rather than as a fitted distribution, and the
+inverse-variance weighting, which this figure gives independent reason to
+distrust — it already reduces effective sample size from 115 to 42.3, and now
+the residuals say its weights do not describe their spread.
+
 ### The seasonal split figure
 
 `figures/seasonal_cycle.png`, built by `study.figures.seasonal_cycle` from
