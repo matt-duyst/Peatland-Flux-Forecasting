@@ -379,18 +379,51 @@ def wrap_title(text: str, width_px: int) -> str:
     return textwrap.fill(" ".join(text.split()), width=width)
 
 
+def _balance(text: str, width: int) -> str:
+    """Wrap to the narrowest width that still uses the same number of lines.
+
+    A centred block is not justified, it is balanced. Setting flush edges on a
+    centred display line is the wrong instrument twice over: the last line of a
+    justified block is never stretched, so a two-line subtitle would end up with
+    one flush line above one ragged one, and stretching word spaces to reach a
+    fixed measure is what body text in a column needs, not a heading. What a
+    ragged centred block actually wants is lines of similar length, so the shape
+    reads as deliberate rather than as the accident of where the wrap fell.
+
+    Binary search finds the narrowest measure that does not spill into another
+    line. Because the line count is held, no block changes height and nothing
+    below the subtitle moves.
+    """
+    body = " ".join(text.split())
+    lines = textwrap.fill(body, width=width).count("\n") + 1
+    if lines == 1:
+        return body
+    low, high = 1, width
+    while low < high:
+        middle = (low + high) // 2
+        if textwrap.fill(body, width=middle).count("\n") + 1 <= lines:
+            high = middle
+        else:
+            low = middle + 1
+    return textwrap.fill(body, width=low)
+
+
 def wrap_subtitle(text: str, width_px: int) -> str:
-    """Wrap a subtitle to the canvas width.
+    """Wrap a subtitle to the canvas width, balanced across its lines.
 
     A subtitle is usually one line, and the block that holds it is sized from
     what it wraps to rather than fixed, so a figure whose subtitle carries the
     definitions a reader needs is given the room instead of being compressed
     into it. Every other block stays fixed, so proportions still do not depend
     on how much text a figure happens to carry below the subtitle.
+
+    Where it does run to more than one line, the lines are balanced rather than
+    filled. See `_balance` for why a centred block is balanced and not
+    justified.
     """
     drawable_points = (width_px - MARGIN_PX["left"] - MARGIN_PX["right"]) / DPI * 72.0
     width = max(20, int(drawable_points / (_CHAR_WIDTH * SUBTITLE_SIZE)))
-    return textwrap.fill(" ".join(text.split()), width=width)
+    return _balance(text, width)
 
 
 def wrap_description(text: str, width_px: int, terms: tuple[str, ...] = ()) -> str:

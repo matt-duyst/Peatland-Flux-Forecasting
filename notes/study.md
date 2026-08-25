@@ -1093,6 +1093,56 @@ edge is 47.497 rather than the 47.495 first wanted because the quarter-quad
 holding the tower begins there, and a second scene for 220 m would have added a
 seam and a second acquisition to attribute.
 
+### Subtitles are balanced, not justified
+
+Nine of the eleven subtitles run to more than one line, and every one of them
+was setting as a filled block with a short last line. The worst were the
+residual check, whose fourth line was 16 characters against a first of 147, and
+the coefficient stability figure at 63 against 147.
+
+Justification was considered and rejected as the wrong instrument twice over. A
+justified block never stretches its last line, so a two-line subtitle would end
+up flush above ragged, which is the same complaint in a new place. And
+stretching word spaces to reach a fixed measure is what body text set in a
+column needs; a centred heading is not that. Implementing it would also have
+meant drawing each line as its own artist with computed word positions, which
+breaks the mathtext bold runs `emphasize` inserts, since a bold term can span a
+word boundary.
+
+What a ragged centred block wants is lines of similar length. `_balance` binary
+searches for the narrowest measure that does not spill into another line, which
+holds the line count and so moves nothing below the subtitle. All nine now set
+within about ten characters across their lines. The cost is one function and no
+layout change anywhere.
+
+### The three panels now all present a rectangle
+
+Panels a and b are bounded by their own spines at 0.8 weight. Panel c is polar,
+so its spine is a circle, and it was the only panel floating on the page.
+
+Three treatments were rendered and compared. A rectangle round each panel
+double-frames a and b, which already have one, and reads as ink rather than
+structure. A single rectangle round all three mostly outlines the white space
+between the columns. A rectangle round panel c alone, on panel b's width and at
+the same 0.8 weight, is the one that works: the right column becomes two
+stacked boxes on one measure, and the set reads as three framed panels instead
+of two boxes and a circle. The ring note stays outside the frame, where panel
+a's coordinate labels are.
+
+### Panel c's floor, and what it cost
+
+The rose carries its legend above the circle and its ring note below, so its ink
+runs past its rectangle at both ends. The note was landing 15 px above the
+description against panel a's 63.
+
+Raising the rose's floor rather than lowering its ceiling keeps the legend where
+it is, so panel b's clearance is untouched; the gaps are now 63 for panel a and
+68 for panel c. Because the polar circle's diameter is the panel's height, this
+is paid for in the rose's size: 422 px to 374, about 11%. That was accepted over
+the alternatives, which were shrinking the gap between panels b and c to under
+10 px or moving the legend inside the circle, where the widest dead corner is
+165 px against a legend needing about 200.
+
 ### The peatland's geomorphology, and what the figure may say about it
 
 The Marcell Experimental Forest's peatlands sit in ice-block depressions left by

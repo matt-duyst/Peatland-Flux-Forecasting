@@ -22,7 +22,7 @@ import numpy as np
 import pandas as pd
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
-from matplotlib.patches import Circle, Patch, Polygon
+from matplotlib.patches import Circle, Patch, Polygon, Rectangle
 
 from ingest import paths, site
 import matplotlib.patheffects as pe
@@ -47,6 +47,21 @@ SURFACE_HOMOGENEITY_M = 200.0
 #: and so sits lower than the rectangle it is given, which left panel b as the
 #: only thing meeting the subtitle, 29 px below it against panel a's 79.
 SUBTITLE_CLEARANCE_PX = 36
+
+#: Room taken off the bottom of panel c only. The rose carries a legend above
+#: the circle and the ring note below it, so its ink runs further than its
+#: rectangle at both ends, and the note was landing 15 px above the description
+#: against panel a's 63. Raising the floor rather than the ceiling keeps the
+#: legend where it is and so keeps panel b's clearance untouched. It costs the
+#: circle its diameter, which is the panel's height: see the note in study.md.
+ROSE_FLOOR_PX = 48
+
+#: Air between panel c's contents and the frame drawn round them.
+FRAME_PAD_PX = 12
+
+#: What panels a and b carry on their spines, matched by panel c's frame so no
+#: panel is outlined more heavily than another.
+SPINE_WEIGHT = 0.8
 
 #: Wind sectors the site discards, degrees clockwise from north.
 EXCLUDED_SECTOR = (30.0, 200.0)
@@ -82,11 +97,11 @@ SITEMAP_TEXT = ps.FigureText(
         "covariance rests on. Panel b places the site among the FLUXNET-CH4 network: "
         "it is not one of them, so no community gap-filled product exists for it. "
         "Panel c is how often the wind blew from each direction over 2009 to 2019, "
-        "the years the model was fitted on. The published product holds no retained "
-        "flux from 30\u00b0 to 200\u00b0 at all, where the tower and the upland "
-        "forest lie: the exclusion was applied before publication, so this study "
-        "inherits it. It is 45% of the half-hours carrying a wind direction, "
-        "which the rose plots."
+        "the years the model was fitted on. The hatched bars are the discarded "
+        "sector, where the tower and the upland forest lie: they are 45% of the "
+        "half-hours the rose counts, and the published product holds no retained "
+        "flux from them at all. The exclusion predates publication, so this study "
+        "inherits it."
     ),
     emphasize=("Panel a", "Panel b", "Panel c"),
 )
@@ -360,11 +375,44 @@ def site_overview(image, wetlands: dict, states: dict, sites: pd.DataFrame,
 
     ax_site = fig.add_axes((left, bottom, left_w, height))
     ax_net = fig.add_axes((right_x, bottom + row_h + row_gap, right_w, row_h))
-    ax_rose = fig.add_axes((right_x, bottom, right_w, row_h), projection="polar")
+    rose_floor = ROSE_FLOOR_PX / ps.SIZES["tall"][1]
+    ax_rose = fig.add_axes((right_x, bottom + rose_floor, right_w,
+                            row_h - rose_floor), projection="polar")
 
     draw_site(ax_site, image, wetlands, origin)
     draw_network(ax_net, states, sites, origin)
     draw_sector(ax_rose, shares)
     for ax, letter in ((ax_site, "a"), (ax_net, "b"), (ax_rose, "c")):
         ps.panel_letter(ax, letter)
+    _frame_rose(fig, ax_rose, ax_net)
     return fig
+
+
+def _frame_rose(fig, ax_rose, ax_net) -> None:
+    """Give panel c the rectangle the other two already have.
+
+    Panels a and b are bounded by their own spines, so the only panel without a
+    frame is the polar one, whose spine is a circle. Drawing a rectangle round
+    every panel instead double-frames the two that are already framed, and a
+    single rectangle round all three mostly outlines the white space between
+    them. Framing panel c alone is what the suggestion was worth: it settles a
+    floating rose onto a footing, and the three then read as one set rather
+    than two boxes and a circle.
+
+    The rectangle takes panel b's width, so the right column is two stacked
+    boxes on one measure, and its height spans the rose and the legend above
+    it. The ring note stays outside, where panel a's coordinate labels are.
+    """
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    width_px, height_px = ps.SIZES["tall"]
+    circle = ax_rose.get_window_extent(renderer)
+    key = ax_rose.get_legend().get_window_extent(renderer)
+    box = ax_net.get_window_extent(renderer)
+    bottom = circle.y0 - FRAME_PAD_PX
+    top = key.y1 + FRAME_PAD_PX
+    fig.add_artist(Rectangle(
+        (box.x0 / width_px, bottom / height_px),
+        box.width / width_px, (top - bottom) / height_px,
+        transform=fig.transFigure, facecolor="none", edgecolor=ps.BOUNDARY,
+        linewidth=SPINE_WEIGHT, zorder=0))
