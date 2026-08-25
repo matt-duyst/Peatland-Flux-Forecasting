@@ -2997,6 +2997,39 @@ inverse-variance weighting, which this figure gives independent reason to
 distrust — it already reduces effective sample size from 115 to 42.3, and now
 the residuals say its weights do not describe their spread.
 
+### The availability figure's row ordering, after methane reached 2024
+
+**The rows sort by where each record ends, latest first, and that rule was chosen
+to make one relationship visible: the study's boundaries fall where the shortest
+records end.** With methane extended to 2024 the right edges run **2024-12,
+2024-12, 2021-06, 2021-01, 2019-12, 2019-12** — steps of 0, **42 months**, 5, 13
+and 0.
+
+**It is not a staircase and it never was.** Before the extension the steps were
+36, 6, 5, 13 and 0: one row alone at the top, five clustered below. The extension
+moved the top group from one row to two and the drop from 36 months to 42. Four
+of the six rows still end within eighteen months of each other, so most of the
+visible descent is a single cliff.
+
+**The cliff is the finding, so the shape encodes the constraint rather than
+hiding it.** Flux runs to 2024 and the drivers stop in 2019; that gap is what
+bounds the fit window, and it is what the drop between the second and third rows
+draws. Recorded so a future reader does not re-derive this, or mistake the shape
+for a defect and change the ordering rule to something that reads more evenly.
+The rule is doing its job. What confirms it is the alignment rather than the
+descent: air temperature and precipitation are now the bottom two rows of the
+measurement block, and the blue fitted-range bar sits directly beneath them with
+its right edge level at 2019-12, so the relationship the ordering exists for now
+happens between adjacent rows rather than across a gap.
+
+**The block splits at both ends, and the left edge is the sharper half.** Both
+gases begin in 2009 while all four environmental records begin in 1990. The right
+edges say where the fit window had to stop; **the left edges say why a
+reconstruction is possible at all** — nineteen years of drivers standing before
+any flux was measured is the entire opportunity the reconstruction half of this
+study exploits. That is the figure's second true message rather than a defect in
+the grouping, and nothing on the figure currently states it.
+
 ### The seasonal split figure
 
 `figures/seasonal_cycle.png`, built by `study.figures.seasonal_cycle` from

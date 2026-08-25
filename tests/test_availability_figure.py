@@ -173,9 +173,20 @@ def test_the_key_covers_every_mark_on_the_panel_and_carries_no_reasons():
 
 
 def test_the_blue_convention_is_stated_somewhere_on_the_figure():
-    """A reader meeting this figure first has no other way to know what it means."""
-    assert "Blue marks the range the model was fitted on" in \
+    """A reader meeting this figure first has to be told what blue means.
+
+    The description carried a sentence saying so until the key gained a fourth
+    entry naming the fitted range. Two statements of one convention is one more
+    than the figure needs, and the key is where a reader looks for it, so the
+    sentence went and this now checks the key rather than the words.
+    """
+    fig = figure()
+    key = next(ax.get_legend() for ax in fig.axes if ax.get_legend())
+    labels = [text.get_text() for text in key.get_texts()]
+    assert figures.FITTED_RANGE_LABEL in labels
+    assert "Blue marks the range the model was fitted on" not in \
         figures.AVAILABILITY_TEXT.description
+    ps.plt.close(fig)
 
 
 def test_one_neutral_serves_every_bar_that_is_not_the_fitted_range():
@@ -388,3 +399,21 @@ def test_the_time_axis_is_named_and_the_row_axis_is_not():
 
 def test_the_title_names_the_site():
     assert "Marcell Bog Lake Peatland" in figures.AVAILABILITY_TEXT.title
+
+
+def test_the_subtitle_says_the_block_splits_at_both_ends():
+    """The right edges say where the fit window had to stop. The left edges say
+    why a reconstruction is possible at all, and nothing else on the figure
+    states it. Nineteen understates: three of the four environmental records
+    begin 1990-01 against carbon dioxide at 2009-01, and soil temperature begins
+    six months earlier still, so the figure claims less than it draws.
+    """
+    said = figures.AVAILABILITY_TEXT.subtitle
+    assert "begin nineteen years before either flux does" in said
+    assert "the room the reconstruction works in" in said
+    # Placed with the other statement about the measurement block, and before the
+    # boundary sentence, which stays the last thing read.
+    assert said.index("latest first") < said.index("nineteen years")
+    assert said.index("nineteen years") < said.index("The rows below")
+    assert said.rstrip().endswith("The study's boundaries fall where the shortest "
+                                  "records end.")
