@@ -41,8 +41,8 @@ from ingest import paths
 #
 # These two are the support encoding. They appear on the reconstruction figures
 # for whether a month lies inside the fitted range, and on the site map for
-# whether a wind sector is retained or discarded and for whether the site is in
-# the FLUXNET-CH4 network. They are the strongest separation in the set, 111.7
+# whether a wind sector is retained or discarded and for whether the site was
+# gathered into FLUXNET-CH4. They are the strongest separation in the set, 111.7
 # apart under deuteranopia and 93.3 under protanopia.
 #
 #   FITTED  #009E73  the range across the eight fitted models, and on the

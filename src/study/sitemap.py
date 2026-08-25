@@ -94,12 +94,12 @@ SITEMAP_TEXT = ps.FigureText(
         "Panel a is the peatland around the tower. The white outline is the wetland "
         "the National Wetlands Inventory maps there, and the circle marks the 200 m "
         "within which the site reports its surface uniform, the assumption eddy "
-        "covariance rests on. Panel b places the site among the FLUXNET-CH4 network: "
-        "it is not one of them, so no community gap-filled product exists for it. "
+        "covariance rests on. Panel b places the site among FLUXNET-CH4, the synthesis it "
+        "was left out of, so no community gap-filled product exists for it. "
         "Panel c is how often the wind blew from each direction over 2009 to 2019, "
         "the years the model was fitted on. The hatched bars are the discarded "
         "sector, where the tower and the upland forest lie: they are 45% of the "
-        "half-hours the rose counts, and the published product holds no retained "
+        "half-hours carrying a wind direction, and the published product holds no retained "
         "flux from them at all. The exclusion predates publication, so this study "
         "inherits it."
     ),
@@ -384,11 +384,37 @@ def site_overview(image, wetlands: dict, states: dict, sites: pd.DataFrame,
     draw_sector(ax_rose, shares)
     for ax, letter in ((ax_site, "a"), (ax_net, "b"), (ax_rose, "c")):
         ps.panel_letter(ax, letter)
-    _frame_rose(fig, ax_rose, ax_net)
+    _align_right_column(fig, ax_site, ax_net, ax_rose)
+    _frame_rose(fig, ax_rose, ax_net, ax_site)
     return fig
 
 
-def _frame_rose(fig, ax_rose, ax_net) -> None:
+def _align_right_column(fig, ax_site, ax_net, ax_rose) -> None:
+    """Bring the right column's top down to panel a's.
+
+    Panel a holds the imagery's aspect, so it does not fill the rectangle it is
+    given: it is width-limited, needing 789 px of height for the 760 px of width
+    it has against a 949 px slot, and matplotlib centres what is left over. That
+    put its top 17.5 px below panel b's and its bottom 18.5 px below panel c's
+    frame, on a figure whose right column is otherwise two boxes on one measure.
+
+    Panel a is the one thing here that cannot move without being stretched, so
+    the column moves to it rather than the other way round. Both right-hand
+    rectangles shift by the same amount, which preserves every gap inside the
+    column, and the residual under a pixel is taken up by the frame, which is
+    drawn to panel a's floor directly.
+    """
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    height_px = ps.SIZES["tall"][1]
+    drop = (ax_net.get_window_extent(renderer).y1
+            - ax_site.get_window_extent(renderer).y1) / height_px
+    for ax in (ax_net, ax_rose):
+        box = ax.get_position()
+        ax.set_position((box.x0, box.y0 - drop, box.width, box.height))
+
+
+def _frame_rose(fig, ax_rose, ax_net, ax_site) -> None:
     """Give panel c the rectangle the other two already have.
 
     Panels a and b are bounded by their own spines, so the only panel without a
@@ -402,6 +428,10 @@ def _frame_rose(fig, ax_rose, ax_net) -> None:
     The rectangle takes panel b's width, so the right column is two stacked
     boxes on one measure, and its height spans the rose and the legend above
     it. The ring note stays outside, where panel a's coordinate labels are.
+
+    Its floor is panel a's floor rather than the rose's own, so the two columns
+    close on one line. That is where the sub-pixel left over from shifting the
+    column goes, and it costs nothing: the rose is inside either way.
     """
     fig.canvas.draw()
     renderer = fig.canvas.get_renderer()
@@ -409,7 +439,7 @@ def _frame_rose(fig, ax_rose, ax_net) -> None:
     circle = ax_rose.get_window_extent(renderer)
     key = ax_rose.get_legend().get_window_extent(renderer)
     box = ax_net.get_window_extent(renderer)
-    bottom = circle.y0 - FRAME_PAD_PX
+    bottom = min(circle.y0 - FRAME_PAD_PX, ax_site.get_window_extent(renderer).y0)
     top = key.y1 + FRAME_PAD_PX
     fig.add_artist(Rectangle(
         (box.x0 / width_px, bottom / height_px),

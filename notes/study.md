@@ -733,7 +733,16 @@ Data **13**, 3607-3689,
 doi:[10.5194/essd-13-3607-2021](https://doi.org/10.5194/essd-13-3607-2021), with
 the appendix archived at
 doi:[10.5281/zenodo.4672601](https://doi.org/10.5281/zenodo.4672601) under
-CC-BY-4.0. The workbook names 65 AmeriFlux sites and none is US-MBP; no cell
+CC-BY-4.0. The workbook is a synthesis rather than a network: its own
+`ORIGINAL_DATA_SOURCE` column credits AmeriFlux for 45 of the 79 sites in the
+metadata sheet, EuroFlux for 28, AsiaFlux for 5 and OzFlux for 1. None of the
+45 is US-MBP, which is itself an AmeriFlux site: the product this study reads
+is `AMF_US-MBP_BASE-BADM_5-5`. So the site belongs to the network that supplied
+the plurality of FLUXNET-CH4 and was not gathered into the synthesis, which is a
+different statement from not belonging to the network, and the figure must not
+conflate them. (An earlier version of this note said the workbook names 65
+AmeriFlux sites. No count in it is 65: the metadata sheet holds 79 sites, the
+annual-values sheet 81, and the Americas prefixes total 45.) No cell
 contains "MBP", "Marcell" or "Bog Lake"; and no site lies within 100 km of
 47.505 N, −93.489 W. The nearest are US-PFa at 300 km, classified upland, and
 US-Los at 310 km, a fen in the same climate zone and the closest usable
