@@ -221,6 +221,17 @@ recovers the nominal window. Two further literals were removed at the same time:
 backward-transfer coverages at 84.4% and 62.5%, all three of which described the
 nominal window, and all three are now computed from the window in use.
 
+**A fourth instance, found later.** `ingest.assemble.TARGET_END` was the literal
+`"2021-12"`, the last month of the 2022 workbook export. When methane moved to
+the 2025 BASE product it would have left `monthly_bog_lake_fen.csv` ending three
+years short of every other methane output, and nothing would have failed: the
+grid would simply have stopped, regularly spaced and wrong. It is now `"2024-12"`
+with the reason at the constant. **This is the same class as the three above** —
+the window exclusion living in the figure module, the pinned wettest-band bias,
+the pinned backward-transfer coverages — a value that describes the data sitting
+as a constant rather than being derived from it. Four instances is enough to call
+it a pattern in this repository rather than three accidents.
+
 **Everything below is the adopted window as the committed scripts now produce it.
 Numbers that moved when the pipeline caught up with the prose are noted where
 they appear.**

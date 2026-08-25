@@ -199,10 +199,6 @@ def main() -> None:
     # Availability reads every source the study draws on, and takes its two
     # exclusions from the constants that define them, so a change to either moves
     # the figure rather than leaving it stale.
-    legacy = pd.read_csv(root / "data/processed/monthly_bog_lake_fen.csv")
-    legacy["month"] = pd.PeriodIndex(legacy["month"], freq="M")
-    legacy = legacy.set_index("month")
-
     def observed(filename: str, column: str) -> pd.Series:
         frame = pd.read_csv(root / "data/processed" / filename)
         frame["month"] = pd.PeriodIndex(frame["month"], freq="M")

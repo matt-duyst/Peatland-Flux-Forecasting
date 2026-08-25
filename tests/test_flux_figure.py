@@ -93,9 +93,14 @@ def test_the_fitted_range_brackets_every_fitted_model_and_excludes_the_benchmark
 
 
 def test_the_evaluated_share_of_each_record_is_what_the_figure_says():
-    """The panel note claims 40% of methane months and 44% of carbon dioxide."""
+    """The panel note claims 32% of methane months and 44% of carbon dioxide.
+
+    Methane's share fell from 40% when the series was extended to 2024: the
+    evaluated window is fixed by the drivers, so a longer record is a smaller
+    evaluated share of it. Carbon dioxide already ran to 2024 and did not move.
+    """
     shares = {gas: table["climatology"].notna().mean() for gas, table in real_panels().items()}
-    assert shares["methane"] == pytest.approx(0.40, abs=0.01)
+    assert shares["methane"] == pytest.approx(0.32, abs=0.01)
     assert shares["carbon_dioxide"] == pytest.approx(0.44, abs=0.01)
 
 

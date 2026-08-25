@@ -302,14 +302,19 @@ def test_the_training_lead_is_a_lighter_weight_of_the_same_mark():
 
 
 def test_the_description_says_what_the_window_cost_and_not_only_its_cause():
+    """Phrased as what the window leaves unusable rather than as a discard. The
+    count grew from 24 to 60 when methane was read from the 2025 product, and
+    "discards 60" would read as a larger loss when nothing was lost that was not
+    already lost: the number grew because the record did."""
     said = figures.AVAILABILITY_TEXT.description
-    assert "discards 25 months of methane" in said
+    assert "leaves 60 months of methane the tower recorded but the model cannot use" in said
+    assert "discards" not in said
     assert "48 months of flux" in said and "62 calendar months" in said
 
 
 def test_the_description_names_the_benchmark_tail_without_drawing_it():
     """A fourth mark for a clause is not worth it."""
-    assert "seasonal benchmarks alone reach 2021 and 2024" in \
+    assert "seasonal benchmarks alone reach 2024 on both gases" in \
         figures.AVAILABILITY_TEXT.description
 
 

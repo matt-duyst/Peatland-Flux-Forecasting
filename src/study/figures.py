@@ -728,7 +728,7 @@ def _draw_flux_panel(ax, panel: pd.DataFrame, unit: str, labeled: bool) -> None:
     """One gas: the measured series over the record, and predictions where they exist.
 
     The evaluated months are shaded rather than clipped to, so a reader sees how
-    much of the record was never forecast: 40% of the methane months carry a
+    much of the record was never forecast: 32% of the methane months carry a
     prediction and 44% of the carbon dioxide months.
     """
     times = panel.index.to_timestamp()
@@ -1400,12 +1400,13 @@ AVAILABILITY_TEXT = ps.FigureText(
     ),
     description=(
         "Air temperature and precipitation stop at the end of 2019. That ends the "
-        "months the model could learn from, and discards 25 months of methane the "
-        "tower recorded. Forecasts cannot be checked until 48 months of flux have "
-        "accumulated. For methane that took 62 calendar months, because of the "
-        "gaps in 2013 and 2014. The check ends in 2020, which is as far as the "
-        "models that use the drivers can run. The seasonal "
-        "benchmarks alone reach 2021 and 2024. Blue marks the range the model was "
+        "months the model could learn from, and leaves 60 months of methane the "
+        "tower recorded but the model cannot use. Forecasts cannot be checked "
+        "until 48 months of flux have accumulated. For methane that took 62 "
+        "calendar months, because of the gaps in 2013 and 2014. The check ends in "
+        "2020, which is as far as the models that use the drivers can run. The "
+        "seasonal benchmarks alone reach 2024 on both gases. Blue marks the range "
+        "the model was "
         "fitted on, as it does across this set. The two hollow marks are decisions "
         "rather than absences. The water table is set aside from January 2020 for "
         "a gauge change. Two months of 2019 are set aside for instrument error."
@@ -1698,12 +1699,13 @@ SEASONAL_TEXT = ps.FigureText(
         "and four measured drivers."
     ),
     description=(
-        "What the repeating shape leaves is half the variation in the record: 0.54 "
+        "What the repeating shape leaves is half the variation in the record: 0.51 "
         "of the measurements' spread on methane and 0.53 on carbon dioxide. The "
-        "shape accounts for the rest, 71% of the variance in both. The size of the "
+        "shape accounts for the rest, 74% of the variance on methane and 71% on "
+        "carbon dioxide. The size of the "
         "season is what varies: methane's swing from lowest to highest month runs "
         "33.7 to 150.6 across the years, a factor of 4.5, and carbon dioxide's 0.8 "
-        "to 2.4, a factor of 3.0, neither of them trending (p = 0.119 and 0.505). "
+        "to 2.4, a factor of 3.0, neither of them trending (p = 0.215 and 0.505). "
         "The level was tested for a trend as well, and neither gas has one, so "
         "nothing was removed for it. This shape is fitted on every observed month, "
         "which is not what the forecast benchmark does: that one is rebuilt inside "

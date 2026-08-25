@@ -76,7 +76,9 @@ def test_the_split_runs_over_every_observed_month_of_the_committed_record():
     series = pd.read_csv(paths.processed_dir() / filename)
     series["month"] = pd.PeriodIndex(series["month"], freq="M")
     panel = figures.seasonal_parts(series.set_index("month")[column])
-    assert panel.index.max().year == 2021
+    # 2024, not 2021: methane is read from the 2025 BASE product, which carries
+    # three years the 2022 workbook export stopped short of.
+    assert panel.index.max().year == 2024
     assert panel.attrs["swing"].idxmin() == 2021
     assert panel.attrs["swing"].max() / panel.attrs["swing"].min() > 4.4
 
@@ -314,7 +316,7 @@ def test_the_description_leads_with_the_share_of_the_spread():
     """Variance share and standard deviation share pull opposite ways, and a
     reader takes whichever arrives first."""
     said = figures.SEASONAL_TEXT.description
-    assert said.index("0.54") < said.index("71%")
+    assert said.index("0.51") < said.index("74%")
 
 
 def test_the_description_says_the_shape_is_not_the_benchmark_s():
@@ -326,7 +328,7 @@ def test_the_description_says_the_shape_is_not_the_benchmark_s():
 
 def test_the_description_reports_both_amplitudes_with_their_trend_tests():
     said = figures.SEASONAL_TEXT.description
-    for number in ("33.7", "150.6", "4.5", "0.8", "2.4", "3.0", "0.119", "0.505"):
+    for number in ("33.7", "150.6", "4.5", "0.8", "2.4", "3.0", "0.215", "0.505"):
         assert number in said
 
 

@@ -79,6 +79,27 @@ the derived subset was cut from the 2022 one. Anything that deletes the Excel
 reader as unreferenced will break script 01 silently, because the failure is a
 missing file rather than a missing symbol.
 
+**The 25-month claim was wrong before the switch, not because of it.** The
+availability figure said the drivers ending in 2019 "discards 25 months of
+methane the tower recorded". On the export that number is **24** — the twelve
+months of 2020 and the twelve of 2021 — and no basis reachable from the code
+gives 25. The count on the 2025 product is **60**. It has now been restated, and
+phrased as what the window *leaves unusable* rather than as a discard: the number
+grew because the record grew, and "discards 60" would read as a larger loss when
+nothing was lost that had not already been lost. **The wrong figure had also
+reached the README**, which is where it was taken from for a rewrite, so it was
+carried forward once before being checked.
+
+**A useful negative: the calendar shares do not move.** The share of each
+covariate the calendar explains — 95% of soil and air temperature, 3.8% of the
+water table on methane and 6.0% on carbon dioxide — was expected to shift, since
+`explained_by_calendar` is computed over the observed-month index and that index
+grew by 36 months. It is **identical to four decimal places**. The covariates end
+in 2019 and the water table is cut at the datum break before that, so every added
+month contributes a null on both sides of the regression and drops out. Worth
+recording because the assumption that a longer index moves an index-dependent
+statistic is the natural one and is wrong here.
+
 **`assemble.TARGET_END` moved from 2021-12 to 2024-12** for the same reason. The
 monthly grid exists so the series is regularly spaced by construction over the
 target span; leaving it at the export's last month would have truncated
