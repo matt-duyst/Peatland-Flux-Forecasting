@@ -43,6 +43,11 @@ BOUNDARY_CREDIT = "State outlines US Census Bureau, 2022"
 #: Homogeneous fetch around the tower, meters, from the product's own metadata.
 SURFACE_HOMOGENEITY_M = 200.0
 
+#: Room taken off the top of the drawing area. Panel a holds an equal aspect
+#: and so sits lower than the rectangle it is given, which left panel b as the
+#: only thing meeting the subtitle, 29 px below it against panel a's 79.
+SUBTITLE_CLEARANCE_PX = 36
+
 #: Wind sectors the site discards, degrees clockwise from north.
 EXCLUDED_SECTOR = (30.0, 200.0)
 
@@ -64,20 +69,24 @@ SITE_MARKER = dict(marker="*", markersize=15, markerfacecolor=ps.SITE,
 SITEMAP_TEXT = ps.FigureText(
     title="The flux tower and the wind directions it measures at Marcell Bog Lake Peatland",
     subtitle=(
-        "The site is in north-central Minnesota. Flux is discarded from 30 to 200 "
-        "degrees, where upland forest lies, which removes 40% of the record"
+        "The tower stands in a poor fen in north-central Minnesota (47.5051\u00b0 N, "
+        "93.4893\u00b0 W), measuring carbon dioxide since 2007 and methane since 2009. "
+        "Because upland forest lies to the east and southeast, flux arriving from "
+        "30\u00b0 to 200\u00b0 is discarded before publication, which removes 40% of "
+        "the record."
     ),
     description=(
-        "Panel a is the peatland around the tower, with the wetland polygon the "
-        "National Wetlands Inventory maps there and a circle at the 200 m over which "
-        "the site reports its surface uniform. Panel b places the site among the "
-        "FLUXNET-CH4 network: it is not one of them, so no community gap-filled "
-        "product exists for it. Panel c is how often the wind blew from each "
-        "direction over 2009 to 2019, the years the model was fitted on. Flux is "
-        "discarded from 30 to 200 degrees, where the tower and the upland forest "
-        "lie. That sector holds 45% of the half-hours that carry a wind direction "
-        "and 40% of the whole record, and the published product holds no retained "
-        "flux from it at all."
+        "Panel a is the peatland around the tower. The white outline is the wetland "
+        "the National Wetlands Inventory maps there, and the circle marks the 200 m "
+        "within which the site reports its surface uniform, the assumption eddy "
+        "covariance rests on. Panel b places the site among the FLUXNET-CH4 network: "
+        "it is not one of them, so no community gap-filled product exists for it. "
+        "Panel c is how often the wind blew from each direction over 2009 to 2019, "
+        "the years the model was fitted on. The published product holds no retained "
+        "flux from 30\u00b0 to 200\u00b0 at all, where the tower and the upland "
+        "forest lie: the exclusion was applied before publication, so this study "
+        "inherits it. It is 45% of the half-hours carrying a wind direction, "
+        "which the rose plots."
     ),
     emphasize=("Panel a", "Panel b", "Panel c"),
 )
@@ -219,7 +228,7 @@ def draw_site(ax, image, wetlands: dict, origin: tuple[float, float]) -> None:
     ]
     key = ps.legend(ax, handles=handles, labels=[h.get_label() for h in handles],
                     loc="upper left", fontsize=7.6, borderpad=0.4, labelspacing=0.3,
-                    handlelength=1.5, handletextpad=0.5, title="Legend",
+                    handlelength=1.5, handletextpad=0.5, title="What is marked",
                     bbox_to_anchor=(0.03, 0.945))
     key.get_title().set_fontsize(7.8)
     key.get_title().set_fontweight("bold")
@@ -325,7 +334,7 @@ def draw_sector(ax, shares: pd.DataFrame) -> None:
     handles = [
         Patch(facecolor=ps.INSIDE, edgecolor="white", label="Flux retained"),
         Patch(facecolor=ps.OUTSIDE, edgecolor="white", hatch=ps.OUTSIDE_HATCH,
-              label="Discarded, 30 to 200\u00b0"),
+              label="Discarded, 30\u00b0 to 200\u00b0"),
     ]
     ps.legend(ax, handles=handles, labels=[h.get_label() for h in handles],
               loc="lower center", fontsize=7.8, borderpad=0.38, labelspacing=0.3,
@@ -338,6 +347,9 @@ def site_overview(image, wetlands: dict, states: dict, sites: pd.DataFrame,
     """The three panels together, sharing the set's title and description blocks."""
     fig, (left, bottom, width, height) = ps.canvas_area(SITEMAP_TEXT, size="tall")
     origin = (site.LONGITUDE, site.LATITUDE)
+    # Panel a is aspect-constrained, so it sits lower than its allocation and
+    # panel b meets the subtitle alone. Insetting the block clears it.
+    height -= SUBTITLE_CLEARANCE_PX / ps.SIZES["tall"][1]
 
     gap = 0.035 * width
     left_w = 0.46 * width

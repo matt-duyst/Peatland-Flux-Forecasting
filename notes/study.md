@@ -1093,6 +1093,65 @@ edge is 47.497 rather than the 47.495 first wanted because the quarter-quad
 holding the tower begins there, and a second scene for 220 m would have added a
 seam and a second acquisition to attribute.
 
+### The peatland's geomorphology, and what the figure may say about it
+
+The Marcell Experimental Forest's peatlands sit in ice-block depressions left by
+the retreating Wisconsin ice sheet, and the Forest Service describes the forest's
+six research watersheds that way as a group. Whether that origin applies to this
+particular basin cannot be established from anything in this repository or from
+the site's own metadata. The Forest Service's own discriminator between the
+forest's bogs and its fens is peat depth, and this site's peat depth appears
+nowhere in the repository: not in the BADM, not in `geodata/`, not in any
+derived table. So the general statement is well sourced and the specific one is
+an inference the repository cannot carry, which is why the site figure's
+description says nothing about glacial origin.
+
+The rule this settled, in the form it should be kept:
+
+> A figure carries only what it draws or derives from what it draws.
+
+That is stricter than "no uncited claims" and easier to apply. It admits the
+subtitle's coordinates, which are the tower the star marks. It admits the 40%
+exclusion, which panel c draws. It excludes an ice-block origin, which no layer
+on the figure shows, no matter how well cited the claim would be in prose. It is
+also why the figure carries no citation: a figure that only says what it draws
+has nothing to cite.
+
+### The sector is wider than the upland, and has two stated reasons
+
+The site figure's subtitle attributes the excluded sector to upland forest. Two
+things qualify that, both verified here rather than assumed.
+
+Ray-testing the NWI polygons outward from the tower on sixteen compass points,
+at 5 m sampling to 400 m, the directions with no wetland at all are NE through
+SSE, about 45° to 160°. Due east is as devoid of wetland as southeast. The
+subtitle therefore reads "to the east and southeast"; "to the southeast" alone
+would be a third of the upland block.
+
+The excluded sector is wider than that block on the clockwise side. SSW, inside
+the sector, carries 260 m of continuous wetland from the tower, and S carries 55
+m. The sector's definition in `validation/base_v55.py` gives two reasons, tower
+flow distortion and upland forest in the flux footprint, and the geometry is
+consistent with that: the upland accounts for the sector's middle, not its
+edges. "Because upland forest lies to the east and southeast" states the reason
+that is visible on panel a and does not claim it is the only one.
+
+### Why the tower coordinates are rounded in two places
+
+`ingest/site.py` holds 47.505 and −93.489. The BADM holds 47.5051 and −93.4893.
+The difference is about 11 m north-south and 22 m east-west, invisible on a
+two-kilometre panel, so nothing projected from the constants is wrong. But it is
+a second source of truth for one number, and the site figure's subtitle quotes
+the BADM values to a reader, so the two now differ in the same figure.
+
+They should be left rounded. Widening them changes the projection origin of
+every panel that uses them, which moves the star, the 200 m circle and the
+imagery window by a fraction of a pixel each, with no gain a reader could see,
+and requires re-checking every layout that was measured against the current
+extent. The constants are the drawing origin; the BADM is the citable location.
+The comment at the definition now says so, which is the fix that was actually
+needed: the risk was never the 22 m, it was that the discrepancy was silent.
+
 ### Why the wind rose stops at 2019
 
 **The rose is restricted to 2009 to 2019**, the months the model was fitted on,

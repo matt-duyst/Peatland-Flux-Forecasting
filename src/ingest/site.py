@@ -15,6 +15,15 @@ from __future__ import annotations
 
 SITE_ID = "US-MBP"
 SITE_NAME = "Marcell Bog Lake Peatland"
+#: Rounded from the values the product's own metadata carries, which are
+#: LOCATION_LAT 47.5051 and LOCATION_LONG -93.4893 in the BADM file. The BADM is
+#: authoritative; these are the abbreviation, and the difference is about 11 m of
+#: latitude and 22 m of longitude. That is invisible on a two-kilometre panel, so
+#: nothing drawn from these is wrong, but it is a second source of truth for one
+#: number. Anything quoting coordinates to a reader should take the BADM values,
+#: as the site figure's subtitle does; these stay rounded only because widening
+#: them would change every figure that projects from them for no gain a reader
+#: could see.
 LATITUDE = 47.505
 LONGITUDE = -93.489
 LOCATION = "USDA Forest Service Marcell Experimental Forest, Minnesota, USA"

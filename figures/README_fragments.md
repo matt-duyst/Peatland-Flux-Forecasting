@@ -10,9 +10,9 @@ Reconstruction means estimating methane emissions for years before measurements 
 
 ![The flux tower and the wind directions it measures at Marcell Bog Lake Peatland](figures/site_overview.png)
 
-**The site is in north-central Minnesota. Flux is discarded from 30 to 200 degrees, where upland forest lies, which removes 40% of the record**
+**The tower stands in a poor fen in north-central Minnesota (47.5051° N, 93.4893° W), measuring carbon dioxide since 2007 and methane since 2009. Because upland forest lies to the east and southeast, flux arriving from 30° to 200° is discarded before publication, which removes 40% of the record.**
 
-Panel a is the peatland around the tower, with the wetland polygon the National Wetlands Inventory maps there and a circle at the 200 m over which the site reports its surface uniform. Panel b places the site among the FLUXNET-CH4 network: it is not one of them, so no community gap-filled product exists for it. Panel c is how often the wind blew from each direction over 2009 to 2019, the years the model was fitted on. Flux is discarded from 30 to 200 degrees, where the tower and the upland forest lie. That sector holds 45% of the half-hours that carry a wind direction and 40% of the whole record, and the published product holds no retained flux from it at all.
+Panel a is the peatland around the tower. The white outline is the wetland the National Wetlands Inventory maps there, and the circle marks the 200 m within which the site reports its surface uniform, the assumption eddy covariance rests on. Panel b places the site among the FLUXNET-CH4 network: it is not one of them, so no community gap-filled product exists for it. Panel c is how often the wind blew from each direction over 2009 to 2019, the years the model was fitted on. The published product holds no retained flux from 30° to 200° at all, where the tower and the upland forest lie: the exclusion was applied before publication, so this study inherits it. It is 45% of the half-hours carrying a wind direction, which the rose plots.
 
 ### Reconstructed methane emission at Marcell Bog Lake Peatland (1990 to 2008)
 
