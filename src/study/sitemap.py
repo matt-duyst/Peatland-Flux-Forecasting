@@ -43,11 +43,6 @@ BOUNDARY_CREDIT = "State outlines US Census Bureau, 2022"
 #: Homogeneous fetch around the tower, meters, from the product's own metadata.
 SURFACE_HOMOGENEITY_M = 200.0
 
-#: Room taken off the top of the drawing area. Panel a holds an equal aspect
-#: and so sits lower than the rectangle it is given, which left panel b as the
-#: only thing meeting the subtitle, 29 px below it against panel a's 79.
-SUBTITLE_CLEARANCE_PX = 36
-
 #: Room taken off the bottom of panel c only. The rose carries a legend above
 #: the circle and the ring note below it, so its ink runs further than its
 #: rectangle at both ends, and the note was landing 15 px above the description
@@ -55,6 +50,13 @@ SUBTITLE_CLEARANCE_PX = 36
 #: legend where it is and so keeps panel b's clearance untouched. It costs the
 #: circle its diameter, which is the panel's height: see the note in study.md.
 ROSE_FLOOR_PX = 48
+
+#: Room taken off the top of the drawing area. It no longer exists to clear the
+#: subtitle, which `_balance_gaps` now does: it holds panels b and c at the size
+#: `ROSE_FLOOR_PX` was tuned against. Giving it back widens them by 16 px, which
+#: drops the rose 35 px below panel a's floor and breaks the one line the two
+#: columns close on. See the note in study.md.
+SUBTITLE_CLEARANCE_PX = 36
 
 #: Air between panel c's contents and the frame drawn round them.
 FRAME_PAD_PX = 12
@@ -362,8 +364,6 @@ def site_overview(image, wetlands: dict, states: dict, sites: pd.DataFrame,
     """The three panels together, sharing the set's title and description blocks."""
     fig, (left, bottom, width, height) = ps.canvas_area(SITEMAP_TEXT, size="tall")
     origin = (site.LONGITUDE, site.LATITUDE)
-    # Panel a is aspect-constrained, so it sits lower than its allocation and
-    # panel b meets the subtitle alone. Insetting the block clears it.
     height -= SUBTITLE_CLEARANCE_PX / ps.SIZES["tall"][1]
 
     gap = 0.035 * width
@@ -385,8 +385,41 @@ def site_overview(image, wetlands: dict, states: dict, sites: pd.DataFrame,
     for ax, letter in ((ax_site, "a"), (ax_net, "b"), (ax_rose, "c")):
         ps.panel_letter(ax, letter)
     _align_right_column(fig, ax_site, ax_net, ax_rose)
+    _balance_gaps(fig, (ax_site, ax_net, ax_rose))
     _frame_rose(fig, ax_rose, ax_net, ax_site)
     return fig
+
+
+def _balance_gaps(fig, axes) -> None:
+    """Put the same air above the panels as below them.
+
+    The gap a reader sees is not the one the rectangles describe. Above the
+    panels it is clear to the subtitle; below it is filled by panel a's
+    coordinate labels and panel c's ring note, which hang outside their boxes.
+    Measured to the boxes the two gaps were 85 and 92 and looked wrong; measured
+    to the ink they were 85 and 50, which is what the eye was reporting.
+
+    The block is rigid between two text blocks that cannot move, so the two gaps
+    trade one for one: closing the top opens the bottom by as much. Halving the
+    difference is the only setting that leaves them equal, and it is what evenly
+    spaced means here.
+
+    This replaces the inset that used to be taken off the top. That was there
+    because panel b stood higher than panel a and met the subtitle alone at 29
+    px; aligning the column to panel a removed the overhang, so the room is no
+    longer needed, and giving it back widens panel b and c by 16 px.
+    """
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    height_px = ps.SIZES["tall"][1]
+    subtitle, description = fig.texts[1], fig.texts[2]
+    boxes = [ax.get_tightbbox(renderer) for ax in axes]
+    above = subtitle.get_window_extent(renderer).y0 - max(b.y1 for b in boxes)
+    below = min(b.y0 for b in boxes) - description.get_window_extent(renderer).y1
+    lift = (above - below) / 2 / height_px
+    for ax in axes:
+        box = ax.get_position()
+        ax.set_position((box.x0, box.y0 + lift, box.width, box.height))
 
 
 def _align_right_column(fig, ax_site, ax_net, ax_rose) -> None:

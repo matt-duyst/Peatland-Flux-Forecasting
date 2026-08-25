@@ -1138,6 +1138,37 @@ stacked boxes on one measure, and the set reads as three framed panels instead
 of two boxes and a circle. The ring note stays outside the frame, where panel
 a's coordinate labels are.
 
+### Even air above and below, and why 50 was not available
+
+The gap a reader sees is not the one the rectangles describe. Above the panels
+it is clear to the subtitle; below it is filled by panel a's coordinate labels
+and panel c's ring note, both of which hang outside their boxes. Measured to the
+boxes the gaps were 85 and 92, which says the figure is already even and looks
+wrong. Measured to the ink they were 85 and 50, which is what the eye was
+reporting. The ink measure is the one to hold.
+
+The block is rigid between two text blocks that cannot move, so the two gaps
+trade one for one: every pixel taken off the top is added to the bottom. Closing
+the top to 50 would have opened the bottom to 85 and moved the imbalance rather
+than removing it. Halving the difference is the only setting that leaves them
+equal, and both are now 67.8.
+
+Fifty on both sides was available, at a price that was not worth paying. Taking
+the 36 px inset off the top gives the drawing area back to the layout, which
+widens panels b and c by 16 px and lands both gaps at 48.9. But `ROSE_FLOOR_PX`
+was tuned against the narrower panel: a rose 16 px taller hangs 35 px below
+panel a's floor, so the frame no longer closes on panel a's bottom and the line
+the two columns share is lost. Restoring it means raising the floor to about 83,
+which leaves the circle at 355 px against the 374 it has now. So the choice was
+even gaps at 68 with the columns aligned and the rose at 374, or even gaps at 49
+with the alignment broken, or even gaps at 49 with a 5% smaller rose. The first
+was taken: the shared line is structure a reader can see, and the difference
+between 49 px of air and 68 is not.
+
+The inset survives, but not for the reason it was added. It no longer clears the
+subtitle, which the balance now does. It holds panels b and c at the size the
+rose floor was tuned against, and the comment at its definition says so.
+
 ### Panel c's floor, and what it cost
 
 The rose carries its legend above the circle and its ring note below, so its ink
