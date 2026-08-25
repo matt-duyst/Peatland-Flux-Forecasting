@@ -226,7 +226,7 @@ SIZES = {
     #: the panels shrink and leave empty margins either side of the pair. Two rows
     #: of square panels under a text stack of about 750 px is a taller canvas than
     #: it is wide, which is why this is the one portrait size in the set.
-    "quad": (1560, 2122),
+    "quad": (1560, 2102),
 }
 
 #: Fixed pixel allocations, so a figure's proportions do not depend on how much
@@ -250,6 +250,13 @@ LEGEND_SIZE = 9.5
 #: In-plot annotations sit below the region labels and the subtitle in the
 #: hierarchy, so they are smaller and italic rather than competing with them.
 ANNOTATION_SIZE = 8.5
+
+#: Air between the title and the subtitle, and between the subtitle and the
+#: drawing area, for figures that ask for the text blocks to be measured rather
+#: than allotted. The allotment reserves a share of the title's own height, so
+#: the gap a reader sees below a title doubles when the title wraps to two lines;
+#: measuring keeps it the same whatever the title does.
+TEXT_GAP_PX = 26
 
 #: Descriptions carry one idea per sentence, which takes more sentences than it
 #: takes words. The fixed block height is the real bound on length; this only
@@ -401,13 +408,28 @@ def wrap_description(text: str, width_px: int, terms: tuple[str, ...] = ()) -> s
     return emphasize(wrapped, terms)
 
 
-def canvas_area(text: FigureText, size: str = "wide",
-                extra_left_px: int = 0) -> tuple[Figure, tuple[float, float, float, float]]:
+def _below(fig: Figure, drawn, height_px: int) -> float:
+    """Where the next block starts, one gap under what this one occupies."""
+    fig.canvas.draw()
+    box = drawn.get_window_extent().transformed(fig.transFigure.inverted())
+    return box.y0 - TEXT_GAP_PX / height_px
+
+
+def canvas_area(text: FigureText, size: str = "wide", extra_left_px: int = 0,
+                measured_text: bool = False
+                ) -> tuple[Figure, tuple[float, float, float, float]]:
     """A figure carrying its text blocks, and the rectangle left for drawing.
 
     Callers that need one axes use `canvas`; callers laying out several panels
     take the rectangle and subdivide it, so every figure in the set keeps the
     same blocks in the same places whatever it draws inside them.
+
+    With `measured_text`, the subtitle and the drawing area are placed against
+    what the blocks above them actually occupy rather than against the room
+    allotted for them. The allotment gives the title a share of its own height,
+    which is right for the one-line titles most of this set carries and leaves a
+    two-line title sitting under twice the air. Off by default, so no figure that
+    does not ask for it moves.
     """
     apply_style()
     width_px, height_px = SIZES[size]
@@ -435,11 +457,18 @@ def canvas_area(text: FigureText, size: str = "wide",
     ) / height_px
 
     middle = (left + right) / 2
-    fig.text(middle, 1 - MARGIN_PX["top"] / height_px, title, ha="center", va="top",
-             fontsize=TITLE_SIZE, fontweight="bold", color=INK, linespacing=1.35)
-    fig.text(middle, 1 - (MARGIN_PX["top"] + title_px) / height_px,
-             emphasize(heading, text.emphasize), ha="center", va="top",
-             fontsize=SUBTITLE_SIZE, color=INK, linespacing=1.5)
+    drawn_title = fig.text(middle, 1 - MARGIN_PX["top"] / height_px, title,
+                           ha="center", va="top", fontsize=TITLE_SIZE,
+                           fontweight="bold", color=INK, linespacing=1.35)
+    subtitle_at = 1 - (MARGIN_PX["top"] + title_px) / height_px
+    if measured_text:
+        subtitle_at = _below(fig, drawn_title, height_px)
+    drawn_subtitle = fig.text(middle, subtitle_at,
+                              emphasize(heading, text.emphasize), ha="center",
+                              va="top", fontsize=SUBTITLE_SIZE, color=INK,
+                              linespacing=1.5)
+    if measured_text:
+        axes_top = _below(fig, drawn_subtitle, height_px)
     fig.text(left, (MARGIN_PX["bottom"] + DESCRIPTION_BLOCK_PX) / height_px,
              body, ha="left", va="top", fontsize=DESCRIPTION_SIZE, color=MUTED,
              linespacing=1.45)

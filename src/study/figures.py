@@ -2512,7 +2512,7 @@ def _distribution_key(fig, left: float, bottom: float, width: float) -> None:
     # another sixty pixels.
     ps.legend(ax, handles=[handle for handle, _ in entries],
               labels=[label for _, label in entries], loc="center",
-              bbox_to_anchor=(0.5, 0.31), ncol=1, framealpha=1.0, borderpad=0.7,
+              bbox_to_anchor=(0.5, 0.30), ncol=1, framealpha=1.0, borderpad=0.7,
               labelspacing=0.5, handlelength=2.0, handletextpad=0.8,
               fontsize=ps.LEGEND_SIZE - 1.5)
     _underline_legend_headings(fig, ax, center=True)
@@ -2528,8 +2528,10 @@ def residual_distribution_check(
     have no likelihood at all, and carbon dioxide has no fit of this kind: it
     crosses zero, so the log target the model needs does not exist for it.
     """
-    fig, (left, bottom, width, height) = ps.canvas_area(DISTRIBUTION_TEXT,
-                                                        size="quad")
+    # Measured text blocks: the title wraps to two lines here, and the allotted
+    # spacing gives a two-line title twice the air a one-line title gets.
+    fig, (left, bottom, width, height) = ps.canvas_area(
+        DISTRIBUTION_TEXT, size="quad", measured_text=True)
     width_px, height_px = ps.SIZES["quad"]
 
     axis_room = DISTRIBUTION_AXIS_PX / width_px
@@ -2547,13 +2549,11 @@ def residual_distribution_check(
                    - 2 * (DISTRIBUTION_HEAD_PX + DISTRIBUTION_XAXIS_PX)
                    - DISTRIBUTION_ROW_GAP_PX) / 2)
     across, down = side_px / width_px, side_px / height_px
-    # Centered in what is left, so the slack sits either side of the pair rather
-    # than all of it at the right.
-    slack = (width - axis_room - 2 * across - gap) / 2
+    drawn = []
     for index, (weighting, name) in enumerate(DISTRIBUTION_PANELS):
         row, column = divmod(index, 2)
         family = name.split(" ")[0]
-        at = left + slack + axis_room + column * (across + gap)
+        at = left + axis_room + column * (across + gap)
         top = bottom + height - row * (head + down + x_room + row_gap) - head
         ax = fig.add_axes((at, top - down, across, down))
         _draw_distribution_panel(ax, panels[(weighting, family)],
@@ -2563,6 +2563,28 @@ def residual_distribution_check(
         # sitting on the frame it names.
         ps.panel_name(ax, name, x=0.5, align="center",
                       y=1.0 + 44 / (down * height_px))
+        drawn.append(ax)
 
-    _distribution_key(fig, left, bottom, width)
+    # Slid so the whole block sits centered, the block being the panels together
+    # with the axis names and tick labels standing left of them. The canvas keeps
+    # a wider margin at the left than at the right, which this figure does not
+    # need: its own gutter already holds what that margin is there for.
+    shift = _centering_shift(fig, drawn, width_px)
+    for ax in drawn:
+        box = ax.get_position()
+        ax.set_position((box.x0 + shift, box.y0, box.width, box.height))
+    # Centered on the canvas, as the block above it now is.
+    _distribution_key(fig, 0.5 - width / 2, bottom, width)
     return fig
+
+
+def _centering_shift(fig, drawn: list, width_px: int) -> float:
+    """How far to slide the panels so the whole block sits centered.
+
+    Measured after drawing rather than taken from the room set aside: what a
+    y-axis name and its tick labels occupy is not what was allotted to them.
+    """
+    fig.canvas.draw()
+    left_edge = min(ax.yaxis.get_label().get_window_extent().x0 for ax in drawn)
+    right_edge = max(ax.get_window_extent().x1 for ax in drawn)
+    return ((width_px - (right_edge - left_edge)) / 2 - left_edge) / width_px

@@ -140,14 +140,46 @@ def test_the_panels_take_the_full_width_rather_than_leaving_margins():
     fig = figures.residual_distribution_check(four_panels())
     fig.canvas.draw()
     drawn = [ax for ax in fig.axes if ax.get_legend() is None]
-    left_edge = min(ax.get_window_extent().x0 for ax in drawn)
-    expected = ps.MARGIN_PX["left"] + figures.DISTRIBUTION_AXIS_PX
-    assert left_edge == pytest.approx(expected, abs=2.0)
-
     width_px, height_px = ps.SIZES["quad"]
     covered = sum(ax.get_window_extent().width * ax.get_window_extent().height
                   for ax in drawn)
     assert covered / (width_px * height_px) > 0.40
+    ps.plt.close(fig)
+
+
+def test_the_whole_block_is_centered_and_not_just_the_panels():
+    """The canvas keeps a wider margin at the left than at the right, and this
+    figure's own gutter already holds what that margin is there for. Centering
+    the panels alone would leave the block sitting right of centre by half the
+    difference; centering what the panels and their axis names occupy does not."""
+    fig = figures.residual_distribution_check(four_panels())
+    fig.canvas.draw()
+    drawn = [ax for ax in fig.axes if ax.get_legend() is None]
+    width_px, _ = ps.SIZES["quad"]
+    left_margin = min(ax.yaxis.get_label().get_window_extent().x0 for ax in drawn)
+    right_margin = width_px - max(ax.get_window_extent().x1 for ax in drawn)
+    assert left_margin == pytest.approx(right_margin, abs=2.0)
+
+    # And the key sits on the same centre line as the block above it.
+    key = next(ax.get_legend() for ax in fig.axes if ax.get_legend())
+    box = key.get_window_extent()
+    assert (box.x0 + box.x1) / 2 == pytest.approx(width_px / 2, abs=2.0)
+    ps.plt.close(fig)
+
+
+def test_the_text_blocks_are_measured_rather_than_allotted():
+    """The allotment gives the title a share of its own height, so a two-line
+    title sits under twice the air a one-line title gets. This figure has one."""
+    fig = figures.residual_distribution_check(four_panels())
+    fig.canvas.draw()
+    _, height_px = ps.SIZES["quad"]
+    title = max(fig.texts,
+                key=lambda t: len(t.get_text()) if "Diagnostic" in t.get_text() else 0)
+    subtitle = max(fig.texts,
+                   key=lambda t: len(t.get_text()) if "quantile-quantile" in t.get_text() else 0)
+    gap = title.get_window_extent().y0 - subtitle.get_window_extent().y1
+    assert gap == pytest.approx(ps.TEXT_GAP_PX, abs=2.0)
+    assert title.get_text().count("\n") == 1        # the two-line title
     ps.plt.close(fig)
 
 

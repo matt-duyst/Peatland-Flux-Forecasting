@@ -2848,11 +2848,33 @@ covers, and what weighting does.
 453 px square with 156 px of empty margin either side of the pair, because the
 height was chosen first and squareness then took whichever direction ran out
 sooner. Setting the height to whatever squares the panels at the full available
-width gives **609 px square and no slack**, and the panels went from **28.6% to
-44.8% of the canvas**. Two rows of square panels under a text stack of about
-750 px is taller than it is wide, so this is the one portrait size in the set,
-at 1560 by 2122. A test holds the left edge against the margin so a later change
-that shrinks the panels and reopens the margins fails rather than passes quietly.
+width gives **609 px square**, and the panels went from **28.6% to 45.2% of the
+canvas**. Two rows of square panels under a text stack is taller than it is wide,
+so this is the one portrait size in the set, at 1560 by 2102.
+
+**The block is centered, not the panels.** `MARGIN_PX` keeps 108 px at the left
+against 40 at the right, which is there to hold y-axis names on figures that have
+no gutter of their own. This one has a gutter, so that margin was doubling up and
+the whole block sat 52 px right of centre. `_centering_shift` measures what the
+panels and their axis names actually occupy after drawing — the room set aside
+for a name is not the room it uses — and slides every panel and the key by the
+difference. Margins are 92 px either side now and a test holds them equal.
+
+**The text blocks are measured rather than allotted, for this figure only.**
+`canvas_area` reserves the subtitle a share of the *title's* height, so the air
+under a title doubles when the title wraps to two lines. Every other figure in
+the set has a one-line title and never met it; this one wraps, and sat under 53 px
+of air with another 40 px below the subtitle. `canvas_area` now takes
+`measured_text`, off by default, which places the subtitle one `TEXT_GAP_PX`
+under what the title actually occupies and the drawing area one gap under the
+subtitle. Both gaps are 26 px, and no figure that does not ask for it moves.
+
+**The key sits below the middle of its band.** It is taller than the 92 px band
+it stands in, so centering it puts its top edge against the axis names of the row
+above. At an anchor of 0.30 it clears them by 41 px and the description below by
+41 px. The canvas height was tuned alongside it: the tighter text freed 40 px
+that the square constraint could not spend, since the panel side is set by the
+width, so the canvas came down rather than leaving the gap above the key to grow.
 
 **The description bounds the null rather than leaving it open.** Every earlier
 version stated the negative result and stopped, which leaves a reader working out
