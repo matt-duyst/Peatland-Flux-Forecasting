@@ -221,8 +221,12 @@ SIZES = {
     #: Two rows of two square panels, each holding one comparison of the same
     #: residuals against one distribution. Square because the reference is a line
     #: of equality, which has to sit at 45 degrees or distance from it cannot be
-    #: read, and four of them at a size worth reading sets both dimensions.
-    "quad": (1560, 1840),
+    #: read. The width sets the panel side, and the height is then whatever makes
+    #: them square at that side rather than a number chosen first: set shorter,
+    #: the panels shrink and leave empty margins either side of the pair. Two rows
+    #: of square panels under a text stack of about 750 px is a taller canvas than
+    #: it is wide, which is why this is the one portrait size in the set.
+    "quad": (1560, 2122),
 }
 
 #: Fixed pixel allocations, so a figure's proportions do not depend on how much

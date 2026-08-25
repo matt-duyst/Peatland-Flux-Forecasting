@@ -133,6 +133,24 @@ def test_each_panel_is_square_and_carries_the_line_of_equality():
     ps.plt.close(fig)
 
 
+def test_the_panels_take_the_full_width_rather_than_leaving_margins():
+    """The canvas height is set to whatever squares the panels at the width
+    available, so nothing is left over at the sides. Set shorter, the panels
+    shrink and the slack reappears."""
+    fig = figures.residual_distribution_check(four_panels())
+    fig.canvas.draw()
+    drawn = [ax for ax in fig.axes if ax.get_legend() is None]
+    left_edge = min(ax.get_window_extent().x0 for ax in drawn)
+    expected = ps.MARGIN_PX["left"] + figures.DISTRIBUTION_AXIS_PX
+    assert left_edge == pytest.approx(expected, abs=2.0)
+
+    width_px, height_px = ps.SIZES["quad"]
+    covered = sum(ax.get_window_extent().width * ax.get_window_extent().height
+                  for ax in drawn)
+    assert covered / (width_px * height_px) > 0.40
+    ps.plt.close(fig)
+
+
 def test_both_axes_of_every_panel_say_the_scale():
     """The log scale is the thing a reader most needs stated: these are errors in
     log flux, so 0.3 is a third rather than a third of a nanomole."""
@@ -203,15 +221,25 @@ def test_the_key_names_the_line_without_explaining_it():
 
 
 def test_the_subtitle_says_what_kind_of_plot_this_is_before_anything_else():
-    """A reader who has not met one has no way to work out what pairing sorted
-    errors with predicted values is for."""
+    """A reader who has not met one has no way to work out what the pairing is
+    for. Naming the form does that; describing how one is built does not."""
     said = figures.DISTRIBUTION_TEXT.subtitle
     assert said.startswith("This is a quantile-quantile plot, which compares the "
                            "errors the model made against the errors a named "
-                           "distribution predicts.")
-    assert "sorted smallest to largest" in said
-    assert "log scale, so 0.3 means the prediction was out by about a third" in said
+                           "distribution predicts, on a log scale.")
     assert "Points falling on the 1:1 line are errors matching the distribution" in said
+
+
+def test_the_subtitle_is_short_enough_to_leave_the_panels_the_canvas():
+    """Seven lines of subtitle over four small panels put more canvas under text
+    than under data. The construction detail went: how a quantile plot is built
+    helps neither the reader who knows the form nor the one who does not."""
+    said = figures.DISTRIBUTION_TEXT.subtitle
+    assert len([s for s in said.split(". ") if s.strip()]) == 3
+    assert ps.wrap_subtitle(said, ps.SIZES["quad"][0]).count("\n") + 1 <= 4
+    for gone in ("sorted smallest to largest", "at one position in that order",
+                 "predicts for that position"):
+        assert gone not in said
 
 
 def test_the_subtitle_explains_what_weighting_means():
@@ -219,14 +247,15 @@ def test_the_subtitle_explains_what_weighting_means():
     said = figures.DISTRIBUTION_TEXT.subtitle
     assert ("weighted fit counts a month resting on many measurements more "
             "heavily than one resting on few") in said
-    assert "runs both weighted and unweighted throughout" in said
+    assert "the study runs both throughout" in said
 
 
 def test_the_subtitle_says_the_band_is_global_and_what_escaping_it_means():
+    """That it covers all 115 at once is what makes one escape decisive; a band
+    each point held on its own would be escaped by most correct samples."""
     said = figures.DISTRIBUTION_TEXT.subtitle
     assert "covers all 115 points at once" in said
-    assert "holds 95 percent of the time when the distribution is correct" in said
-    assert "a single point outside it is enough" in said
+    assert "a single point outside it is enough to say the distribution does not hold" in said
 
 
 def test_the_description_carries_no_number_a_reader_cannot_check():

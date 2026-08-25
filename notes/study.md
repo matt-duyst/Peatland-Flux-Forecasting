@@ -2836,6 +2836,24 @@ short conventional names are the clearest thing on the axis and leave room besid
 a 453 px panel. The key's middle entry lost its trailing clause for the same
 reason: the subtitle defines the 1:1 line, so **The 1:1 line** is enough.
 
+**The subtitle went to three sentences, and what went was construction detail.**
+At seven lines over four small panels it put more canvas under text than under
+data. The sentences cut explained that the errors are sorted smallest to largest
+and paired by position, which is **how a quantile plot is built**: a reader who
+knows the form does not need it, and one who does not is not helped by it. What
+stayed is the naming of the form, what falling on the line means, what the band
+covers, and what weighting does.
+
+**The panels are sized by the width and the canvas height follows.** They sat at
+453 px square with 156 px of empty margin either side of the pair, because the
+height was chosen first and squareness then took whichever direction ran out
+sooner. Setting the height to whatever squares the panels at the full available
+width gives **609 px square and no slack**, and the panels went from **28.6% to
+44.8% of the canvas**. Two rows of square panels under a text stack of about
+750 px is taller than it is wide, so this is the one portrait size in the set,
+at 1560 by 2122. A test holds the left edge against the margin so a later change
+that shrinks the panels and reopens the margins fails rather than passes quietly.
+
 **The description bounds the null rather than leaving it open.** Every earlier
 version stated the negative result and stopped, which leaves a reader working out
 what a failed assumption breaks. The last sentence answers it: least absolute

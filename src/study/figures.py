@@ -2393,18 +2393,12 @@ DISTRIBUTION_TEXT = ps.FigureText(
            "(2009 to 2019)"),
     subtitle=(
         "This is a quantile-quantile plot, which compares the errors the model "
-        "made against the errors a named distribution predicts. Each point is one "
-        "of the 115 months the model was fitted on. The errors are sorted "
-        "smallest to largest, and each point pairs the error at one position in "
-        "that order with the value the distribution predicts for that position. "
-        "Errors sit on a log scale, so 0.3 means the prediction was out by about "
-        "a third. Points falling on the 1:1 line are errors matching the "
-        "distribution exactly. The band covers all 115 points at once and holds "
-        "95 percent of the time when the distribution is correct, so a single "
-        "point outside it is enough to say the distribution does not hold. The "
-        "weighted fit counts a month resting on many measurements more heavily "
-        "than one resting on few, and the study runs both weighted and unweighted "
-        "throughout."
+        "made against the errors a named distribution predicts, on a log scale. "
+        "Points falling on the 1:1 line are errors matching the distribution "
+        "exactly; the band covers all 115 points at once, so a single point "
+        "outside it is enough to say the distribution does not hold. The weighted "
+        "fit counts a month resting on many measurements more heavily than one "
+        "resting on few, and the study runs both throughout."
     ),
     description=(
         "Fitting by least absolute deviations is optimal when errors follow a "
