@@ -2689,9 +2689,10 @@ sites were not consistently inundated.** That is this study's screening result a
 network scale, and it is recorded here as well as in the screening section because
 this figure is where the fitted methods' failure is most visible.
 
-### The residual shape figure
+### The residual distribution check figure
 
-`figures/residual_shape.png`, built by `study.figures.residual_shape` from
+`figures/residual_distribution_check.png`, built by
+`study.figures.residual_distribution_check` from
 `study.residuals.quantile_comparison`, `study.residuals.local_level` and
 `study.residuals.distribution_comparison`.
 
@@ -2779,6 +2780,57 @@ recursion reports.
 Monte Carlo would have been shorter but would have added a second seeded step for
 a quantity that has a closed recursion. Building no band at all was the fallback
 if the exact route proved substantial; at 3.6 s and 55 lines it did not.
+
+### The words, which took two passes
+
+**Everything the figure says was written twice.** The first pass leaned on the
+word *shape* — in the title, both axis names, the key and the description — where
+*distribution* was the word that already existed. A reader outside the study
+could not tell whether it meant a curve, a pattern or a probability
+distribution, and the file was named `residual_shape.png` after the same vague
+word. Renamed to `residual_distribution_check.png`, which says what it tests.
+
+**The title now names the test.** It read *Model error against the shapes it
+might follow*, which is passive and names nothing that happens. It reads
+*Whether the model's errors follow the distribution its estimator assumes*.
+
+**The axis names are the quantities rather than the reading.** They read *Error
+the shape expects* and *Error the model made*, the first of which is not a
+quantity anyone would recognize. A quantile plot compares two sets of values rank
+by rank, so the axes are **Distribution's value at that rank** and **Model's
+error at that rank**, both in log flux. Naming an axis for what it is "expected"
+to show describes the conclusion rather than the number underneath it.
+
+**The key entries were circular or oblique.** *Where a point falls if the errors
+follow that distribution* describes the dashed line by the conclusion it exists
+to support; it is the **1:1 line, where the two sets of values are equal**. *Where
+every point falls together, 19 times in 20* is closer but leaves the reader to
+work out what kind of band it is; it is a **95% band, meaning all 115 points fall
+inside it 95% of the time if the distribution holds**.
+
+**Weighting is explained rather than named.** The subtitle said the upper row
+*scales each month by how well it was measured (which is what the weighted fit
+assumes about it)*, a parenthesis that names the fit instead of saying what it
+does. It now says the weighted fit **counts a month resting on many measurements
+more heavily than one resting on few**, and that the study runs both throughout.
+
+**The description leads with the finding and carries no loose numbers.** The
+counts, the gap of 96, the factor of 554 and the differences in the Akaike
+information criterion are all precise and **none of them can be checked against a
+panel**, so they are in the table below and nowhere on the canvas. What the
+description carries instead is the finding, which row to read and why, and the
+conflation that is the takeaway.
+
+**Which row to read, which the figure could not say for itself.** The two rows
+disagree and nothing on the panel says which fit is primary. The unweighted row
+is the one to read for the distribution: the weighted row tests the weights as
+well as the errors, and it is the weights that fail there.
+
+**"Quantile" and "residual" are allowed.** The rule against terms a reader would
+have to decode is about this study's own vocabulary — Boruta, fold, survival,
+lag, screening, covariate — and not about standard statistics. On a quantile plot
+those two words name the quantities exactly, and the earlier text avoided them at
+the cost of saying nothing precise.
 
 ### What the figure found, which is not what was assumed
 

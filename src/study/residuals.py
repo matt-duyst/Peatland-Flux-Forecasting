@@ -104,7 +104,7 @@ def extreme_months(
 
 
 # --------------------------------------------------------------------------
-# What shape the error has, against the shape the estimator assumes
+# What distribution the errors follow, against the one the estimator assumes
 # --------------------------------------------------------------------------
 
 #: The two the estimator choice was made between. Least absolute deviations is
@@ -225,15 +225,15 @@ def quantile_comparison(values: pd.Series, family: str,
     array = np.sort(np.asarray(values, dtype=float))
     n = len(array)
     location, scale = _laplace(array) if family == "Laplace" else _gaussian(array)
-    shape = stats.laplace(location, scale) if family == "Laplace" \
+    reference = stats.laplace(location, scale) if family == "Laplace" \
         else stats.norm(location, scale)
 
     k = np.arange(1, n + 1)
     if level is None:
         level = local_level(n)
     return pd.DataFrame({
-        "expected": shape.ppf((k - 0.5) / n),
+        "expected": reference.ppf((k - 0.5) / n),
         "observed": array,
-        "lowest": shape.ppf(stats.beta.ppf(level / 2, k, n - k + 1)),
-        "highest": shape.ppf(stats.beta.ppf(1 - level / 2, k, n - k + 1)),
+        "lowest": reference.ppf(stats.beta.ppf(level / 2, k, n - k + 1)),
+        "highest": reference.ppf(stats.beta.ppf(1 - level / 2, k, n - k + 1)),
     })

@@ -112,19 +112,19 @@ def test_each_shape_is_fitted_to_the_errors_by_maximum_likelihood():
 # --- what is drawn ------------------------------------------------------------
 
 
-def test_there_are_four_panels_naming_both_shape_and_weighting():
+def test_there_are_four_panels_naming_both_distribution_and_weighting():
     """A panel lifted out of the figure still says what it is."""
-    fig = figures.residual_shape(four_panels())
+    fig = figures.residual_distribution_check(four_panels())
     drawn = [ax for ax in fig.axes if ax.get_legend() is None]
     assert len(drawn) == 4
     named = {note.get_text() for ax in drawn for note in ax.texts}
-    assert named == {name for _, name in figures.SHAPE_PANELS}
+    assert named == {name for _, name in figures.DISTRIBUTION_PANELS}
     ps.plt.close(fig)
 
 
 def test_each_panel_is_square_and_carries_the_line_of_equality():
     """Distance from that line is the reading, so it has to sit at 45 degrees."""
-    fig = figures.residual_shape(four_panels())
+    fig = figures.residual_distribution_check(four_panels())
     width_px, height_px = ps.SIZES["quad"]
     for ax in [ax for ax in fig.axes if ax.get_legend() is None]:
         box = ax.get_position()
@@ -136,21 +136,21 @@ def test_each_panel_is_square_and_carries_the_line_of_equality():
 def test_both_axes_of_every_panel_say_the_scale():
     """The log scale is the thing a reader most needs stated: these are errors in
     log flux, so 0.3 is a third rather than a third of a nanomole."""
-    fig = figures.residual_shape(four_panels())
+    fig = figures.residual_distribution_check(four_panels())
     for ax in [ax for ax in fig.axes if ax.get_legend() is None]:
-        assert figures.SHAPE_UNIT in ax.get_xlabel()
-        assert figures.SHAPE_UNIT in ax.get_ylabel()
-        assert figures.SHAPE_EXPECTED in ax.get_xlabel()
-        assert figures.SHAPE_OBSERVED in ax.get_ylabel()
+        assert figures.DISTRIBUTION_UNIT in ax.get_xlabel()
+        assert figures.DISTRIBUTION_UNIT in ax.get_ylabel()
+        assert figures.DISTRIBUTION_EXPECTED in ax.get_xlabel()
+        assert figures.DISTRIBUTION_OBSERVED in ax.get_ylabel()
     ps.plt.close(fig)
 
 
 def test_the_key_names_the_points_the_line_and_the_band():
-    fig = figures.residual_shape(four_panels())
+    fig = figures.residual_distribution_check(four_panels())
     keys = [ax.get_legend() for ax in fig.axes if ax.get_legend()]
     assert len(keys) == 1
     labels = [text.get_text() for text in keys[0].get_texts()]
-    for entry in figures.SHAPE_KEYS:
+    for entry in figures.DISTRIBUTION_KEYS:
         assert entry in labels
     assert sum(label.startswith("$") for label in labels) == 1
     ps.plt.close(fig)
@@ -158,8 +158,8 @@ def test_the_key_names_the_points_the_line_and_the_band():
 
 def test_the_panels_carry_no_numbers():
     """At four panels the description carries them."""
-    fig = figures.residual_shape(four_panels())
-    named = {name for _, name in figures.SHAPE_PANELS}
+    fig = figures.residual_distribution_check(four_panels())
+    named = {name for _, name in figures.DISTRIBUTION_PANELS}
     for ax in [ax for ax in fig.axes if ax.get_legend() is None]:
         assert not [note for note in ax.texts
                     if note.get_text().strip() and note.get_text() not in named]
@@ -169,43 +169,89 @@ def test_the_panels_carry_no_numbers():
 # --- what the words carry -----------------------------------------------------
 
 
-def test_the_title_names_what_is_plotted_the_site_and_the_span():
-    title = figures.SHAPE_TEXT.title
-    assert title.startswith("Model error against the shapes it might follow")
+def test_the_title_names_the_test_rather_than_the_marks():
+    """It read "Model error against the shapes it might follow", which is passive
+    and names nothing. The figure tests one thing and the title says which."""
+    title = figures.DISTRIBUTION_TEXT.title
+    assert title.startswith("Whether the model's errors follow the distribution "
+                            "its estimator assumes")
     assert "Marcell Bog Lake Peatland" in title
     assert title.endswith("(2009 to 2019)")
 
 
-def test_the_subtitle_states_the_log_scale_and_what_the_band_covers():
-    said = figures.SHAPE_TEXT.subtitle
+def test_nothing_the_figure_says_calls_a_distribution_a_shape():
+    """"Shape" was doing the work of a word that already exists, and a reader
+    could not tell whether it meant a curve, a pattern or a distribution."""
+    text = figures.DISTRIBUTION_TEXT
+    said = " ".join([text.title, text.subtitle, text.description,
+                     *figures.DISTRIBUTION_KEYS,
+                     figures.DISTRIBUTION_EXPECTED,
+                     figures.DISTRIBUTION_OBSERVED]).lower()
+    assert "shape" not in said
+
+
+def test_the_axis_names_are_the_quantities_rather_than_the_reading():
+    """A quantile plot compares two sets of values rank by rank. Naming an axis
+    for what it is "expected" to show describes the reading rather than the
+    number underneath it."""
+    assert figures.DISTRIBUTION_EXPECTED == "Distribution's value at that rank"
+    assert figures.DISTRIBUTION_OBSERVED == "Model's error at that rank"
+
+
+def test_the_key_says_what_the_line_and_the_band_are():
+    """"Where a point falls if the errors follow that distribution" is circular:
+    it describes the panel by the conclusion it is there to support."""
+    line, band = figures.DISTRIBUTION_KEYS[1], figures.DISTRIBUTION_KEYS[2]
+    assert line == "The 1:1 line, where the two sets of values are equal"
+    assert band.startswith("95% band")
+    assert "all 115 points fall inside it 95% of the time" in band
+
+
+def test_the_subtitle_explains_what_weighting_means():
+    """It was a parenthesis that named the fit rather than saying what it does."""
+    said = figures.DISTRIBUTION_TEXT.subtitle
+    assert ("weighted fit counts a month resting on many measurements more "
+            "heavily than one resting on few") in said
+    assert "runs both weighted and unweighted throughout" in said
     assert "log scale" in said
-    assert "covers every point at once" in said
-    assert "one point outside it is enough" in said
+    assert "covers all 115 points at once" in said
 
 
-def test_the_description_reports_the_negative_result_rather_than_the_assumption():
-    """The estimator assumes Laplace. The model's own error does not carry it,
-    and the figure was built to be able to say so."""
-    said = figures.SHAPE_TEXT.description
-    assert "does not carry the shape the estimator assumes" in said
+def test_the_description_leads_with_the_finding_and_carries_no_loose_numbers():
+    """The counts, the gap and the factor are precise and none of them can be
+    checked against a panel, so they are in the notes."""
+    said = figures.DISTRIBUTION_TEXT.description
+    assert said.startswith("The model's own errors do not follow the "
+                           "distribution its estimator assumes.")
+    for moved in ("554", "96", "0.31", "11 months", "61", "115 months",
+                  "AIC", "factor of"):
+        assert moved not in said
+
+
+def test_the_description_says_which_row_to_read_and_why():
+    """The two rows disagree and nothing on the panel says which is primary."""
+    said = figures.DISTRIBUTION_TEXT.description
+    assert "neither can be told from the other" in said
+    assert "Weighted, both fail" in said
+    assert ("that row tests the weights as well as the errors, so the unweighted "
+            "row is the one to read") in said
+
+
+def test_the_description_names_the_conflation_as_the_takeaway():
+    """Twice now: the published result is about the difference between two
+    instruments, and the estimator assumption is about a fitted model's error."""
+    said = figures.DISTRIBUTION_TEXT.description
     assert "difference between two instruments" in said
-    assert "a different quantity" in said
-
-
-def test_the_weighted_row_is_not_read_as_confirming_the_assumption():
-    """It looks strongly Laplace and that is an artifact of the weights, which
-    span a factor of 554 and turn errors of one size into a heavy-tailed
-    mixture. Left unsaid, the row would be read as the opposite of the finding."""
-    said = figures.SHAPE_TEXT.description
-    assert "554" in said
-    assert "errors of one constant size" in said
-    assert "11 months escape the Laplace band and 61 the Gaussian" in said
+    assert "a different quantity from the error of a fitted model" in said
+    assert "second time this study has caught the two being treated as one" in said
 
 
 def test_no_term_a_reader_outside_the_study_would_have_to_decode():
-    text = figures.SHAPE_TEXT
+    """Study vocabulary, not standard statistics: "quantile" and "residual" name
+    real quantities and the axis titles are allowed to use them."""
+    text = figures.DISTRIBUTION_TEXT
     said = " ".join([text.title, text.subtitle, text.description]).lower()
-    for term in ("quantile", "residual", "heteroscedastic", "kurtosis", "aic",
-                 "maximum likelihood", "q-q", "estimator assumption",
-                 "leptokurtic", "order statistic"):
+    for term in ("boruta", "fold", "survival", "lag", "screening", "covariate",
+                 "heteroscedastic", "kurtosis", "leptokurtic", "order statistic",
+                 "maximum likelihood", "q-q"):
         assert term not in said

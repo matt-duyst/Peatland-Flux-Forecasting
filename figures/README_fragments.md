@@ -62,13 +62,13 @@ The same analysis is drawn twice, once weighting each month by how well it was m
 
 Across every evaluated year the methods fail in much the same way, missing by similar amounts and in similar directions regardless of which year they are predicting. Methane in 2015 is the one exception, and it differs twice over: its months are all small ones, so a weak season holding no large months puts its points entirely in the lower half of the axis, and its months are also missed about 1.7 times as badly as months of the same size across the record.
 
-### Model error against the shapes it might follow at Marcell Bog Lake Peatland (2009 to 2019)
+### Whether the model's errors follow the distribution its estimator assumes at Marcell Bog Lake Peatland (2009 to 2019)
 
-![Model error against the shapes it might follow at Marcell Bog Lake Peatland (2009 to 2019)](figures/residual_shape.png)
+![Whether the model's errors follow the distribution its estimator assumes at Marcell Bog Lake Peatland (2009 to 2019)](figures/residual_distribution_check.png)
 
-**Each point is one of the 115 months the model was fitted on. Its height is the error the model made there. Its position across is the error the named shape expects at that rank. Points on the line follow that shape exactly. Errors are on a log scale (0.3 means the prediction was out by about a third). The band covers every point at once (one point outside it is enough to say the shape does not hold). The upper row scales each month by how well it was measured (which is what the weighted fit assumes about it).**
+**Each point is one of the 115 months the model was fitted on. Its height is the model's error for that month. Its position across is the value the named distribution puts at that rank. Errors are on a log scale (0.3 means the prediction was out by about a third). The band covers all 115 points at once, so one point outside it is enough to say the distribution does not hold. The weighted fit counts a month resting on many measurements more heavily than one resting on few. The study runs both weighted and unweighted throughout.**
 
-Unweighted, no month escapes the Laplace band and one escapes the Gaussian, and neither shape fits better than the other (a gap of 0.3, where 2 is the least worth remarking on). Weighted, both fail: 11 months escape the Laplace band and 61 the Gaussian. That row's apparent preference for Laplace, a gap of 96, is what errors of one constant size become once multiplied by weights spanning a factor of 554. So the model's own error does not carry the shape the estimator assumes. That shape was established for the difference between two instruments, which is a different quantity.
+The model's own errors do not follow the distribution its estimator assumes. Unweighted, they fit Laplace and Gaussian equally well and neither can be told from the other, so nothing here supports the choice that was made. Weighted, both fail, but that row tests the weights as well as the errors, so the unweighted row is the one to read for the distribution itself. The published Laplace result was established for the difference between two instruments, which is a different quantity from the error of a fitted model. That is the second time this study has caught the two being treated as one.
 
 ### The seasonal cycle in monthly flux at Marcell Bog Lake Peatland
 
