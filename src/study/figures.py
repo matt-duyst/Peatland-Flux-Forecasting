@@ -2389,28 +2389,32 @@ def prediction_error_by_year(panels: dict[str, pd.DataFrame]) -> Figure:
 # --------------------------------------------------------------------------
 
 DISTRIBUTION_TEXT = ps.FigureText(
-    title=("Whether the model's errors follow the distribution its estimator "
-           "assumes at Marcell Bog Lake Peatland (2009 to 2019)"),
+    title=("Diagnostic check on the model's errors at Marcell Bog Lake Peatland "
+           "(2009 to 2019)"),
     subtitle=(
-        "Each point is one of the 115 months the model was fitted on. Its height "
-        "is the model's error for that month. Its position across is the value "
-        "the named distribution puts at that rank. Errors are on a log scale "
-        "(0.3 means the prediction was out by about a third). The band covers all "
-        "115 points at once, so one point outside it is enough to say the "
-        "distribution does not hold. The weighted fit counts a month resting on "
-        "many measurements more heavily than one resting on few. The study runs "
-        "both weighted and unweighted throughout."
+        "This is a quantile-quantile plot, which compares the errors the model "
+        "made against the errors a named distribution predicts. Each point is one "
+        "of the 115 months the model was fitted on. The errors are sorted "
+        "smallest to largest, and each point pairs the error at one position in "
+        "that order with the value the distribution predicts for that position. "
+        "Errors sit on a log scale, so 0.3 means the prediction was out by about "
+        "a third. Points falling on the 1:1 line are errors matching the "
+        "distribution exactly. The band covers all 115 points at once and holds "
+        "95 percent of the time when the distribution is correct, so a single "
+        "point outside it is enough to say the distribution does not hold. The "
+        "weighted fit counts a month resting on many measurements more heavily "
+        "than one resting on few, and the study runs both weighted and unweighted "
+        "throughout."
     ),
     description=(
-        "The model's own errors do not follow the distribution its estimator "
-        "assumes. Unweighted, they fit Laplace and Gaussian equally well and "
-        "neither can be told from the other, so nothing here supports the choice "
-        "that was made. Weighted, both fail, but that row tests the weights as "
-        "well as the errors, so the unweighted row is the one to read for the "
-        "distribution itself. The published Laplace result was established for "
-        "the difference between two instruments, which is a different quantity "
-        "from the error of a fitted model. That is the second time this study has "
-        "caught the two being treated as one."
+        "Fitting by least absolute deviations is optimal when errors follow a "
+        "Laplace distribution, which is why this study chose it. Tested directly, "
+        "the errors are equally consistent with Laplace and with Gaussian, so the "
+        "choice is not supported by the model's own residuals. The published "
+        "Laplace result came from comparing two instruments against each other, "
+        "which is a different quantity. Least absolute deviations remains robust "
+        "either way, and the study's intervals are empirical rather than "
+        "distributional, so nothing downstream changes."
     ),
 )
 
@@ -2423,11 +2427,11 @@ DISTRIBUTION_PANELS = (
     ("unweighted", "Gaussian (unweighted)"),
 )
 
-#: Both axes name the quantity literally. A quantile plot compares two sets of
-#: quantiles rank by rank, and naming either axis for what it is "expected" to
-#: show describes the reading rather than the number underneath it.
-DISTRIBUTION_EXPECTED = "Distribution's value at that rank"
-DISTRIBUTION_OBSERVED = "Model's error at that rank"
+#: The names a quantile plot's axes carry by convention. The subtitle says what
+#: they are in full, so the axes themselves stay short enough to sit beside a
+#: panel without crowding it.
+DISTRIBUTION_EXPECTED = "Theoretical quantiles"
+DISTRIBUTION_OBSERVED = "Sample quantiles"
 DISTRIBUTION_UNIT = "log flux"
 
 #: The band is the region every point has to stay inside, so it is drawn as
@@ -2437,7 +2441,7 @@ DISTRIBUTION_BAND_EDGE = "#A6A6A6"
 
 DISTRIBUTION_KEYS = (
     "One of the 115 months the model was fitted on",
-    "The 1:1 line, where the two sets of values are equal",
+    "The 1:1 line",
     "95% band: all 115 points fall inside it 95% of the time if the "
     "distribution holds",
 )
@@ -2508,9 +2512,13 @@ def _distribution_key(fig, left: float, bottom: float, width: float) -> None:
         (Patch(facecolor=DISTRIBUTION_BAND_FILL, edgecolor=DISTRIBUTION_BAND_EDGE,
                linewidth=1.0), DISTRIBUTION_KEYS[2]),
     ]
+    # Held below the middle of its band. The key is taller than the band it sits
+    # in, so centering it puts its top edge against the axis names of the row
+    # above; the room it needs is all below, where the description is not for
+    # another sixty pixels.
     ps.legend(ax, handles=[handle for handle, _ in entries],
               labels=[label for _, label in entries], loc="center",
-              bbox_to_anchor=(0.5, 0.5), ncol=1, framealpha=1.0, borderpad=0.7,
+              bbox_to_anchor=(0.5, 0.31), ncol=1, framealpha=1.0, borderpad=0.7,
               labelspacing=0.5, handlelength=2.0, handletextpad=0.8,
               fontsize=ps.LEGEND_SIZE - 1.5)
     _underline_legend_headings(fig, ax, center=True)
@@ -2556,8 +2564,11 @@ def residual_distribution_check(
         ax = fig.add_axes((at, top - down, across, down))
         _draw_distribution_panel(ax, panels[(weighting, family)],
                                  DISTRIBUTION_UNIT)
+        # Clear of the panel top by more than the frame's own line weight: the
+        # label is drawn from its top edge, so a smaller offset leaves the box
+        # sitting on the frame it names.
         ps.panel_name(ax, name, x=0.5, align="center",
-                      y=1.0 + 30 / (down * height_px))
+                      y=1.0 + 44 / (down * height_px))
 
     _distribution_key(fig, left, bottom, width)
     return fig

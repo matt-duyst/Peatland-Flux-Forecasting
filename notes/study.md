@@ -2814,6 +2814,36 @@ assumes about it)*, a parenthesis that names the fit instead of saying what it
 does. It now says the weighted fit **counts a month resting on many measurements
 more heavily than one resting on few**, and that the study runs both throughout.
 
+**The title calls it a diagnostic, which is what sets the expectation.** Three
+titles were tried. *Model error against the shapes it might follow* is passive
+and names nothing that happens. *Whether the model's errors follow the
+distribution its estimator assumes* names the test but reads as though a finding
+follows. **Diagnostic check on the model's errors** says what the figure is for:
+it checks an assumption and reports a null, and a diagnostic is the thing that
+is allowed to do that.
+
+**The subtitle says what a quantile plot is before using one.** A reader who has
+not met the form has no way to work out why sorted errors are being paired with
+predicted values, and every earlier subtitle described the marks without naming
+the construction. It now opens by naming it, says the errors are sorted smallest
+to largest, and says what pairing rank with rank means.
+
+**The axis names went back to the conventional pair.** They passed through *Error
+the shape expects* and *Distribution's value at that rank* before settling on
+**Theoretical quantiles** and **Sample quantiles**, both in log flux. The long
+forms were attempts to avoid a term; once the subtitle defines the plot, the
+short conventional names are the clearest thing on the axis and leave room beside
+a 453 px panel. The key's middle entry lost its trailing clause for the same
+reason: the subtitle defines the 1:1 line, so **The 1:1 line** is enough.
+
+**The description bounds the null rather than leaving it open.** Every earlier
+version stated the negative result and stopped, which leaves a reader working out
+what a failed assumption breaks. The last sentence answers it: least absolute
+deviations stays robust whether or not the errors are Laplace, and the study's
+intervals are the empirical quantiles of the training residuals rather than
+anything distributional, so nothing downstream moves. **What the null costs is
+the argument for the estimator, not the estimator.**
+
 **The description leads with the finding and carries no loose numbers.** The
 counts, the gap of 96, the factor of 554 and the differences in the Akaike
 information criterion are all precise and **none of them can be checked against a

@@ -169,12 +169,12 @@ def test_the_panels_carry_no_numbers():
 # --- what the words carry -----------------------------------------------------
 
 
-def test_the_title_names_the_test_rather_than_the_marks():
-    """It read "Model error against the shapes it might follow", which is passive
-    and names nothing. The figure tests one thing and the title says which."""
+def test_the_title_names_this_a_diagnostic():
+    """It checks an assumption and reports a null. Earlier titles ("Model error
+    against the shapes it might follow", "Whether the model's errors follow the
+    distribution its estimator assumes") implied a finding it does not carry."""
     title = figures.DISTRIBUTION_TEXT.title
-    assert title.startswith("Whether the model's errors follow the distribution "
-                            "its estimator assumes")
+    assert title.startswith("Diagnostic check on the model's errors")
     assert "Marcell Bog Lake Peatland" in title
     assert title.endswith("(2009 to 2019)")
 
@@ -190,21 +190,28 @@ def test_nothing_the_figure_says_calls_a_distribution_a_shape():
     assert "shape" not in said
 
 
-def test_the_axis_names_are_the_quantities_rather_than_the_reading():
-    """A quantile plot compares two sets of values rank by rank. Naming an axis
-    for what it is "expected" to show describes the reading rather than the
-    number underneath it."""
-    assert figures.DISTRIBUTION_EXPECTED == "Distribution's value at that rank"
-    assert figures.DISTRIBUTION_OBSERVED == "Model's error at that rank"
+def test_the_axes_take_the_names_a_quantile_plot_carries():
+    """Short, because the subtitle now says what they are in full."""
+    assert figures.DISTRIBUTION_EXPECTED == "Theoretical quantiles"
+    assert figures.DISTRIBUTION_OBSERVED == "Sample quantiles"
 
 
-def test_the_key_says_what_the_line_and_the_band_are():
-    """"Where a point falls if the errors follow that distribution" is circular:
-    it describes the panel by the conclusion it is there to support."""
-    line, band = figures.DISTRIBUTION_KEYS[1], figures.DISTRIBUTION_KEYS[2]
-    assert line == "The 1:1 line, where the two sets of values are equal"
-    assert band.startswith("95% band")
-    assert "all 115 points fall inside it 95% of the time" in band
+def test_the_key_names_the_line_without_explaining_it():
+    """The subtitle defines the 1:1 line, so a trailing clause here repeats it."""
+    assert figures.DISTRIBUTION_KEYS[1] == "The 1:1 line"
+    assert figures.DISTRIBUTION_KEYS[2].startswith("95% band")
+
+
+def test_the_subtitle_says_what_kind_of_plot_this_is_before_anything_else():
+    """A reader who has not met one has no way to work out what pairing sorted
+    errors with predicted values is for."""
+    said = figures.DISTRIBUTION_TEXT.subtitle
+    assert said.startswith("This is a quantile-quantile plot, which compares the "
+                           "errors the model made against the errors a named "
+                           "distribution predicts.")
+    assert "sorted smallest to largest" in said
+    assert "log scale, so 0.3 means the prediction was out by about a third" in said
+    assert "Points falling on the 1:1 line are errors matching the distribution" in said
 
 
 def test_the_subtitle_explains_what_weighting_means():
@@ -213,45 +220,57 @@ def test_the_subtitle_explains_what_weighting_means():
     assert ("weighted fit counts a month resting on many measurements more "
             "heavily than one resting on few") in said
     assert "runs both weighted and unweighted throughout" in said
-    assert "log scale" in said
+
+
+def test_the_subtitle_says_the_band_is_global_and_what_escaping_it_means():
+    said = figures.DISTRIBUTION_TEXT.subtitle
     assert "covers all 115 points at once" in said
+    assert "holds 95 percent of the time when the distribution is correct" in said
+    assert "a single point outside it is enough" in said
 
 
-def test_the_description_leads_with_the_finding_and_carries_no_loose_numbers():
+def test_the_description_carries_no_number_a_reader_cannot_check():
     """The counts, the gap and the factor are precise and none of them can be
-    checked against a panel, so they are in the notes."""
+    read off a panel, so they are in the notes."""
     said = figures.DISTRIBUTION_TEXT.description
-    assert said.startswith("The model's own errors do not follow the "
-                           "distribution its estimator assumes.")
-    for moved in ("554", "96", "0.31", "11 months", "61", "115 months",
-                  "AIC", "factor of"):
+    for moved in ("554", "96", "0.31", "11 months", "61", "AIC", "factor of"):
         assert moved not in said
 
 
-def test_the_description_says_which_row_to_read_and_why():
-    """The two rows disagree and nothing on the panel says which is primary."""
+def test_the_description_says_why_the_estimator_was_chosen_before_testing_it():
+    """A null result on an assumption means nothing to a reader who does not know
+    the assumption was load-bearing."""
     said = figures.DISTRIBUTION_TEXT.description
-    assert "neither can be told from the other" in said
-    assert "Weighted, both fail" in said
-    assert ("that row tests the weights as well as the errors, so the unweighted "
-            "row is the one to read") in said
+    assert said.startswith("Fitting by least absolute deviations is optimal when "
+                           "errors follow a Laplace distribution, which is why "
+                           "this study chose it.")
+    assert "equally consistent with Laplace and with Gaussian" in said
+    assert "not supported by the model's own residuals" in said
 
 
-def test_the_description_names_the_conflation_as_the_takeaway():
-    """Twice now: the published result is about the difference between two
-    instruments, and the estimator assumption is about a fitted model's error."""
+def test_the_description_names_the_conflation():
+    """The published result is about two instruments compared against each other;
+    the assumption is about a fitted model's error."""
     said = figures.DISTRIBUTION_TEXT.description
-    assert "difference between two instruments" in said
-    assert "a different quantity from the error of a fitted model" in said
-    assert "second time this study has caught the two being treated as one" in said
+    assert "comparing two instruments against each other" in said
+    assert "a different quantity" in said
+
+
+def test_the_description_bounds_the_null_result():
+    """Without this a reader is left working out what a failed assumption breaks.
+    The estimator stays robust and the intervals never used the distribution."""
+    said = figures.DISTRIBUTION_TEXT.description
+    assert "remains robust either way" in said
+    assert "intervals are empirical rather than distributional" in said
+    assert "nothing downstream changes" in said
 
 
 def test_no_term_a_reader_outside_the_study_would_have_to_decode():
-    """Study vocabulary, not standard statistics: "quantile" and "residual" name
-    real quantities and the axis titles are allowed to use them."""
+    """Study vocabulary, not standard statistics: this figure is a quantile plot
+    and is allowed to say so."""
     text = figures.DISTRIBUTION_TEXT
     said = " ".join([text.title, text.subtitle, text.description]).lower()
-    for term in ("boruta", "fold", "survival", "lag", "screening", "covariate",
+    for term in ("boruta", "fold", "survival", "screening", "covariate",
                  "heteroscedastic", "kurtosis", "leptokurtic", "order statistic",
-                 "maximum likelihood", "q-q"):
+                 "maximum likelihood"):
         assert term not in said
