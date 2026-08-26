@@ -426,10 +426,9 @@ FORECAST_TEXT = ps.FigureText(
         "last month carried forward, and the same month last year adjusted for "
         "trend. The first two are drawn here. Each method is evaluated at "
         "forecast horizons of one to twelve months, meaning how far ahead the "
-        "prediction is made. The most accurate at every horizon on both gases is "
-        "the simplest, the first of those. The pale band marks how far from that "
-        "average a method would have to fall, in either direction, before the "
-        "difference could be told apart from noise."
+        "prediction is made. The pale band marks how far from the first of those "
+        "a method would have to fall, in either direction, before the difference "
+        "could be told apart from noise."
     ),
     description=(
         "Methane is measured in nanomoles and carbon dioxide in micromoles, so "
@@ -529,6 +528,11 @@ def forecast_error_by_horizon(panels: dict[str, pd.DataFrame]) -> Figure:
     # holds at three, so a reader met it twice above the axis and once below.
     for ax in axes:
         _raise_top_until_furniture_clears(ax)
+    # Balance before ruling the headings. The rules are figure artists at fixed
+    # figure coordinates, so anything that moves an axes afterwards slides its
+    # legend out from under them.
+    ps.balance_drawing_block(fig, *axes)
+    for ax in axes:
         _underline_legend_headings(fig, ax)
     return fig
 
@@ -592,7 +596,7 @@ def _forecast_legend(ax) -> None:
          "Margin needed to differ from the average"),
     ]
     ps.legend(ax, handles=[h for h, _ in entries], labels=[label for _, label in entries],
-              loc="upper center", bbox_to_anchor=(0.46, 0.90), ncol=2, borderpad=0.7,
+              loc="upper right", bbox_to_anchor=(0.995, 0.985), ncol=2, borderpad=0.7,
               labelspacing=0.34, columnspacing=2.0, handlelength=2.2,
               handletextpad=0.8, fontsize=ps.LEGEND_SIZE - 1.0, framealpha=1.0)
 
