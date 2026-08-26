@@ -184,7 +184,7 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
     this study exists to refuse: the spread is what the choice of assumption
     buys, not a probability.
     """
-    from matplotlib.ticker import FixedLocator, MultipleLocator
+    from matplotlib.ticker import FixedLocator, FormatStrFormatter, MultipleLocator
 
     frame = annual[annual["year"] <= LAST_PLOTTED_YEAR].copy()
     years = frame["year"].to_numpy()
@@ -228,12 +228,18 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
 
     ax.set_ylabel(ps.axis_label("Annual emission", "g C m$^{-2}$ yr$^{-1}$"))
     ax.set_ylim(0, frame[list(WATER_TABLE_ASSUMPTIONS)].to_numpy().max() * 1.18)
+    # Every year is labeled, on the minor ticks. At 87 px a year against a
+    # 50 px label there is room for all nineteen, and a reader should not have
+    # to count along from a five-year mark to find one. The majors stay at five
+    # years because the grid follows them: nineteen rules would be a lattice
+    # over three lines and two marker colors, where five are an anchor.
     ticks = [y for y in range(int(years.min()), int(years.max()) + 1, 5)]
     if years.max() not in ticks:
         ticks.append(int(years.max()))
     ax.xaxis.set_major_locator(FixedLocator(ticks))
     ax.xaxis.set_minor_locator(MultipleLocator(1))
-    ax.tick_params(labelbottom=False)
+    ax.xaxis.set_minor_formatter(FormatStrFormatter("%d"))
+    ax.tick_params(axis="x", which="both", labelbottom=False)
     ps.mirror_ticks(ax)
     # Two columns, one group each: the lines are assumptions about the model and
     # the markers are properties of a year, which are different kinds of thing.
@@ -274,11 +280,18 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
 
     strip.set_ylim(0, 108)
     strip.set_yticks([0, 50, 100])
-    strip.set_ylabel(ps.axis_label("Months outside", "%"))
+    # The strip is an eighth of the block's height and its label is set along
+    # it, so at the set's label size the words run 217 px against a 128 px
+    # frame and reach into the panel above. Reduced until they clear it.
+    strip.set_ylabel(ps.axis_label("Months outside", "%"), fontsize=8.4)
     strip.set_xlabel(ps.axis_label("Year"))
     strip.set_xlim(years.min() - 0.8, years.max() + 0.8)
     strip.xaxis.set_minor_locator(MultipleLocator(1))
     ps.mirror_ticks(strip)
+    # The year labels ride the minor ticks, so they are set to the size the
+    # majors carry rather than the smaller default matplotlib gives minors.
+    strip.tick_params(axis="x", which="minor", labelbottom=True,
+                      labelsize=ps.TICK_SIZE)
 
     _underline_legend_headings(fig, ax)
     ps.balance_drawing_block(fig, ax, strip)
