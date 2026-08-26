@@ -25,13 +25,15 @@ def frames(seed: int = 0) -> dict[str, pd.DataFrame]:
     months = pd.period_range("2015-01", periods=60, freq="M")
     rows = []
     families = {
-        "benchmarks": ("climatology", "seasonal naive", "naive"),
+        "benchmarks": ("climatology", "seasonal naive", "naive",
+                       "seasonal naive with drift"),
         "autoregressive": ("ridge", "random forest"),
         "exogenous": ("ridge", "random forest"),
     }
     for family, methods in families.items():
         for method in methods:
-            scale = {"climatology": 1.0, "seasonal naive": 1.4, "naive": 1.2}.get(method, 1.1)
+            scale = {"climatology": 1.0, "seasonal naive": 1.4, "naive": 1.2,
+                     "seasonal naive with drift": 1.45}.get(method, 1.1)
             for horizon in HORIZONS:
                 grow = horizon if method == "naive" else 1.0
                 for month in months[:40]:
@@ -68,7 +70,8 @@ def real_panel(gas: str) -> pd.DataFrame:
 def test_one_row_per_horizon_with_the_benchmarks_and_the_fitted_range():
     table = panel()
     assert list(table["horizon"]) == list(HORIZONS)
-    for column in ("climatology", "seasonal naive", "naive", "fitted_low",
+    for column in ("climatology", "seasonal naive", "naive",
+                   "seasonal naive with drift", "fitted_low",
                    "fitted_high", "margin", "effective_n"):
         assert column in table
 
@@ -270,17 +273,16 @@ def test_the_units_caveat_names_the_units():
     assert "nanomole" in said and "micromole" in said
 
 
-def test_the_annotation_target_sits_low_enough_to_show_its_arrow():
+def test_no_panel_repeats_what_the_description_says():
+    """The note that used to sit in each corner said what the description says
+    in nearly the same words, and pointed at one horizon of a finding holding at
+    three, so a reader met it twice above the axis and once below."""
     tables = {key: real_panel(key) for key, _, _ in figures.GAS_PANEL}
     fig = figures.forecast_error_by_horizon(tables)
-    fig.canvas.draw()
     for ax in fig.axes:
-        note = next(a for a in ax.texts if "above the band" in a.get_text())
-        frame = ax.get_window_extent()
-        share = (ax.transData.transform(note.xy)[1] - frame.y0) / frame.height
-        # At or below the share, never above it: the legend's clearance can push
-        # the target lower still, which only lengthens the arrow.
-        assert share <= figures.ANNOTATION_TARGET_SHARE + 0.02
+        drawn = " ".join(a.get_text() for a in ax.texts)
+        assert "above the band" not in drawn, drawn
+    assert "above the band" in figures.FORECAST_TEXT.description
     ps.plt.close(fig)
 
 

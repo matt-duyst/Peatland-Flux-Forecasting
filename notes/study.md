@@ -874,6 +874,45 @@ nineteen at the same time: at five, the x axis is compressed enough that the key
 spans half the panel instead of a quarter, which is a different layout from the
 one being checked.
 
+## Which benchmarks the forecast figure draws, and why not the other two
+
+The subtitle says four benchmarks are compared and the panel draws two. A
+proposed sentence would have explained the omission as the other two losing so
+heavily at longer horizons that plotting them would compress everything else.
+That is true of one of them and false of the other, so it was not written.
+
+Mean absolute error, every benchmark, both gases:
+
+| horizon | climatology | seasonal naive | naive | seasonal naive with drift |
+|---|---|---|---|---|
+| methane 1 | 8.11 | 11.35 | 12.21 | 11.38 |
+| methane 3 | 7.91 | 11.02 | **29.23** | 11.13 |
+| methane 6 | 6.91 | 9.40 | **41.42** | 9.57 |
+| methane 12 | 8.00 | 10.52 | 10.52 | 10.65 |
+| carbon dioxide 1 | 0.2202 | 0.2587 | 0.2998 | **0.2586** |
+| carbon dioxide 3 | 0.2211 | 0.2576 | 0.6184 | 0.2587 |
+| carbon dioxide 6 | 0.2169 | 0.2540 | 0.7970 | 0.2573 |
+| carbon dioxide 12 | 0.2239 | 0.2357 | 0.2357 | 0.2448 |
+
+**The drawn pair is not the two most accurate at every horizon**, and it fails
+in two different ways. At twelve months `naive` ties `seasonal naive` exactly on
+both gases, because forecasting twelve months ahead from the last observation
+uses the value twelve months before the target, which is the same month last
+year: the two are the same prediction by construction and the tie is not a
+coincidence. And at one month on carbon dioxide, `seasonal naive with drift`
+beats `seasonal naive` by 0.0001, which is a tie in everything but sorting.
+
+**The two omissions have different reasons.** `naive` does lose heavily, but in
+the middle rather than at the end: 29.2 and 41.4 against a climatology of 7.9
+and 6.9 on methane, 0.618 and 0.797 against 0.221 and 0.217 on carbon dioxide,
+then back to a tie at twelve. Drawing it would compress the comparison, and
+"at longer horizons" is the wrong description of when. `seasonal naive with
+drift` is omitted for the opposite reason: it never leaves `seasonal naive`,
+differing by at most 0.2 on methane and 0.009 on carbon dioxide, so drawing it
+would add a line no reader could separate from one already there.
+
+Any sentence explaining the omission has to carry both reasons or name neither.
+
 ## Three errors the reconstruction figure carried
 
 **The subtitle said the three assumptions give 10 to 30 g C per square meter.**

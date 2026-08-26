@@ -49,16 +49,33 @@ from ingest import paths
 #                    seasonal split what the average year leaves
 #   SITE    #F0E442  the site, and the tower on it
 #
-# `FITTED` carries two scoped meanings, which is the one place this rule bends.
-# On the two forecast figures it is the range across the eight fitted models. On
-# the seasonal split it fills what the average year leaves. The two never appear
-# on one panel and the figures are not adjacent in the set; the alternative was a
-# fifth hue for a row that is one of three on a single figure. Recorded as a
-# deliberate exception rather than an oversight. The scoping exists because the
-# study's halves ask different questions: the reconstruction figures are about
-# support and the forecast figures are about method, so neither set needs the
-# other's encoding.
-# A second blue was tried here and removed, because blue already means retained.
+# `FITTED` is where this rule bends, and it has bent further than it was written
+# to. It now carries four meanings across five figures:
+#
+#   forecast error by horizon        the range across the eight fitted models
+#   measurements used across horizons  how often each measurement was chosen
+#   seasonal cycle                   what the average year leaves
+#   residual distribution check      the 115 months the model was fitted on
+#   prediction error by year         the months of the panel's own year
+#
+# The first three are the original scoping and the reason for it: the study's
+# halves ask different questions, the reconstruction figures being about support
+# and the forecast figures about method, so neither set needs the other's
+# encoding. A second blue was tried on the forecast figures and removed, because
+# blue already means retained. The alternative on the seasonal split was a fifth
+# hue for one row of three on a single figure.
+#
+# The last two were added later and are not covered by that reasoning. The
+# residual check is close to it, since the 115 months are the fitted ones. The
+# prediction error use is the loosest in the set: there green means the year a
+# panel is about, against grey for every other year, which has nothing to do
+# with fitting anything. It is recorded rather than repainted because neither
+# late use collides. Both sit against grey alone, with no blue or orange on the
+# panel, so the scoping still holds on the page even where the sentence naming
+# it no longer describes what is drawn.
+#
+# What this does not license is reaching for green as a general accent. Five
+# figures is where it stops.
 #
 # `SITE` marks the flux tower in the site panel and the same site among the
 # network in the panel beside it. A reader meeting a star in both panels assumes

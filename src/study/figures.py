@@ -336,13 +336,25 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
 #: each one carries: climatology is the result, so it is heaviest.
 BENCHMARK_STYLE = {
     "climatology": {"color": "#1A1A1A", "linestyle": "-", "linewidth": 2.4},
-    "seasonal naive": {"color": "#767676", "linestyle": (0, (1.4, 2.2)), "linewidth": 1.9},
+    # Longer dashes and a little more weight, because this line crosses the green
+    # fill and at #767676 it holds only 2.33:1 against it, under the 3:1 a
+    # graphical object needs. It already draws above the fill, so order was not
+    # the problem; the fill's alpha stays at the measured 0.45, which is what
+    # keeps the subject 0.143 darker than the apparatus behind it. Ink is the
+    # only lever left, and a dotted line at 1.4 on 2.2 lays down very little.
+    "seasonal naive": {"color": "#767676", "linestyle": (0, (5.0, 2.6)), "linewidth": 2.2},
 }
 
 #: Benchmarks the panel table carries. Drawing is a separate question: the table
 #: keeps every benchmark the study scored, so the subtitle can quote one the
 #: panel does not draw and a test can check that it quotes it correctly.
-PANEL_BENCHMARKS = ("climatology", "seasonal naive", "naive")
+#: Every benchmark the study scores reaches the panel's table, so the table can
+#: answer why two of them are drawn and two are not. `BENCHMARK_STYLE` is the
+#: drawn subset. Carrying three of the four was the older arrangement: `naive`
+#: reached the table and nothing drew it, and `seasonal naive with drift` never
+#: reached it at all, so neither the drawing nor the table was the complete set.
+PANEL_BENCHMARKS = ("climatology", "seasonal naive", "naive",
+                    "seasonal naive with drift")
 
 #: Carrying last month's value forward is scored and reported but not drawn. It
 #: is not a contender, and at twelve months it coincides with the seasonal
@@ -413,9 +425,9 @@ FORECAST_TEXT = ps.FigureText(
         "Each is evaluated at forecast horizons of one to twelve months, meaning "
         "how far ahead the prediction is made. The most accurate at every horizon "
         "on both gases is the simplest: predicting each month as the average of "
-        "that month in previous years. The pale band marks how far below that "
-        "average a method would have to fall before the difference could be told "
-        "apart from noise."
+        "that month in previous years. The pale band marks how far from that "
+        "average a method would have to fall, in either direction, before the "
+        "difference could be told apart from noise."
     ),
     description=(
         "Methane is measured in nanomoles and carbon dioxide in micromoles, so "
@@ -510,33 +522,14 @@ def forecast_error_by_horizon(panels: dict[str, pd.DataFrame]) -> Figure:
         _forecast_legend(ax)
         axes.append(ax)
 
-    # The result in the other direction, on both panels because it holds on both.
-    # Anchored at twelve months, where the envelope's upper edge is highest, and
-    # set into the corner beyond the legend's right edge. Wrapped narrow so it
-    # fits the strip the legend leaves rather than reaching back across it.
-    for ax, (key, _, _) in zip(axes, GAS_PANEL):
-        table = panels[key]
-        last = len(table) - 1
-        ps.annotate(
-            ax,
-            "above the band,\nsome fitted models are\ndistinguishably worse",
-            xy=(float(last), float(table["fitted_high"].iloc[last])),
-            xytext=(0.988, 0.97), textcoords="axes fraction", ha="right", va="top",
-        )
-
-    # Both pieces of furniture are in place, so the axis can be grown to fit them.
+    # No note on the panel. The description says the same thing in nearly the
+    # same words, and an arrow can only point at one horizon of a finding that
+    # holds at three, so a reader met it twice above the axis and once below.
     for ax in axes:
         _raise_top_until_furniture_clears(ax)
         _underline_legend_headings(fig, ax)
     return fig
 
-
-#: Where the annotation's target sits in the panel, as a share of its height.
-#: The note is anchored near the top, so holding its target here leaves a leader
-#: long enough for the arrowhead to read. Set rather than measured: an
-#: Annotation's window extent covers its arrow as well as its text, so sizing the
-#: arrow from that extent is circular and does not converge.
-ANNOTATION_TARGET_SHARE = 0.72
 
 #: Pixels of clear space between the legend and the nearest series beneath it.
 #: In pixels rather than as a share of the data range, which would grow with the
@@ -547,12 +540,11 @@ LEGEND_CLEARANCE_PX = 60
 
 
 def _raise_top_until_furniture_clears(ax, rounds: int = 8) -> None:
-    """Grow the axis upward until the legend clears the series and the leader shows.
+    """Grow the axis upward until the legend clears the series beneath it.
 
-    The legend and the note are both anchored in axes fractions, so raising the
-    top moves the data away from them. Two requirements: the legend keeps a fixed
-    pixel gap above the highest series beneath it, and the note's target sits at a
-    fixed share of the panel height, which is what gives the arrow its length.
+    The legend is anchored in axes fractions, so raising the top moves the data
+    away from it. With the panel note gone there is one requirement left: a fixed
+    pixel gap between the legend and the highest series running under it.
     """
     for _ in range(rounds):
         ax.figure.canvas.draw()
@@ -572,10 +564,6 @@ def _raise_top_until_furniture_clears(ax, rounds: int = 8) -> None:
         share = (legend.y0 - frame.y0 - LEGEND_CLEARANCE_PX) / frame.height
         if highest > -np.inf and share > 0:
             needed = max(needed, (highest - low) / share)
-
-        for note in ax.texts:
-            if "above the band" in note.get_text():
-                needed = max(needed, (note.xy[1] - low) / ANNOTATION_TARGET_SHARE)
 
         if needed <= (high - low) * 1.001:
             return
