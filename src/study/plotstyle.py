@@ -236,7 +236,16 @@ DESCRIPTION_BLOCK_PX = 156
 #: Room below the drawing area for tick labels and the axis label, so the
 #: description block never collides with the axis it sits under.
 XAXIS_BLOCK_PX = 74
-MARGIN_PX = {"left": 108, "right": 40, "top": 26, "bottom": 22}
+#: Top and bottom are equal because they are the two the eye compares: the
+#: title's first line against the canvas top, and the description's last against
+#: the canvas bottom. They were 26 and 22, and the four pixels between them were
+#: never the reason the figures looked unevenly bounded. That was the block
+#: below being fixed at five lines while every description in the set uses three
+#: or four, so the unused rows fell out as white space at the canvas edge. The
+#: description is now set from the bottom of its block rather than the top,
+#: which puts the slack between the axis label and the text, where it reads as
+#: air inside the figure rather than a broken margin.
+MARGIN_PX = {"left": 108, "right": 40, "top": 26, "bottom": 26}
 
 TITLE_SIZE = 15
 #: Set to the description size. The subtitle carries the finding and is read
@@ -502,8 +511,11 @@ def canvas_area(text: FigureText, size: str = "wide", extra_left_px: int = 0,
                               linespacing=1.5)
     if measured_text:
         axes_top = _below(fig, drawn_subtitle, height_px)
-    fig.text(left, (MARGIN_PX["bottom"] + DESCRIPTION_BLOCK_PX) / height_px,
-             body, ha="left", va="top", fontsize=DESCRIPTION_SIZE, color=MUTED,
+    # Anchored to the floor of its block, not the ceiling. The block stays the
+    # same fixed height either way, so `axes_bottom` above is untouched and no
+    # panel moves; only where the slack sits changes.
+    fig.text(left, MARGIN_PX["bottom"] / height_px,
+             body, ha="left", va="bottom", fontsize=DESCRIPTION_SIZE, color=MUTED,
              linespacing=1.45)
     return fig, (left, axes_bottom, right - left, axes_top - axes_bottom)
 

@@ -1005,6 +1005,30 @@ Vector output is not produced. These are read in a README, which will not displa
 one, and every figure is regenerable from its function if a document ever needs
 one.
 
+## The description sets from the floor of its block
+
+Every figure looked unevenly bounded: 26 px of air above the title and between
+92 and 108 below the description. The four pixels between `MARGIN_PX["top"]` and
+`MARGIN_PX["bottom"]` were not the cause. The cause was that the description
+block is a fixed 156 px, five lines, and no description in the set uses five on
+its own canvas: two use three and four use four, so between 12 and 70 px of
+unused rows fell out as white space at the canvas edge.
+
+The fix is where the text anchors, not how big the block is. Setting it from the
+floor of the block rather than the ceiling leaves the block the same fixed
+height, so `axes_bottom` is unchanged and no panel moves on any figure. Only the
+slack relocates, from below the last line to above the first, where it sits
+between the axis label and the text and reads as air inside the figure rather
+than a broken margin. `MARGIN_PX["bottom"]` went to 26 to match the top exactly.
+All eleven figures now measure 26 px of ink to the edge at both ends.
+
+The trade is real and worth naming. Before, the gap between the axis label and
+the description was constant at 74 px and the bottom margin varied. Now the
+bottom margin is constant and that gap varies, from about 12 px on a five-line
+description to about 70 px on a three-line one. The canvas edge is the stronger
+reference: an uneven margin there reads as a mistake, while uneven air between
+two elements inside the figure reads as spacing.
+
 ## The palette convention, and the two collisions that produced it
 
 Recorded in `src/study/plotstyle.py`. Three hues carry meaning across the set and

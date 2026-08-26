@@ -117,9 +117,15 @@ def water_table_support(
         Line2D([], [], color=ps.BOUNDARY, linewidth=1.3, linestyle=(0, (7, 4)),
                label=f"Fitted range, {low:.2f} to {high:.2f} m"),
     ]
+    # The legend sits between the panel's corner and the lower range line, and
+    # at 80.5 px tall it left 9.0 px to the border and 4.3 px to the line. The
+    # two clearances trade against each other, since insetting it further from
+    # the corner pushes it into the line, so the box is reduced instead and the
+    # inset set to split what that frees: 11.3 px and 11.1 px.
     ps.legend(ax, handles=handles, labels=[h.get_label() for h in handles],
-              loc="lower left", ncols=1, fontsize=8.6, borderpad=0.42,
-              labelspacing=0.32, handlelength=1.9, handletextpad=0.6)
+              loc="lower left", ncols=1, fontsize=8.0, borderpad=0.30,
+              labelspacing=0.22, handlelength=1.5, handletextpad=0.46,
+              borderaxespad=0.68)
 
     return fig
 
