@@ -820,6 +820,48 @@ of 14.40 on the nominal window. Both were produced by fitting a
 short flux record and projecting backward, so this is method agreement and not
 independent confirmation.
 
+## The strip's key, and a measurement that was wrong twice
+
+The strip's marks belong in the strip. Folding them into the panel's key put an
+entry for hatched bars on a panel that carries none, so a reader looking there
+would not find them. They are keyed where they appear.
+
+Getting them there took two attempts because the first measurement compared the
+wrong things. A probe labelled "heading as a blank-handle row" in fact carried no
+heading at all, so its 54.4 px was two entries, and setting that against a
+titled legend's 77.2 px produced a 23 px saving that does not exist. Measured
+properly, on the same three rows, a blank-handle heading costs 81.2 px and a
+title 77.2: the row is 4 px *more*, not 23 less. The conclusion drawn from it,
+that the strip's height was never really the constraint, was wrong. It is.
+
+What actually fits, at 8.2 pt with a heading, on a strip an eighth of the block:
+
+| arrangement | height | % of strip | clears the 2007 bar by |
+|---|---|---|---|
+| heading row, stacked | 81.2 | 63.5% | −4.0 |
+| title, stacked | 77.2 | 60.4% | −0.7 |
+| heading row, three columns | 35.7 | 27.9% | −32.6, it reaches a 100% bar |
+| **title, two columns** | **58.4** | **45.7%** | **+15.2** |
+
+Only the last one clears, so the strip's key is one row of two under a title.
+Stacking is what costs the height, not the heading, and laying the entries
+across is what buys it back. The title is the site figure's device, so this is
+the set's other heading rather than a new one, and it is set in the same
+mathtext bold at the same size and ruled by the same line, so the three headings
+on this figure are one device in two placements.
+
+The alternatives were a taller strip, 0.17 to 0.22 of the block, which fits the
+stacked form at 6.3% of the main panel; and the gap above the strip, which needs
+81 px against the 41 there and costs 6.9%. Both pay panel height for a placement
+a reader does not benefit from.
+
+`test_the_strip_legend_fits_inside_the_frame_without_covering_a_bar` holds the
+clearance, because +15.2 is a property of the last years' bars being short
+rather than of the layout. Its fixture was widened from five plotted years to
+nineteen at the same time: at five, the x axis is compressed enough that the key
+spans half the panel instead of a quarter, which is a different layout from the
+one being checked.
+
 ## Three errors the reconstruction figure carried
 
 **The subtitle said the three assumptions give 10 to 30 g C per square meter.**

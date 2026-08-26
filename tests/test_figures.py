@@ -115,16 +115,27 @@ def test_the_panel_defines_reconstruction_for_a_reader_arriving_cold():
 
 
 def annual_frame():
-    """Six reconstruction years, two inside support and one partial."""
-    years = [1990, 1991, 1992, 2007, 2008, 2009]
+    """The reconstruction's nineteen years plus the partial twentieth.
+
+    Shaped like the real table rather than shortened to the few rows most of
+    these checks need. A five-year version compresses the x axis enough that the
+    strip's key spans half the panel instead of an eighth, which is a different
+    layout from the one being checked.
+    """
+    years = list(range(1990, 2010))
+    outside = [67.0, 0.0, 0.0, 7.0, 74.0, 100.0, 100.0, 100.0, 82.0, 74.0,
+               100.0, 74.0, 100.0, 7.0, 0.0, 25.0, 0.0, 33.0, 25.0, 33.0]
+    clamped = [17.4, 11.9, 11.2, 15.0, 17.6, 16.2, 17.3, 17.4, 17.9, 18.0,
+               16.8, 18.0, 17.6, 13.8, 11.4, 16.8, 13.1, 7.9, 8.2, 0.8]
     return pd.DataFrame({
         "year": years,
-        "n_months": [12, 12, 12, 12, 12, 3],
-        "support": ["outside", "inside", "inside", "outside", "outside", "outside"],
-        "pct_months_outside": [67.0, 0.0, 0.0, 33.0, 25.0, 33.0],
-        "clamped": [17.4, 11.9, 11.2, 7.9, 8.2, 0.8],
-        "unclamped": [20.3, 11.9, 11.2, 10.1, 9.3, 1.1],
-        "reduced": [10.9, 11.3, 10.6, 7.8, 8.1, 0.8],
+        "n_months": [12] * 19 + [3],
+        "support": ["inside" if y in (1991, 1992, 2004, 2006) else "outside"
+                    for y in years],
+        "pct_months_outside": outside,
+        "clamped": clamped,
+        "unclamped": [v + 2.9 if o > 50 else v for v, o in zip(clamped, outside)],
+        "reduced": [10.9 if o > 50 else v - 0.6 for v, o in zip(clamped, outside)],
     })
 
 
@@ -199,26 +210,24 @@ def test_a_year_with_no_months_outside_is_marked_flat_and_in_blue():
     strip = fig.axes[1]
     flat = [line for line in strip.lines if line.get_marker() == "_"]
     assert flat, "the inside years are not marked at all"
-    assert len(flat[0].get_xdata()) == 2
+    inside = (annual_frame()["support"] == "inside").sum()
+    assert len(flat[0].get_xdata()) == inside
     assert to_rgba(flat[0].get_color()) == to_rgba(ps.INSIDE)
     assert to_rgba(flat[0].get_color()) != to_rgba(ps.OUTSIDE)
     assert all(y == 0 for y in flat[0].get_ydata())
     ps.plt.close(fig)
 
 
-def test_the_figure_carries_one_key_and_it_names_the_strip_marks():
-    """The hatching and the flat mark are otherwise unexplained.
-
-    They used to be keyed by a second legend inside the strip, which had to be
-    set at 6.4 pt to fit between the bars and the frame, below anything else in
-    the set. They are a headed group in the panel's key instead, so the figure
-    carries one legend at one size.
-    """
+def test_the_strip_names_both_of_its_marks_in_its_own_key():
+    """The hatching and the flat mark appear only in the strip, so they are
+    keyed there. Folded into the panel above they would put an entry for hatched
+    bars on a panel carrying none."""
     fig = figures.reconstruction_series(annual_frame())
-    assert fig.axes[1].get_legend() is None, "the strip carries no key of its own"
-    labels = [t.get_text() for t in fig.axes[0].get_legend().get_texts()]
+    labels = [t.get_text() for t in fig.axes[1].get_legend().get_texts()]
     assert "Months outside" in labels, labels
     assert "No months outside" in labels, labels
+    panel = [t.get_text() for t in fig.axes[0].get_legend().get_texts()]
+    assert "Months outside" not in panel, panel
     ps.plt.close(fig)
 
 
@@ -226,9 +235,63 @@ def test_the_strip_bar_is_named_what_the_strip_axis_names():
     """One quantity, one name. The key said share of the year and the axis said
     months outside, which are the same thing counted the same way."""
     fig = figures.reconstruction_series(annual_frame())
-    labels = [t.get_text() for t in fig.axes[0].get_legend().get_texts()]
+    labels = [t.get_text() for t in fig.axes[1].get_legend().get_texts()]
     assert "Months outside" in fig.axes[1].get_ylabel()
     assert "Months outside" in labels
+    ps.plt.close(fig)
+
+
+def test_both_keys_head_their_groups_at_one_size_and_weight():
+    """Two placements of one device, not two devices.
+
+    The panel heads its groups with blank-handle rows and the strip heads its
+    one with a legend title, because three stacked rows cover the 2007 bar
+    however the heading is set. They differ in where the text sits, so they must
+    not differ in anything else.
+    """
+    fig = figures.reconstruction_series(annual_frame())
+    headings = [text for text in fig.axes[0].get_legend().get_texts()
+                if text.get_text().startswith("$")]
+    assert len(headings) == 2, "the panel names both of its groups"
+    title = fig.axes[1].get_legend().get_title()
+    assert title.get_text(), "the strip names its group"
+    everything = headings + [title]
+    sizes = {round(t.get_fontsize(), 3) for t in everything}
+    assert len(sizes) == 1, f"headings set at different sizes: {sizes}"
+    assert all(t.get_text().startswith(r"$\bf{") for t in everything), \
+        "all three are bold through the same mathtext"
+    ps.plt.close(fig)
+
+
+def test_every_group_heading_is_ruled():
+    """The rule is what makes a heading read as one, so all three carry it."""
+    from matplotlib.lines import Line2D as _Line2D
+
+    fig = figures.reconstruction_series(annual_frame())
+    rules = [a for a in fig.artists
+             if isinstance(a, _Line2D) and a.get_transform() is fig.transFigure]
+    assert len(rules) == 3, f"two panel headings and one strip heading: {len(rules)}"
+    ps.plt.close(fig)
+
+
+def test_the_strip_legend_fits_inside_the_frame_without_covering_a_bar():
+    """The strip is secondary and must not gain height to carry its own key.
+
+    The key clears the tallest bar beneath it by 18.6 points on the real data,
+    but that is a property of the last years being short rather than of the
+    layout, so nothing would fail if a future change put a tall bar under it.
+    This is what fails.
+    """
+    fig = figures.reconstruction_series(annual_frame())
+    fig.canvas.draw()
+    strip = fig.axes[1]
+    frame = strip.get_window_extent()
+    legend = strip.get_legend().get_window_extent()
+    assert legend.y1 <= frame.y1 and legend.y0 >= frame.y0, "the legend leaves the frame"
+    box = legend.transformed(strip.transData.inverted())
+    under = [bar.get_height() for bar in strip.patches
+             if box.x0 <= bar.get_x() + bar.get_width() / 2 <= box.x1]
+    assert box.y0 > max(under, default=0.0), "the legend covers a bar"
     ps.plt.close(fig)
 
 

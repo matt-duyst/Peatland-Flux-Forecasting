@@ -252,18 +252,12 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
                 (r"Year $\bf{inside}$ the fitted range",
                  r"Year $\bf{outside}$ the fitted range")]
     entries += [(measured_key, measured_key.get_label())]
-    # The strip's two marks join this key rather than carrying their own. A
-    # separate legend down there had to be set at 6.4 pt to fit between the bars
-    # and the frame, which is below anything else in the set and too small to
-    # read. Named to match the strip's axis, so one quantity has one name.
-    entries += [(blank, r"$\bf{In\ the\ strip\ below}$")]
-    entries += [(Patch(facecolor=ps.OUTSIDE, edgecolor="white", hatch=ps.OUTSIDE_HATCH),
-                 "Months outside"),
-                (Line2D([], [], linestyle="none", marker="_", markersize=5.2,
-                        markeredgewidth=1.8, color=ps.INSIDE), "No months outside")]
+    # The strip's marks are keyed in the strip, not here. Folding them in put an
+    # entry for hatched bars on a panel carrying none, so a reader looking for
+    # them would not find them.
     ps.legend(ax, handles=[h for h, _ in entries], labels=[label for _, label in entries],
               loc="lower left", fontsize=8.2, borderpad=0.5, labelspacing=0.3,
-              handlelength=1.9, handletextpad=0.5, ncols=3, columnspacing=1.6,
+              handlelength=1.9, handletextpad=0.5, ncols=2, columnspacing=1.6,
               bbox_to_anchor=(0.015, 0.02))
 
     share = frame["pct_months_outside"].to_numpy()
@@ -278,6 +272,30 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
                markersize=5.2, markeredgewidth=1.8, color=ps.INSIDE,
                clip_on=False, zorder=4)
 
+    # The strip's own key, at the size the panel's key uses. Set as one row of
+    # two with the heading as a legend title, which is the only arrangement that
+    # clears the bars: the strip is an eighth of the block, and three stacked
+    # rows run to 63% of its height and cover the 2007 bar whichever way the
+    # heading is set. Laid across, the same entries take 43% and clear it by 19
+    # points. The title device is the site figure's, so this is the set's other
+    # heading rather than a new one.
+    strip_key = [
+        Patch(facecolor=ps.OUTSIDE, edgecolor="white", hatch=ps.OUTSIDE_HATCH,
+              label="Months outside"),
+        Line2D([], [], linestyle="none", marker="_", markersize=5.2,
+               markeredgewidth=1.8, color=ps.INSIDE, label="No months outside"),
+    ]
+    # Upper right, where the last years' bars are short. That is a property of
+    # the data rather than of the layout, so a test holds the clearance.
+    strip_legend = ps.legend(
+        strip, handles=strip_key, labels=[h.get_label() for h in strip_key],
+        loc="upper right", ncols=2, fontsize=8.2, borderpad=0.4,
+        labelspacing=0.28, handlelength=1.5, handletextpad=0.5, columnspacing=1.4,
+        framealpha=1.0, title=r"$\bf{In\ the\ strip\ below}$",
+        bbox_to_anchor=(0.995, 0.97))
+    # Bold through the same mathtext the panel's headings use, so the two are
+    # one device set two ways rather than two that happen to look alike.
+    strip_legend.get_title().set_fontsize(8.2)
     strip.set_ylim(0, 108)
     strip.set_yticks([0, 50, 100])
     # The strip is an eighth of the block's height and its label is set along
@@ -294,6 +312,7 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
                       labelsize=ps.TICK_SIZE)
 
     _underline_legend_headings(fig, ax)
+    _underline_legend_title(fig, strip_legend)
     ps.balance_drawing_block(fig, ax, strip)
 
     return fig
@@ -577,6 +596,22 @@ def _forecast_legend(ax) -> None:
               loc="upper center", bbox_to_anchor=(0.46, 0.90), ncol=2, borderpad=0.7,
               labelspacing=0.34, columnspacing=2.0, handlelength=2.2,
               handletextpad=0.8, fontsize=ps.LEGEND_SIZE - 1.0, framealpha=1.0)
+
+
+def _underline_legend_title(fig, legend) -> None:
+    """Rule a legend title, so it reads as the heading rows elsewhere do.
+
+    A title and a blank-handle row are the set's two ways of naming a group. They
+    differ in where the text sits, not in what it is, so the rule that marks one
+    marks the other and the two read as the same device.
+    """
+    fig.canvas.draw()
+    text = legend.get_title()
+    box = text.get_window_extent().transformed(fig.transFigure.inverted())
+    y = box.y0 - 0.10 * (box.y1 - box.y0)
+    fig.add_artist(Line2D([box.x0, box.x1], [y, y], transform=fig.transFigure,
+                          color=ps.INK, linewidth=0.9,
+                          zorder=legend.get_zorder() + 1))
 
 
 def _underline_legend_headings(fig, ax, center: bool = False) -> None:
