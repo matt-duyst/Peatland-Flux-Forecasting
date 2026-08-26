@@ -874,6 +874,43 @@ nineteen at the same time: at five, the x axis is compressed enough that the key
 spans half the panel instead of a quarter, which is a different layout from the
 one being checked.
 
+## The clearance test read series at their vertices
+
+`_raise_top_until_furniture_clears` grows a panel until its key clears the
+series running under it. It found the highest series by reading `ax.lines` at
+their plotted x values and taking the maximum of those inside the key's span.
+
+Between two vertices a line is straight, so a series that starts low inside the
+span and climbs steeply past its right edge is invisible to that test. The
+forecast figure is the sharp case, four positions across a panel: methane's
+envelope runs 9.98, 11.13, 9.37, 15.06, and a key whose right edge falls at 2.9
+sees 11.13 where the series actually reaches 14.49, an error of 3.36 in the
+quantity the layout is deciding on.
+
+`_highest_between` replaces the vertex reading and is exact rather than sampled.
+The maximum of a piecewise-linear series over an interval is attained at a
+vertex inside it or at one of the two edges, so reading the interior vertices
+and interpolating the two edges is the whole answer.
+
+**It costs nothing on the figures that use it.** Both users were checked:
+
+| figure | vertex reading | exact | missed |
+|---|---|---|---|
+| forecast, methane | 15.0593 | 15.0593 | 0 |
+| forecast, carbon dioxide | 0.2695 | 0.2695 | 0 |
+
+The forecast key's right edge sits exactly on the last horizon, so the vertex
+there was already inside the span and the interpolated edge equals it. The flux
+figure samples monthly, so its edges fall at most one month from a vertex and
+the reading barely moves. No panel top changed and no figure was redrawn
+differently.
+
+That is the point worth recording: the defect was latent, not active. It was
+found by checking a placement by hand and would not have been found by looking
+at the output, because the output was correct by luck. A key edge landing a
+tenth of a category further left, or a data change moving where the envelope
+turns, would have put a series under a key with nothing failing.
+
 ## Which benchmarks the forecast figure draws, and why not the other two
 
 The subtitle says four benchmarks are compared and the panel draws two. A

@@ -424,9 +424,10 @@ FORECAST_TEXT = ps.FigureText(
         "environmental covariates, are compared against four simple benchmarks: "
         "the average of that month in previous years, the same month last year, "
         "last month carried forward, and the same month last year adjusted for "
-        "trend. The first two are drawn here. Each method is evaluated at "
-        "forecast horizons of one to twelve months, meaning how far ahead the "
-        "prediction is made. The pale band marks how far from the first of those "
+        "trend. The first two are drawn here. Each method is evaluated over 2013 "
+        "to 2020 for carbon dioxide and 2014 to 2020 for methane, at forecast "
+        "horizons of one to twelve months, meaning how far ahead the prediction "
+        "is made. The pale band marks how far from the first of those "
         "a method would have to fall, in either direction, before the difference "
         "could be told apart from noise."
     ),
@@ -545,6 +546,34 @@ def forecast_error_by_horizon(panels: dict[str, pd.DataFrame]) -> Figure:
 LEGEND_CLEARANCE_PX = 60
 
 
+def _highest_between(x, y, low: float, high: float) -> float:
+    """Highest a piecewise-linear series reaches over an x span, edges included.
+
+    Exact rather than sampled. Between two vertices the series is a straight
+    line, so its maximum over an interval is attained either at a vertex inside
+    the interval or at one of the two edges, and reading those is enough.
+
+    Reading only the vertices is what this replaces, and it is wrong in a way
+    that hides itself. On the forecast figure the methane envelope climbs from
+    9.37 at one horizon to 15.06 at the next, so a key whose edge falls between
+    them sees 9.37 and is placed where the series will be. That it currently
+    clears on this data is luck, not layout.
+    """
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    keep = ~(np.isnan(x) | np.isnan(y))
+    x, y = x[keep], y[keep]
+    if x.size == 0:
+        return -np.inf
+    order = np.argsort(x)
+    x, y = x[order], y[order]
+    reach = list(y[(x >= low) & (x <= high)])
+    for edge in (low, high):
+        if x[0] <= edge <= x[-1]:
+            reach.append(float(np.interp(edge, x, y)))
+    return max(reach) if reach else -np.inf
+
+
 def _raise_top_until_furniture_clears(ax, rounds: int = 8) -> None:
     """Grow the axis upward until the legend clears the series beneath it.
 
@@ -560,13 +589,11 @@ def _raise_top_until_furniture_clears(ax, rounds: int = 8) -> None:
 
         legend = ax.get_legend().get_window_extent()
         box = legend.transformed(ax.transData.inverted())
-        highest = -np.inf
-        for line in ax.lines:
-            x = np.asarray(line.get_xdata(), dtype=float)
-            y = np.asarray(line.get_ydata(), dtype=float)
-            under = (x >= box.x0) & (x <= box.x1)
-            if under.any():
-                highest = max(highest, float(y[under].max()))
+        highest = max(
+            (_highest_between(line.get_xdata(), line.get_ydata(), box.x0, box.x1)
+             for line in ax.lines),
+            default=-np.inf,
+        )
         share = (legend.y0 - frame.y0 - LEGEND_CLEARANCE_PX) / frame.height
         if highest > -np.inf and share > 0:
             needed = max(needed, (highest - low) / share)
@@ -856,10 +883,9 @@ def _raise_top_for_flux_legend(ax, panel: pd.DataFrame, rounds: int = 8) -> None
         frame = ax.get_window_extent()
         legend = ax.get_legend().get_window_extent()
         box = legend.transformed(ax.transData.inverted())
-        under = (positions >= box.x0) & (positions <= box.x1)
-        if not under.any():
+        highest = _highest_between(positions, ceiling, box.x0, box.x1)
+        if highest == -np.inf:
             return
-        highest = float(np.nanmax(ceiling[under]))
         share = (legend.y0 - frame.y0 - FLUX_LEGEND_CLEARANCE_PX) / frame.height
         if share <= 0:
             return

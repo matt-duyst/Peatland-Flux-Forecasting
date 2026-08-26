@@ -286,6 +286,33 @@ def test_no_panel_repeats_what_the_description_says():
     ps.plt.close(fig)
 
 
+def test_a_series_peaking_between_plotted_points_is_not_missed():
+    """The clearance test reads the series exactly, not at its vertices.
+
+    Between two plotted horizons the series is a straight line, so its highest
+    point over an interval is at a vertex inside it or at one of the edges.
+    Reading only the vertices misses a climb that starts inside the key's span
+    and finishes outside it, which is exactly the shape of methane's envelope
+    between six and twelve months: 9.37 rising to 15.06.
+    """
+    x = np.array([0.0, 1.0, 2.0, 3.0])
+    y = np.array([9.98, 11.13, 9.37, 15.06])
+    vertices_only = float(y[(x >= 0.4) & (x <= 2.9)].max())
+    assert vertices_only == 11.13
+    assert figures._highest_between(x, y, 0.4, 2.9) > 14.0
+    # and it agrees with the naive reading wherever the edges land on vertices
+    assert figures._highest_between(x, y, 0.0, 3.0) == 15.06
+
+
+def test_the_clearance_test_survives_gaps_and_an_empty_span():
+    x = np.array([0.0, 1.0, np.nan, 3.0])
+    y = np.array([1.0, 5.0, np.nan, 2.0])
+    assert figures._highest_between(x, y, 0.0, 1.0) == 5.0
+    assert figures._highest_between(np.array([]), np.array([]), 0.0, 1.0) == -np.inf
+    # a span entirely off the left of the series reaches nothing
+    assert figures._highest_between(x, y, -5.0, -4.0) == -np.inf
+
+
 def test_the_legend_keeps_its_clearance_on_both_panels():
     tables = {key: real_panel(key) for key, _, _ in figures.GAS_PANEL}
     fig = figures.forecast_error_by_horizon(tables)
