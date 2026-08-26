@@ -264,6 +264,18 @@ SIZES = {
     "quad": (1560, 2065),
 }
 
+#: How a count is written in a text block. Large or precise counts are numerals,
+#: small counts of things a reader can see on the panel are spelled: "115
+#: months" and "12 of the 57" against "two hollow marks" and "six below". The
+#: line is not arbitrary. A numeral is read as a measurement and a word as a
+#: quantity, so a figure that says "seventeen of these nineteen years" beside
+#: another saying "12 of the 57 evaluated months" has written one measurement
+#: two ways. Where a sentence carries several counts they take one form, since
+#: mixing them inside one clause reads worse than either choice does alone.
+#:
+#: Years, percentages and measured values are always numerals and are not
+#: counts, so they do not enter into this.
+
 #: Fixed pixel allocations, so a figure's proportions do not depend on how much
 #: text it happens to carry.
 TITLE_BLOCK_PX = 96
@@ -684,7 +696,8 @@ def five_year_ticks(ax: plt.Axes, first_year: int, last_year: int) -> None:
     ax.xaxis.set_minor_locator(YearLocator(1))
 
 
-def even_year_ticks(ax: plt.Axes, first_year: int, last_year: int) -> None:
+def even_year_ticks(ax: plt.Axes, first_year: int, last_year: int,
+                    label_every_year: bool = False) -> None:
     """Major ticks evenly spaced from the first year to the last, annual minors.
 
     `five_year_ticks` appends the endpoint when it does not fall on a multiple of
@@ -703,6 +716,15 @@ def even_year_ticks(ax: plt.Axes, first_year: int, last_year: int) -> None:
     ax.xaxis.set_major_locator(FixedLocator([date2num(_dt.date(y, 1, 1)) for y in years]))
     ax.xaxis.set_major_formatter(DateFormatter("%Y"))
     ax.xaxis.set_minor_locator(YearLocator(1))
+    if label_every_year:
+        # The minors were always drawn here and never named, so a reader counted
+        # along from a major to find a year. Naming them is what the
+        # reconstruction figure does: the grid stays on the majors, and every
+        # year carries its label. It also removes the reason the step lands
+        # where it does, which on a sixteen-year span is four rather than five.
+        ax.xaxis.set_minor_formatter(DateFormatter("%Y"))
+        ax.tick_params(axis="x", which="minor", labelbottom=True,
+                       labelsize=TICK_SIZE)
 
 
 def label_period(ax: plt.Axes, start, end, text: str, y: float = 0.965) -> None:

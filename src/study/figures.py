@@ -784,8 +784,11 @@ FLUX_TEXT = ps.FigureText(
         "will be: in 12 of the 57 evaluated methane months the measured flux "
         "fell below every fitted model, and in 9 of those below the seasonal "
         "average too. 2021, the weakest summer in the record, lies outside the "
-        "years forecasts were made for. Methane is in nanomoles and carbon "
-        "dioxide in micromoles, so the two panels cannot be compared by eye."
+        "years forecasts were made for. On carbon dioxide the eight models "
+        "disagree by less than the uncertainty in the measurement, which is why "
+        "the green band sits inside the black one. Methane is in nanomoles and "
+        "carbon dioxide in micromoles, so the two panels cannot be compared by "
+        "eye."
     ),
 )
 
@@ -822,23 +825,10 @@ def _draw_flux_panel(ax, panel: pd.DataFrame, unit: str, labeled: bool) -> None:
     margin = 0.04 * (high - low)
     ax.set_ylim(low - margin, high + margin)
 
-    # Every year labeled, on the minor ticks, as the reconstruction figure does.
-    # Sixteen years across 1652 px is 103 px each against a 50 px label, more
-    # room than the nineteen years there. The majors stay at five years because
-    # the grid follows them, and the automatic locator they replace was choosing
-    # four-year steps and a 2025 label a year past the record.
-    import matplotlib.dates as mdates
-
-    ax.xaxis.set_major_locator(mdates.YearLocator(5, month=1, day=1))
-    ax.xaxis.set_minor_locator(mdates.YearLocator(1, month=1, day=1))
-    for which in ("major", "minor"):
-        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y")) if which == "major" \
-            else ax.xaxis.set_minor_formatter(mdates.DateFormatter("%Y"))
     if labeled:
         ax.set_xlabel(ps.axis_label("Year"))
     ax.set_ylabel(f"Monthly flux\n({unit})")
     ps.mirror_ticks(ax)
-    ax.tick_params(axis="x", which="minor", labelbottom=True, labelsize=ps.TICK_SIZE)
 
 
 def _flux_legend(ax, panel: pd.DataFrame) -> str:
@@ -920,7 +910,13 @@ def observed_and_predicted(panels: dict[str, pd.DataFrame]) -> Figure:
         row = bottom + (1 - index) * (panel_height + gap)
         ax = fig.add_axes((left, row, width, panel_height))
         _draw_flux_panel(ax, panels[key], unit, labeled=index == len(GAS_PANEL) - 1)
-        _flux_legend(ax, panels[key])
+        # One key for the pair, on the upper panel. The two are stacked on a
+        # shared axis and neither carries a mark the other lacks, so a second
+        # copy names nothing new and costs the lower panel 8% of its area. That
+        # is the panel whose green band is thinnest: half its forecast months
+        # sit inside the uncertainty band on the measurement.
+        if index == 0:
+            _flux_legend(ax, panels[key])
         ps.panel_name(ax, gas, align="left")
         axes.append(ax)
 
@@ -931,9 +927,14 @@ def observed_and_predicted(panels: dict[str, pd.DataFrame]) -> Figure:
     last = (max(panel.index.max() for panel in panels.values()) + 1).to_timestamp()
     for ax, (key, _, _) in zip(axes, GAS_PANEL):
         ax.set_xlim(first, last)
-        ps.even_year_ticks(ax, first.year, last.year)
-        _raise_top_for_flux_legend(ax, panels[key])
-        _underline_legend_headings(fig, ax)
+        ps.even_year_ticks(ax, first.year, last.year, label_every_year=True)
+        if ax.get_legend() is not None:
+            _raise_top_for_flux_legend(ax, panels[key])
+            _underline_legend_headings(fig, ax)
+    ps.balance_drawing_block(fig, *axes)
+    for ax in axes:
+        if ax.get_legend() is not None:
+            _underline_legend_headings(fig, ax)
     return fig
 
 

@@ -177,7 +177,8 @@ def test_no_legend_or_panel_name_covers_the_series():
         ceiling = np.fmax(
             (table["observed"] + figures.OBSERVED_BAND_SIGMAS * table["se"]).to_numpy(),
             table["fitted_high"].to_numpy())
-        for artist in [ax.get_legend(), *ax.texts]:
+        furniture = [a for a in (ax.get_legend(), *ax.texts) if a is not None]
+        for artist in furniture:
             box = artist.get_window_extent().transformed(ax.transData.inverted())
             under = (positions >= box.x0) & (positions <= box.x1)
             if not under.any():
@@ -190,6 +191,8 @@ def test_the_legend_and_the_panel_name_take_opposite_corners():
     fig = figures.observed_and_predicted(real_panels())
     fig.canvas.draw()
     for ax in fig.axes:
+        if ax.get_legend() is None:
+            continue
         legend = ax.get_legend().get_window_extent()
         name = next(a.get_window_extent() for a in ax.texts
                     if a.get_text() in ("Methane", "Carbon dioxide"))
@@ -239,15 +242,16 @@ def test_where_the_two_bands_overlap_the_result_is_distinct_from_each():
         assert np.linalg.norm(both - other) > 0.04
 
 
-def test_both_legends_sit_on_the_same_side():
-    """A legend that moves between panels makes the eye relocate."""
+def test_one_key_serves_both_panels():
+    """The panels are stacked on a shared axis and neither carries a mark the
+    other lacks, so a second copy names nothing new. It cost the lower panel 8%
+    of its area, and that is the panel whose green band is thinnest: half its
+    forecast months sit inside the uncertainty band on the measurement."""
     fig = figures.observed_and_predicted(real_panels())
     fig.canvas.draw()
-    corners = set()
-    for ax in fig.axes:
-        box = ax.get_legend().get_window_extent().transformed(ax.transAxes.inverted())
-        corners.add(round((box.x0 + box.x1) / 2) )
-    assert len(corners) == 1
+    keyed = [ax for ax in fig.axes if ax.get_legend() is not None]
+    assert len(keyed) == 1, "one key for the pair"
+    assert keyed[0] is fig.axes[0], "on the upper panel, met first"
     ps.plt.close(fig)
 
 
@@ -286,6 +290,8 @@ def test_the_eight_are_called_models_wherever_they_are_named():
         assert "fitted method disagrees" not in words
     fig = figures.observed_and_predicted(real_panels())
     for ax in fig.axes:
+        if ax.get_legend() is None:
+            continue
         for label in (t.get_text() for t in ax.get_legend().get_texts()):
             assert "fitted methods" not in label
     ps.plt.close(fig)

@@ -36,7 +36,7 @@ Each panel is one gas. The green region covers all eight fitted models: four met
 
 **Each panel is one gas, with the measured monthly flux in black and a shaded band showing how precisely that month's average is known. Against it are two forecasts, each made using only what was known a month earlier: the seasonal average as a dashed line, and a green band spanning the highest and lowest of eight fitted models. The shaded years are where forecasts exist, since a seasonal average needs each calendar month observed several times before it can be made at all.**
 
-The forecasts follow the seasonal cycle closely, rising and falling in step with the measurements. What they miss is how large each season will be: in 12 of the 57 evaluated methane months the measured flux fell below every fitted model, and in 9 of those below the seasonal average too. 2021, the weakest summer in the record, lies outside the years forecasts were made for. Methane is in nanomoles and carbon dioxide in micromoles, so the two panels cannot be compared by eye.
+The forecasts follow the seasonal cycle closely, rising and falling in step with the measurements. What they miss is how large each season will be: in 12 of the 57 evaluated methane months the measured flux fell below every fitted model, and in 9 of those below the seasonal average too. 2021, the weakest summer in the record, lies outside the years forecasts were made for. On carbon dioxide the eight models disagree by less than the uncertainty in the measurement, which is why the green band sits inside the black one. Methane is in nanomoles and carbon dioxide in micromoles, so the two panels cannot be compared by eye.
 
 ### Which measurements the models used at Marcell Bog Lake Peatland (by forecast horizon)
 
