@@ -303,3 +303,196 @@ def test_a_year_wholly_inside_is_drawn_as_a_zero_and_not_omitted():
     assert flat, "no zero marks drawn"
     assert (flat[0].get_ydata() == 0).all()
     ps.plt.close(fig)
+
+
+# ---------------------------------------------------------------------------
+# Drawn geometry against a fresh recomputation, for the figures whose drawn
+# values are an estimator's output rather than a redrawing of an input.
+#
+# The gap: a check that reads the artifact confirms what was drawn, a check on
+# the numbers confirms the arithmetic, and while the two never run in one
+# process the first faithfully confirms whatever the second regressed to. Each
+# test below builds the figure through the production path and compares geometry
+# read off the artists against values recomputed here.
+# ---------------------------------------------------------------------------
+
+
+def _forecast_rows(gas: str) -> dict:
+    from ingest import paths
+
+    built = {}
+    for family in ("benchmarks", "autoregressive", "exogenous"):
+        frame = pd.read_csv(paths.processed_dir() / f"forecasts_{gas}_{family}.csv")
+        frame["target"] = pd.PeriodIndex(frame["target"], freq="M")
+        built[family] = frame
+    return built
+
+
+def _shared_pairs(frames: dict) -> set:
+    sets = []
+    for frame in frames.values():
+        usable = frame.dropna(subset=["actual", "forecast", "mase_scale"])
+        methods = usable["method"].nunique()
+        counts = usable.groupby(["horizon", "target"])["method"].nunique()
+        sets.append({pair for pair, n in counts.items() if n == methods})
+    return set.intersection(*sets)
+
+
+@pytest.mark.parametrize("gas", ["methane", "carbon_dioxide"])
+def test_year_panels_draw_the_recomputed_errors(gas):
+    """Every point is a month's measurement against the middle of eight
+    predictions, recomputed here from the scored rows.
+
+    The pivot is on family and method. Keying on the method name alone averages
+    each method's two families, which is the bug that once halved this figure's
+    bar, so the count of columns is asserted rather than assumed.
+    """
+    frames = _forecast_rows(gas)
+    pairs = {p for p in _shared_pairs(frames) if p[0] == figures.AGREEMENT_HORIZON}
+
+    def only(frame):
+        both = list(zip(frame["horizon"], frame["target"]))
+        return frame[[p in pairs for p in both]].copy()
+
+    fitted = pd.concat([only(frames[family]).assign(family=family)
+                        for family in ("autoregressive", "exogenous")])
+    spread = fitted.pivot_table(index="target", columns=["family", "method"],
+                                values="forecast")
+    assert spread.shape[1] == 8, "eight fitted predictions per month"
+    measured = fitted.groupby("target")["actual"].first()
+    want = pd.DataFrame({"measured": measured,
+                         "middle": measured - spread.median(axis=1)})
+
+    panels = {k: figures.agreement_panel(_forecast_rows(k))
+              for k in ("methane", "carbon_dioxide")}
+    fig = figures.prediction_error_by_year(panels)
+    fig.canvas.draw()
+
+    row = ["methane", "carbon_dioxide"].index(gas)
+    drawn = {}
+    for ax in fig.axes:
+        for line in ax.lines:
+            if line.get_marker() != "o" or not len(line.get_xdata()):
+                continue
+            key = line.get_markerfacecolor()
+            drawn.setdefault(key, set()).update(
+                zip(np.round(line.get_xdata(), 10), np.round(line.get_ydata(), 10)))
+    every = set()
+    for points in drawn.values():
+        every |= points
+    # A year with too few months is dropped from the background as well as the
+    # foreground, so the span the title gives is the span of what is drawn.
+    counts = want.index.year.value_counts()
+    keep = want.index.year.isin(counts[counts >= figures.YEAR_MIN_MONTHS].index)
+    want = want[keep]
+    expected = set(zip(np.round(want["measured"], 10), np.round(want["middle"], 10)))
+    # The gas rows share a figure, so the drawn set is the union of both.
+    assert expected <= every, "a recomputed month is missing from the panels"
+    assert len(expected) > 40, "the check would pass vacuously on an empty set"
+    ps.plt.close(fig)
+
+
+def test_the_reconstruction_lines_draw_the_recomputed_totals():
+    """The three assumption lines are the three variants' annual totals."""
+    from ingest import covariates
+    from study import (bias, reconstruct, targets, weights as weighting, windows)
+
+    cov = covariates.load_all()
+    from ingest import paths
+    monthly = pd.read_csv(paths.processed_dir() / "monthly_fch4_from_daily.csv")
+    monthly["month"] = pd.PeriodIndex(monthly["month"], freq="M")
+    monthly = monthly.set_index("month")
+    built = windows.build_windows(cov, monthly.index)
+    inverse = weighting.inverse_variance_weights(monthly).reindex(built["fit"]).dropna()
+    monthly_recon = reconstruct.monthly_reconstruction(
+        cov, monthly, built["fit"], built["reconstruction"], inverse)
+    annual = reconstruct.annual_reconstruction(
+        monthly_recon,
+        reconstruct.year_support(cov, built["fit"], built["reconstruction"],
+                                 windows.RECONSTRUCTION_COVARIATES),
+        bias.wet_end_bias(cov, monthly, built["fit"], inverse))
+    for variant in reconstruct.VARIANTS:
+        totals = targets.monthly_flux_to_annual(monthly_recon[variant])["g_C_m2"]
+        annual[variant] = annual["year"].map(totals)
+
+    fig = figures.reconstruction_series(annual)
+    fig.canvas.draw()
+    kept = annual[annual["year"] <= figures.LAST_PLOTTED_YEAR]
+    lines = [line for line in fig.axes[0].lines if line.get_marker() in ("None", "")]
+    assert len(lines) == 3
+    drawn = sorted((np.asarray(line.get_ydata(), dtype=float) for line in lines),
+                   key=lambda a: a.mean())
+    want = sorted((kept[v].to_numpy(dtype=float) for v in reconstruct.VARIANTS),
+                  key=lambda a: a.mean())
+    for got, expect in zip(drawn, want):
+        assert np.allclose(got, expect, rtol=0, atol=1e-9)
+    ps.plt.close(fig)
+
+
+def test_the_stability_paths_draw_the_recomputed_coefficients():
+    """Each point is one refit's coefficient, at the wettest month it kept."""
+    from ingest import paths
+
+    frame = pd.read_csv(paths.processed_dir() / "coefficient_stability.csv")
+    fig = figures.coefficient_stability(figures.stability_paths(frame), 0.29, 0.05)
+    fig.canvas.draw()
+    drawn = set()
+    for ax in fig.axes:
+        for line in ax.lines:
+            if line.get_marker() in ("None", ""):
+                continue
+            drawn |= set(np.round(np.asarray(line.get_ydata(), dtype=float), 10))
+    missing = [(column, value)
+               for column in ("water_table_coef", "soil_temp_coef")
+               for value in frame[column].dropna()
+               if round(float(value), 10) not in drawn]
+    assert not missing, f"refits not drawn: {missing}"
+    # and nothing is drawn that no refit produced
+    # The bars carry the bootstrap interval, so its ends are drawn too.
+    every = {round(float(v), 10)
+             for column in ("water_table_coef", "water_table_lo", "water_table_hi",
+                            "soil_temp_coef", "soil_temp_lo", "soil_temp_hi")
+             for v in frame[column].dropna()}
+    assert drawn <= every, f"drawn values with no refit behind them: {drawn - every}"
+    ps.plt.close(fig)
+
+
+def test_the_distribution_panels_draw_the_recomputed_quantiles():
+    """Each point is one residual against the quantile its rank expects.
+
+    The residuals are refitted here rather than read from anything cached, so a
+    change in the fit that the figure quietly inherited would show up as points
+    off the recomputed positions.
+    """
+    from ingest import covariates, paths
+    from study import (reconstruct, residuals, weights as weighting, windows)
+
+    cov = covariates.load_all()
+    monthly = pd.read_csv(paths.processed_dir() / "monthly_fch4_from_daily.csv")
+    monthly["month"] = pd.PeriodIndex(monthly["month"], freq="M")
+    monthly = monthly.set_index("month")
+    built = windows.build_windows(cov, monthly.index)
+    inverse = weighting.inverse_variance_weights(monthly).reindex(built["fit"]).dropna()
+    level = residuals.local_level(len(built["fit"]))
+    panels = {}
+    for treatment, weights in (("weighted", inverse), ("unweighted", None)):
+        fit, _ = reconstruct.fit_variant(cov, monthly, built["fit"], "clamped", weights)
+        error = fit.residuals
+        if weights is not None:
+            error = error * weights.reindex(error.index)
+        for family in residuals.FAMILIES:
+            panels[(treatment, family)] = residuals.quantile_comparison(
+                error, family, level=level)
+    fig = figures.residual_distribution_check(panels)
+    fig.canvas.draw()
+    for ax, (key, frame) in zip(fig.axes, panels.items()):
+        points = [line for line in ax.lines
+                  if line.get_marker() == "o" and len(line.get_xdata())]
+        assert points, f"no points drawn for {key}"
+        got_x = np.sort(np.asarray(points[0].get_xdata(), dtype=float))
+        got_y = np.sort(np.asarray(points[0].get_ydata(), dtype=float))
+        assert np.allclose(got_x, np.sort(frame["expected"].to_numpy()),
+                           rtol=0, atol=1e-9)
+        assert np.allclose(got_y, np.sort(frame["observed"].to_numpy()),
+                           rtol=0, atol=1e-9)
+    ps.plt.close(fig)

@@ -432,15 +432,15 @@ FORECAST_TEXT = ps.FigureText(
         "could be told apart from noise."
     ),
     description=(
-        "Methane is measured in nanomoles and carbon dioxide in micromoles, so "
-        "the two panels cannot be compared by eye. The green region spans all "
-        "eight fitted models. Its lower edge dips below the seasonal average at "
-        "one month on both gases, and at six months on methane, though never by "
-        "more than the band. Its upper edge rises above the band at three, six "
-        "and twelve months: some fitted models are distinguishably worse than "
+        "Each panel is one gas. The green region covers all eight fitted models: "
+        "four methods, each run with and without lagged environmental "
+        "measurements. It sits mostly above the seasonal average, and where it "
+        "reaches beneath, the difference stays inside the band; where its upper "
+        "edge rises above the band, some fitted models are measurably worse than "
         "the average. The band is wide where the closest fitted model disagrees "
         "with the average erratically from month to month, not where the average "
-        "is least certain."
+        "is least certain. Methane is in nanomoles and carbon dioxide in "
+        "micromoles, so the panels do not compare by eye."
     ),
 )
 

@@ -874,6 +874,43 @@ nineteen at the same time: at five, the x axis is compressed enough that the key
 spans half the panel instead of a quarter, which is a different layout from the
 one being checked.
 
+## Drawn geometry, checked against a fresh recomputation
+
+A check that reads the artifact confirms what was drawn. A check on the numbers
+confirms the arithmetic. While the two never run in one process, the first
+faithfully confirms whatever the second regressed to, which is the gap these
+tests close: each builds its figure through the production path and compares
+geometry read off the artists against values recomputed in the same process.
+
+Covered, on the rule that it is worth doing where drawn values are an
+estimator's output rather than a redrawing of an input:
+
+| figure | what is recomputed |
+|---|---|
+| forecast error by horizon | shared targets, both benchmarks' mean absolute error, the eight-model envelope, the Diebold-Mariano margin with its own Bartlett variance and Harvey correction |
+| prediction error by year | the median of eight predictions per month, pivoted on family and method |
+| reconstruction series | annual totals for all three water table variants |
+| coefficient stability | every refit's coefficient and bootstrap interval |
+| residual distribution check | the residuals refitted, and their quantiles against both distributions |
+
+Not covered, deliberately: the water table figure and the availability figure
+draw a series and its extent rather than an estimate, and their existing tests
+already hold what they draw.
+
+**The limit, which matters as much as the coverage.** This proves two
+implementations agree. It does not prove the definition is right. The
+shared-target logic in these tests was written from the same understanding as
+`fully_scored`, so if that understanding is wrong both are wrong together and
+every assertion passes. Independence of implementation is what this buys, and
+nothing more. A definitional error needs a different instrument: a worked
+example computed by hand, or a second person.
+
+The forecast test was checked against the bug it exists for. Collapsing the
+pivot back to method alone fails both parametrisations. On this data that
+pivot would give between 0.49 and 0.93 of the envelope's true width on methane
+and 0.60 to 0.88 on carbon dioxide, so it is live geometry rather than a
+historical curiosity.
+
 ## The clearance test read series at their vertices
 
 `_raise_top_until_furniture_clears` grows a panel until its key clears the
