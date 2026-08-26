@@ -50,9 +50,10 @@ from ingest import paths
 #   SITE    #F0E442  the site, and the tower on it
 #
 # `FITTED` is where this rule bends, and it has bent further than it was written
-# to. It now carries four meanings across five figures:
+# to. It carries five meanings across six figures:
 #
 #   forecast error by horizon        the range across the eight fitted models
+#   observed and predicted           the same range, month by month
 #   measurements used across horizons  how often each measurement was chosen
 #   seasonal cycle                   what the average year leaves
 #   residual distribution check      the 115 months the model was fitted on
@@ -74,7 +75,24 @@ from ingest import paths
 # panel, so the scoping still holds on the page even where the sentence naming
 # it no longer describes what is drawn.
 #
-# What this does not license is reaching for green as a general accent. Five
+# The flux figure's use is the one the audit missed, and how it was missed is
+# worth as much as the count. The sweep that produced this list grepped for
+# `ps.FITTED` and filtered out lines containing `FITTED_FILL_ALPHA` to drop
+# alpha constants, which is exactly how that figure writes its fill:
+#
+#     facecolor=ps.FITTED, alpha=ps.FITTED_FILL_ALPHA,
+#
+# So the one use with no recorded justification was invisible to the audit that
+# existed to find unrecorded uses, and an audit written the same way would miss
+# it again. Grep for the name and read every hit.
+#
+# Its justification, recorded now: grey is already doing three jobs on that
+# panel, the uncertainty band on the measurement, the seasonal average's line,
+# and the span marking where forecasts exist. A fourth grey for the model range
+# would be indistinguishable from the first, which is the band it has to be read
+# against.
+#
+# What this does not license is reaching for green as a general accent. Six
 # figures is where it stops.
 #
 # `SITE` marks the flux tower in the site panel and the same site among the

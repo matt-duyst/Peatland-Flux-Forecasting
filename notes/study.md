@@ -874,6 +874,46 @@ nineteen at the same time: at five, the x axis is compressed enough that the key
 spans half the panel instead of a quarter, which is a different layout from the
 one being checked.
 
+## An audit that could not see the thing it was for
+
+The palette note recorded green as four meanings across five figures. It is five
+across six: the flux figure uses `FITTED` for its model range and was missed.
+
+The mechanism is worth more than the correction. The sweep grepped for
+`ps.FITTED` and filtered out lines containing `FITTED_FILL_ALPHA`, to drop the
+alpha constant's own definition. That figure writes its fill as
+
+    facecolor=ps.FITTED, alpha=ps.FITTED_FILL_ALPHA,
+
+so the filter removed the line. The one green use with no recorded
+justification was invisible to the audit that existed to find unrecorded uses,
+and an audit written the same way would miss it again. Grep for the name and
+read every hit; a filter that removes noise removes signal shaped like noise.
+
+Its justification is now recorded: grey is already doing three jobs on that
+panel, the uncertainty band, the seasonal average's line and the span marking
+where forecasts exist, so a fourth grey for the model range would be
+indistinguishable from the band it has to be read against.
+
+### Hatching the evaluated-years span, tried and rejected
+
+IPCC AR5 11.25a hatches a region with a particular status, which is texture
+rather than hue and would free one of those three greys without adding a colour.
+Rendered, it adds ink. The diagonals run through the whole series rather than
+behind it, and on carbon dioxide they cross the uncertainty band into noise. The
+IPCC case works because the hatched region is otherwise empty; here it contains
+the data. The flat span recedes and the hatch does not. It also frees nothing,
+since the hatch is drawn in the same grey.
+
+### The 2015 pair, moved off the figure
+
+The description said the seasonal average predicted 94 nanomoles for July 2015
+and the tower measured 40. Both are correct. A single month's pair of values is
+an illustration rather than a sample size, and cannot be read off a panel at
+this scale, which is the standard already applied to the Shurpali point
+estimates on the reconstruction figure. The counts stay: 12 of 57 and 9 of those
+are the evaluated n, which a caption is meant to carry.
+
 ## Drawn geometry, checked against a fresh recomputation
 
 A check that reads the artifact confirms what was drawn. A check on the numbers

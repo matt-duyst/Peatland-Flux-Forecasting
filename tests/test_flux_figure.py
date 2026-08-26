@@ -116,7 +116,9 @@ def test_the_count_of_months_below_every_prediction_is_what_the_description_says
     assert (below_fitted, below_all) == (12, 9)
     said = figures.FLUX_TEXT.description
     assert "12 of the 57" in said and "every fitted model" in said
-    assert "nine of those" in said
+    # Numerals, not words. The sentence carries three counts and mixing spelled
+    # and numeric forms inside one of them reads badly.
+    assert "9 of those" in said and "nine of those" not in said
 
 
 def test_2021_lies_outside_the_evaluated_window_on_methane():

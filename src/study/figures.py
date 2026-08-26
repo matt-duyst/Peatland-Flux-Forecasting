@@ -767,30 +767,25 @@ def flux_panel(
 
 
 FLUX_TEXT = ps.FigureText(
-    title="Observed and predicted monthly flux at Marcell Bog Lake Peatland",
+    title=("Observed and predicted monthly flux at Marcell Bog Lake Peatland "
+           "(2009 to 2024)"),
     subtitle=(
-        "Each month's flux is measured as an average of the half-hourly readings "
-        "taken that month, drawn here in black with a shaded band showing the "
-        "uncertainty in that average, drawn as two standard errors. Two "
-        "predictions are drawn against it, both made a "
-        "month in advance: the seasonal average, which uses the mean of that month "
-        "across previous years, and a green band spanning the highest and lowest of "
-        "eight fitted models. Neither is available for most of the record, since "
-        "the models need several years of history before they can forecast at all. "
-        "The shaded years mark where predictions exist."
+        "Each panel is one gas, with the measured monthly flux in black and a "
+        "shaded band showing how precisely that month's average is known. "
+        "Against it are two forecasts, each made using only what was known a "
+        "month earlier: the seasonal average as a dashed line, and a green band "
+        "spanning the highest and lowest of eight fitted models. The shaded "
+        "years are where forecasts exist, since a seasonal average needs each "
+        "calendar month observed several times before it can be made at all."
     ),
     description=(
-        "The predictions follow the seasonal cycle, rising and falling in step "
-        "with the measurements. On methane their largest misses are usually "
-        "over-predictions. In 12 of the 57 evaluated methane months the flux came "
-        "in below every fitted model, and in nine of those below the seasonal "
-        "average too. 2015 is the clearest example: the seasonal average "
-        "predicted 94 nanomoles for July and the tower measured 40. What the "
-        "models miss is not when the season happens but how large it will be in a "
-        "weak year. 2021, the weakest summer, lies outside the evaluated window "
-        "and was never forecast. On carbon dioxide the eight models disagree by "
-        "less than half the uncertainty in the measurement, which is why the green "
-        "band sits inside the black one."
+        "The forecasts follow the seasonal cycle closely, rising and falling in "
+        "step with the measurements. What they miss is how large each season "
+        "will be: in 12 of the 57 evaluated methane months the measured flux "
+        "fell below every fitted model, and in 9 of those below the seasonal "
+        "average too. 2021, the weakest summer in the record, lies outside the "
+        "years forecasts were made for. Methane is in nanomoles and carbon "
+        "dioxide in micromoles, so the two panels cannot be compared by eye."
     ),
 )
 
