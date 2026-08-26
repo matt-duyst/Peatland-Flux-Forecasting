@@ -1005,6 +1005,38 @@ Vector output is not produced. These are read in a README, which will not displa
 one, and every figure is regenerable from its function if a document ever needs
 one.
 
+## The drawing block sits evenly between its two text blocks
+
+Setting the description from the floor of its block evened the canvas margins
+and moved the slack to where the eye meets it next: between the axis label and
+the caption. On the water table figure that gap read 95.5 px against 35.1 px
+above the panel.
+
+The obvious fix and the previous one are in exact opposition. Moving the
+description up by the 60.4 px that would equalise puts its last line 86.4 px
+from the canvas bottom, which is the uneven margin just removed, one pixel for
+one pixel. Nothing is gained by trading them.
+
+The panel is the third term, and it is the one with room. Growing the drawing
+block downward into the rows the description does not use closes the gap without
+moving the description at all: both gaps are now 35.06 px, the bottom margin
+stays 26, and the panel gains 60.4 px, 451.6 to 512.0.
+
+`balance_drawing_block` measures both gaps after everything is drawn and expands
+the block into whichever is larger, so the panel only ever grows. This does not
+weaken what the fixed block protects. The block is still 156 px. The case it
+exists for, a description filling all five lines, is left exactly as it was, and
+no figure loses drawing area to text. What changes is that rows the text does
+not use stop being a reservation to defend.
+
+The imbalance runs both ways across the set, which is why the helper expands
+rather than shifts. A three-line description leaves 70 px of its block unused
+and the panel floats high above its own axis label; a five-line one leaves 12 px
+and the below gap falls to about 22 px against 35 above, so the block grows
+upward instead and the subtitle clearance closes to about 22 px. Applied to the
+water table figure only so far, since each remaining figure should be looked at
+as the pass reaches it.
+
 ## The description sets from the floor of its block
 
 Every figure looked unevenly bounded: 26 px of air above the title and between

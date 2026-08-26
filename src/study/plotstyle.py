@@ -520,6 +520,43 @@ def canvas_area(text: FigureText, size: str = "wide", extra_left_px: int = 0,
     return fig, (left, axes_bottom, right - left, axes_top - axes_bottom)
 
 
+def balance_drawing_block(fig: Figure, ax: plt.Axes) -> None:
+    """Give the drawing block the same air above it as below it.
+
+    The gap above is what the title and subtitle blocks leave; the gap below is
+    what the description block leaves once its text is set from the floor. The
+    two rarely match, and they miss in both directions: a three-line
+    description leaves 70 px of its block unused and the panel floats high, a
+    five-line one leaves 12 px and the panel sits low against its own axis
+    label.
+
+    The block expands into whichever gap is larger until the two agree, so the
+    panel only ever grows. That is the point: the fixed description block exists
+    so text cannot steal drawing space, and the worst case it protects against,
+    a description filling all five lines, is left exactly as it was. Rows the
+    text does not use are not a reservation to defend, and the panel claims
+    them.
+
+    Call after everything else is drawn on the axes, since the lower gap is
+    measured to the tick labels and axis title rather than the frame.
+    """
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    height_px = fig.get_size_inches()[1] * fig.dpi
+    subtitle, description = fig.texts[1], fig.texts[2]
+    frame = ax.get_window_extent(renderer)
+    furniture = ax.get_tightbbox(renderer)
+    above = subtitle.get_window_extent(renderer).y0 - frame.y1
+    below = furniture.y0 - description.get_window_extent(renderer).y1
+    box = ax.get_position()
+    if below > above:
+        grow = (below - above) / height_px
+        ax.set_position((box.x0, box.y0 - grow, box.width, box.height + grow))
+    elif above > below:
+        grow = (above - below) / height_px
+        ax.set_position((box.x0, box.y0, box.width, box.height + grow))
+
+
 def canvas(text: FigureText, size: str = "wide") -> tuple[Figure, plt.Axes]:
     """A figure with its text blocks and a single drawing area."""
     fig, rect = canvas_area(text, size)

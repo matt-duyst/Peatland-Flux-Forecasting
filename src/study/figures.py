@@ -127,6 +127,7 @@ def water_table_support(
               labelspacing=0.22, handlelength=1.5, handletextpad=0.46,
               borderaxespad=0.68)
 
+    ps.balance_drawing_block(fig, ax)
     return fig
 
 
