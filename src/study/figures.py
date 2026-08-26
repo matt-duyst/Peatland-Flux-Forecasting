@@ -421,11 +421,13 @@ FORECAST_TEXT = ps.FigureText(
     subtitle=(
         "Four fitted methods (ordinary least squares, ridge regression, random "
         "forest and gradient boosting), each run with and without lagged "
-        "environmental covariates, are compared against four simple benchmarks. "
-        "Each is evaluated at forecast horizons of one to twelve months, meaning "
-        "how far ahead the prediction is made. The most accurate at every horizon "
-        "on both gases is the simplest: predicting each month as the average of "
-        "that month in previous years. The pale band marks how far from that "
+        "environmental covariates, are compared against four simple benchmarks: "
+        "the average of that month in previous years, the same month last year, "
+        "last month carried forward, and the same month last year adjusted for "
+        "trend. The first two are drawn here. Each method is evaluated at "
+        "forecast horizons of one to twelve months, meaning how far ahead the "
+        "prediction is made. The most accurate at every horizon on both gases is "
+        "the simplest, the first of those. The pale band marks how far from that "
         "average a method would have to fall, in either direction, before the "
         "difference could be told apart from noise."
     ),
