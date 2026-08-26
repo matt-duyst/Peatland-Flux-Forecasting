@@ -827,10 +827,23 @@ def _draw_flux_panel(ax, panel: pd.DataFrame, unit: str, labeled: bool) -> None:
     margin = 0.04 * (high - low)
     ax.set_ylim(low - margin, high + margin)
 
+    # Every year labeled, on the minor ticks, as the reconstruction figure does.
+    # Sixteen years across 1652 px is 103 px each against a 50 px label, more
+    # room than the nineteen years there. The majors stay at five years because
+    # the grid follows them, and the automatic locator they replace was choosing
+    # four-year steps and a 2025 label a year past the record.
+    import matplotlib.dates as mdates
+
+    ax.xaxis.set_major_locator(mdates.YearLocator(5, month=1, day=1))
+    ax.xaxis.set_minor_locator(mdates.YearLocator(1, month=1, day=1))
+    for which in ("major", "minor"):
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y")) if which == "major" \
+            else ax.xaxis.set_minor_formatter(mdates.DateFormatter("%Y"))
     if labeled:
         ax.set_xlabel(ps.axis_label("Year"))
     ax.set_ylabel(f"Monthly flux\n({unit})")
     ps.mirror_ticks(ax)
+    ax.tick_params(axis="x", which="minor", labelbottom=True, labelsize=ps.TICK_SIZE)
 
 
 def _flux_legend(ax, panel: pd.DataFrame) -> str:
