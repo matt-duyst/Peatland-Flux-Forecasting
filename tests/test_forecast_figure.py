@@ -385,3 +385,151 @@ def test_the_two_filled_regions_separate_in_grayscale_as_well_as_in_hue():
 
     assert abs(luminance(blended) - luminance(band)) > 0.10
     assert luminance(blended) < luminance(band), "the subject must be darker than the apparatus"
+
+
+# --- what is drawn against what the rows say --------------------------------
+#
+# The gap this closes: a check that reads the artifact confirms what was drawn,
+# and a check on the numbers confirms the arithmetic, but if they never run in
+# one process the first faithfully confirms whatever the second regressed to.
+# Everything below recomputes from the scored rows with its own arithmetic and
+# then reads the geometry off the artists the production path drew.
+
+
+def _raw(gas: str) -> dict:
+    from ingest import paths
+
+    built = {}
+    for family in ("benchmarks", "autoregressive", "exogenous"):
+        frame = pd.read_csv(paths.processed_dir() / f"forecasts_{gas}_{family}.csv")
+        frame["target"] = pd.PeriodIndex(frame["target"], freq="M")
+        built[family] = frame
+    return built
+
+
+def _shared(frames: dict) -> set:
+    """Horizon and target pairs every method scored, computed here."""
+    sets = []
+    for frame in frames.values():
+        usable = frame.dropna(subset=["actual", "forecast", "mase_scale"])
+        methods = usable["method"].nunique()
+        counts = usable.groupby(["horizon", "target"])["method"].nunique()
+        sets.append({pair for pair, n in counts.items() if n == methods})
+    return set.intersection(*sets)
+
+
+def _errors(frames: dict, keys: set, horizon: int) -> dict:
+    """One error series per family and method. Keyed on both, never on method
+    alone: the two families run the same four method names, so pivoting on the
+    name averages each method's two predictions and halves the envelope."""
+    out = {}
+    for family, frame in frames.items():
+        pairs = list(zip(frame["horizon"], frame["target"]))
+        block = frame[[p in keys for p in pairs]]
+        block = block[block["horizon"] == horizon]
+        for method, group in block.groupby("method"):
+            out[f"{family}/{method}"] = group.set_index("target")["error"]
+    return out
+
+
+def _margin(best: pd.Series, base: pd.Series, horizon: int, alpha: float = 0.05) -> float:
+    """Diebold-Mariano margin with the Harvey correction, written out here."""
+    from scipy import stats as st
+
+    pair = pd.concat([best.rename("a"), base.rename("b")], axis=1).dropna()
+    n = len(pair)
+    d = (pair["a"].abs() - pair["b"].abs()).to_numpy()
+    lag = max(horizon - 1, int(np.floor(4 * (n / 100) ** (2 / 9))))
+    centred = d - d.mean()
+    variance = float(centred @ centred / n)
+    for k in range(1, lag + 1):
+        variance += 2 * (1 - k / (lag + 1)) * float(centred[k:] @ centred[:-k] / n)
+    variance = max(variance, 1e-12)
+    harvey = np.sqrt(max((n + 1 - 2 * horizon + horizon * (horizon - 1) / n) / n, 1e-12))
+    return float(st.t.isf(alpha / 2, n - 1) * np.sqrt(variance / n) / harvey)
+
+
+def _expected(gas: str) -> pd.DataFrame:
+    frames = _raw(gas)
+    keys = _shared(frames)
+    rows = []
+    for horizon in HORIZONS:
+        errors = _errors(frames, keys, horizon)
+        mae = {k: float(v.abs().mean()) for k, v in errors.items()}
+        fitted = {k: v for k, v in mae.items() if not k.startswith("benchmarks/")}
+        best = min(fitted, key=fitted.get)
+        rows.append({
+            "climatology": mae["benchmarks/climatology"],
+            "seasonal naive": mae["benchmarks/seasonal naive"],
+            "low": min(fitted.values()),
+            "high": max(fitted.values()),
+            "n_fitted": len(fitted),
+            "margin": _margin(errors[best], errors["benchmarks/climatology"], horizon),
+        })
+    return pd.DataFrame(rows)
+
+
+def _drawn(ax) -> dict:
+    """Geometry read off the artists rather than off the table behind them."""
+    import matplotlib.colors as mc
+
+    out = {"edges": []}
+    for line in ax.lines:
+        colour, width = line.get_color(), line.get_linewidth()
+        y = np.asarray(line.get_ydata(), dtype=float)
+        if colour == figures.BENCHMARK_STYLE["climatology"]["color"] and width > 2.0:
+            out["climatology"] = y
+        elif colour == figures.BENCHMARK_STYLE["seasonal naive"]["color"]:
+            out["seasonal naive"] = y
+        elif colour == ps.FITTED:
+            out["edges"].append(y)
+    for coll in ax.collections:
+        paths = coll.get_paths()
+        if not paths:
+            continue
+        vertices = paths[0].vertices
+        low, high = [], []
+        for position in range(len(HORIZONS)):
+            ys = vertices[np.abs(vertices[:, 0] - position) < 1e-9][:, 1]
+            low.append(float(ys.min()))
+            high.append(float(ys.max()))
+        name = "band" if np.allclose(coll.get_facecolor()[0][:3],
+                                     mc.to_rgb(ps.NOT_DISTINGUISHABLE)) else "fill"
+        out[name] = (np.array(low), np.array(high))
+    out["edges"].sort(key=lambda a: a.mean())
+    return out
+
+
+@pytest.mark.parametrize("gas", [key for key, _, _ in figures.GAS_PANEL])
+def test_every_drawn_value_matches_a_fresh_recomputation(gas):
+    panels = {k: figures.forecast_panel(_raw(k), HORIZONS)
+              for k, _, _ in figures.GAS_PANEL}
+    fig = figures.forecast_error_by_horizon(panels)
+    fig.canvas.draw()
+    index = [k for k, _, _ in figures.GAS_PANEL].index(gas)
+    got, want = _drawn(fig.axes[index]), _expected(gas)
+
+    assert set(want["n_fitted"]) == {8}, "the envelope spans eight fitted models"
+    for name in ("climatology", "seasonal naive"):
+        assert np.allclose(got[name], want[name].to_numpy(), rtol=0, atol=1e-9), name
+    assert np.allclose(got["edges"][0], want["low"].to_numpy(), rtol=0, atol=1e-9)
+    assert np.allclose(got["edges"][1], want["high"].to_numpy(), rtol=0, atol=1e-9)
+    assert np.allclose(got["fill"][0], want["low"].to_numpy(), rtol=0, atol=1e-9)
+    assert np.allclose(got["fill"][1], want["high"].to_numpy(), rtol=0, atol=1e-9)
+    assert np.allclose(got["band"][0], (want["climatology"] - want["margin"]).to_numpy(),
+                       rtol=0, atol=1e-9)
+    assert np.allclose(got["band"][1], (want["climatology"] + want["margin"]).to_numpy(),
+                       rtol=0, atol=1e-9)
+    ps.plt.close(fig)
+
+
+@pytest.mark.parametrize("gas", [key for key, _, _ in figures.GAS_PANEL])
+def test_every_method_is_scored_on_identical_months(gas):
+    frames = _raw(gas)
+    keys = _shared(frames)
+    for frame in frames.values():
+        pairs = list(zip(frame["horizon"], frame["target"]))
+        block = frame[[p in keys for p in pairs]]
+        counts = block.groupby(["method", "horizon"]).size().unstack()
+        assert (counts.nunique(axis=0) == 1).all(), \
+            "methods differ in how many months they were scored on"
