@@ -18,9 +18,9 @@ Panel a is the peatland around the tower. The white outline is the wetland the N
 
 ![Reconstructed methane emission at Marcell Bog Lake Peatland (1990 to 2008)](figures/reconstruction_series.png)
 
-**The water table coefficient drifts as its range narrows: flat, linear, or absent (the three give 10 to 30 g C per square meter)**
+**Environmental records at this site reach back to 1990 while the flux record begins in 2009, so relationships fitted on the measured years can be projected into the earlier ones. Beyond the range the fit covered, the water table term has to be assumed rather than estimated, and the three assumptions drawn here give annual totals from 8 to 30 grams of carbon per square meter.**
 
-Each marker is one year's emission in grams of carbon per square meter, from relationships fitted on the measured years (2009 to 2019). Where the water table stays inside the range those years covered, the three assumptions agree closely; where it moves beyond, they fan apart, and the strip below shows how much of each year fell outside. Very little of this can be verified, because measurement stopped in 1992 and did not resume until 2007, leaving eighteen of these twenty years with nothing to compare against. The exceptions are 1991 and 1992, measured by Shurpali and colleagues, for which this reconstruction predicts 9.29 and 8.49 grams of carbon from May to October; their published totals have not been obtained.
+Each marker is one year's emission in grams of carbon per square meter, from relationships fitted on the measured years (2009 to 2019). Beyond the fitted range the three take different views: the water table response either stops rising (flat), continues at the rate the fit found (linear), or is dropped altogether (absent). They agree closely where the water table stays inside that range, and fan apart where it does not. Almost none of this can be checked, because methane measurement stopped in 1992 and did not resume until 2009, leaving seventeen of these nineteen years with nothing to compare against. The exceptions are 1991 and 1992, measured by Shurpali and colleagues, whose published totals have not been obtained.
 
 ### Monthly methane and carbon dioxide forecast error at Marcell Bog Lake Peatland
 

@@ -820,6 +820,38 @@ of 14.40 on the nominal window. Both were produced by fitting a
 short flux record and projecting backward, so this is method agreement and not
 independent confirmation.
 
+## Three errors the reconstruction figure carried
+
+**The subtitle said the three assumptions give 10 to 30 g C per square meter.**
+Across the nineteen plotted years they run 7.77 to 30.46: held flat 7.90 to
+17.98, continued linearly 7.77 to 30.46, term absent 9.27 to 11.74. The floor
+was wrong by more than two grams. The 10 is close to the absent variant's own
+floor of 9.27, which suggests it was once read off that line rather than off all
+three. It now says 8 to 30.
+
+**It said eighteen of twenty years have nothing to compare against.** The figure
+plots nineteen years, 1990 to 2008 inclusive, and two carry a published
+measurement, so it is seventeen of nineteen. Twenty is the reconstruction
+window's calendar span, 1990 to 2009, which is not what the figure draws.
+
+**It said measurement did not resume until 2007.** For methane it resumed in
+2009: the monthly index opens 2009-04, and the Shurpali seasons are recorded
+here as seventeen years before the flux record begins, which is 1992 plus
+seventeen. 2007 is the carbon dioxide start, and this is a methane figure.
+
+The Shurpali point estimates left the description. They were 9.29 and 8.49 g C
+for May to October, which are correct and are already recorded above with their
+sensitivity spans, so the figure was carrying the weaker copy of something the
+notes hold better. The description keeps the status, that no published total has
+been obtained, because that is what the two circled years mean.
+
+One thing the wording must keep refusing: the fan is not an uncertainty range.
+The literature convention describes scenario spreads as spanning a conservative
+uncertainty range, and this study rejects that reading. The spread is what the
+choice of assumption buys, and the record cannot test the choice. That is why
+the three are drawn as named lines and never as a band, and why the subtitle
+says the term has to be assumed rather than estimated.
+
 ## The pending independent validation
 
 Shurpali, N. J., Verma, S. B., Clement, R. J., and Billesbach, D. P. (1993),

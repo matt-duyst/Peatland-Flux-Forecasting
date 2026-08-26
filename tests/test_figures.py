@@ -206,25 +206,37 @@ def test_a_year_with_no_months_outside_is_marked_flat_and_in_blue():
     ps.plt.close(fig)
 
 
-def test_the_strip_names_both_of_its_marks():
-    """The hatching and the flat mark are otherwise unexplained."""
+def test_the_figure_carries_one_key_and_it_names_the_strip_marks():
+    """The hatching and the flat mark are otherwise unexplained.
+
+    They used to be keyed by a second legend inside the strip, which had to be
+    set at 6.4 pt to fit between the bars and the frame, below anything else in
+    the set. They are a headed group in the panel's key instead, so the figure
+    carries one legend at one size.
+    """
     fig = figures.reconstruction_series(annual_frame())
-    labels = [t.get_text() for t in fig.axes[1].get_legend().get_texts()]
-    assert any("Share of the year outside" in label for label in labels)
-    assert any("No months outside" in label for label in labels)
+    assert fig.axes[1].get_legend() is None, "the strip carries no key of its own"
+    labels = [t.get_text() for t in fig.axes[0].get_legend().get_texts()]
+    assert "Months outside" in labels, labels
+    assert "No months outside" in labels, labels
     ps.plt.close(fig)
 
 
-def test_the_strip_legend_fits_inside_the_frame_without_covering_a_bar():
-    """The strip is secondary and must not gain height to carry its own key."""
+def test_the_strip_bar_is_named_what_the_strip_axis_names():
+    """One quantity, one name. The key said share of the year and the axis said
+    months outside, which are the same thing counted the same way."""
     fig = figures.reconstruction_series(annual_frame())
-    fig.canvas.draw()
+    labels = [t.get_text() for t in fig.axes[0].get_legend().get_texts()]
+    assert "Months outside" in fig.axes[1].get_ylabel()
+    assert "Months outside" in labels
+    ps.plt.close(fig)
+
+
+def test_a_year_wholly_inside_is_drawn_as_a_zero_and_not_omitted():
+    """A measured zero is not a missing year, so the strip marks it."""
+    fig = figures.reconstruction_series(annual_frame())
     strip = fig.axes[1]
-    frame = strip.get_window_extent()
-    legend = strip.get_legend().get_window_extent()
-    assert legend.y1 <= frame.y1 and legend.y0 >= frame.y0, "the legend leaves the frame"
-    box = legend.transformed(strip.transData.inverted())
-    under = [bar.get_height() for bar in strip.patches
-             if box.x0 <= bar.get_x() + bar.get_width() / 2 <= box.x1]
-    assert box.y0 > max(under, default=0.0), "the legend covers a bar"
+    flat = [line for line in strip.lines if line.get_marker() == "_"]
+    assert flat, "no zero marks drawn"
+    assert (flat[0].get_ydata() == 0).all()
     ps.plt.close(fig)

@@ -153,20 +153,24 @@ LAST_PLOTTED_YEAR = 2008
 RECONSTRUCTION_TEXT = ps.FigureText(
     title="Reconstructed methane emission at Marcell Bog Lake Peatland (1990 to 2008)",
     subtitle=(
-        "The water table coefficient drifts as its range narrows: flat, linear, or "
-        "absent (the three give 10 to 30 g C per square meter)"
+        "Environmental records at this site reach back to 1990 while the flux record "
+        "begins in 2009, so relationships fitted on the measured years can be "
+        "projected into the earlier ones. Beyond the range the fit covered, the water "
+        "table term has to be assumed rather than estimated, and the three "
+        "assumptions drawn here give annual totals from 8 to 30 grams of carbon per "
+        "square meter."
     ),
     description=(
-        "Each marker is one year's emission in grams of carbon per square meter, "
-        "from relationships fitted on the measured years (2009 to 2019). Where the "
-        "water table stays inside the range those years covered, the three "
-        "assumptions agree closely; where it moves beyond, they fan apart, and the "
-        "strip below shows how much of each year fell outside. Very little of this "
-        "can be verified, because measurement stopped in 1992 and did not resume "
-        "until 2007, leaving eighteen of these twenty years with nothing to compare "
-        "against. The exceptions are 1991 and 1992, measured by Shurpali and "
-        "colleagues, for which this reconstruction predicts 9.29 and 8.49 grams of "
-        "carbon from May to October; their published totals have not been obtained."
+        "Each marker is one year's emission in grams of carbon per square meter, from "
+        "relationships fitted on the measured years (2009 to 2019). Beyond the fitted "
+        "range the three take different views: the water table response either stops "
+        "rising (flat), continues at the rate the fit found (linear), or is dropped "
+        "altogether (absent). They agree closely where the water table stays inside "
+        "that range, and fan apart where it does not. Almost none of this can be "
+        "checked, because methane measurement stopped in 1992 and did not resume "
+        "until 2009, leaving seventeen of these nineteen years with nothing to "
+        "compare against. The exceptions are 1991 and 1992, measured by Shurpali and "
+        "colleagues, whose published totals have not been obtained."
     ),
     emphasize=("flat", "linear", "absent"),
 )
@@ -242,9 +246,18 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
                 (r"Year $\bf{inside}$ the fitted range",
                  r"Year $\bf{outside}$ the fitted range")]
     entries += [(measured_key, measured_key.get_label())]
+    # The strip's two marks join this key rather than carrying their own. A
+    # separate legend down there had to be set at 6.4 pt to fit between the bars
+    # and the frame, which is below anything else in the set and too small to
+    # read. Named to match the strip's axis, so one quantity has one name.
+    entries += [(blank, r"$\bf{In\ the\ strip\ below}$")]
+    entries += [(Patch(facecolor=ps.OUTSIDE, edgecolor="white", hatch=ps.OUTSIDE_HATCH),
+                 "Months outside"),
+                (Line2D([], [], linestyle="none", marker="_", markersize=5.2,
+                        markeredgewidth=1.8, color=ps.INSIDE), "No months outside")]
     ps.legend(ax, handles=[h for h, _ in entries], labels=[label for _, label in entries],
               loc="lower left", fontsize=8.2, borderpad=0.5, labelspacing=0.3,
-              handlelength=1.9, handletextpad=0.5, ncols=2, columnspacing=1.6,
+              handlelength=1.9, handletextpad=0.5, ncols=3, columnspacing=1.6,
               bbox_to_anchor=(0.015, 0.02))
 
     share = frame["pct_months_outside"].to_numpy()
@@ -259,22 +272,6 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
                markersize=5.2, markeredgewidth=1.8, color=ps.INSIDE,
                clip_on=False, zorder=4)
 
-    # The strip carries two marks a reader cannot otherwise name: the hatching,
-    # and a flat mark that means a measured zero rather than a missing year.
-    strip_key = [
-        Patch(facecolor=ps.OUTSIDE, edgecolor="white", hatch=ps.OUTSIDE_HATCH,
-              label="Share of the year outside"),
-        Line2D([], [], linestyle="none", marker="_", markersize=5.2,
-               markeredgewidth=1.8, color=ps.INSIDE,
-               label="No months outside"),
-    ]
-    # Inside the frame, in the block the last six years leave clear. The strip is
-    # a secondary element and should not gain height to carry its own key, so the
-    # key is made small enough to fit what the bars already leave.
-    ps.legend(strip, handles=strip_key, labels=[h.get_label() for h in strip_key],
-              loc="upper right", ncols=1, fontsize=6.4, borderpad=0.3,
-              labelspacing=0.2, handlelength=1.3, handletextpad=0.4,
-              framealpha=1.0, bbox_to_anchor=(0.995, 0.97))
     strip.set_ylim(0, 108)
     strip.set_yticks([0, 50, 100])
     strip.set_ylabel(ps.axis_label("Months outside", "%"))
@@ -284,6 +281,7 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
     ps.mirror_ticks(strip)
 
     _underline_legend_headings(fig, ax)
+    ps.balance_drawing_block(fig, ax, strip)
 
     return fig
 
