@@ -1002,25 +1002,34 @@ MEASUREMENTS_TEXT = ps.FigureText(
     title=("Which measurements the models used at Marcell Bog Lake Peatland "
            "(by forecast horizon)"),
     subtitle=(
-        "Each model predicts a fixed distance ahead, from one month to twelve, "
-        "and was rebuilt every month as the record grew. Each time it chose which "
-        "of the measurements to use, and the green bars show how often each was "
-        "chosen, from never to every rebuild. The grey bars show something "
-        "different: how much of that measurement can be predicted from the date "
-        "alone, which is high for temperature and near zero for the water table. "
-        "Reading the two together, what the models chose most often are the "
-        "measurements the date already predicts, and the one thing the date "
-        "cannot predict is the one they chose least."
+        # The clause naming the green bars is gone: the heading over them already
+        # reads "Chosen by the models (% of rebuilds)", same verb, same unit, same
+        # object, and the axis under it shows the range the clause described. What
+        # the grey bars contrast with is the choice rather than the green bars,
+        # which is why the sentence names the choice: cutting the clause took the
+        # antecedent of "something different" with it. It also carried the only
+        # naming of the water table, so the finding sentence names it rather than
+        # saying "the one thing the date cannot predict": absence reads as
+        # unremarkable, and the sharpest result has to be said in words.
+        "Each model predicts a fixed distance ahead, one month to twelve, and was "
+        "rebuilt every month as the record grew. Each time it chose which of the "
+        "measurements to use. The grey bars are no part of that choice: how much "
+        "of each measurement the date alone predicts. Read together, they say the "
+        "models chose the measurements the date already predicts, and chose least "
+        "the water table, the one thing the date cannot predict."
     ),
     description=(
-        "Two marks stand where a number would mean nothing. The date question does "
-        "not apply to the flux's own past values, which are not measurements taken "
-        "at the site. Last month's flux is unavailable to a model forecasting three "
-        "or more months ahead. Where a grey bar does stand, it is what three "
-        "seasonal terms account for: 95% of soil and air temperature, and about 5% of "
-        "the water table. The sharpest case is carbon dioxide three months ahead, "
-        "where the models chose none of the four measurements in any rebuild and "
-        "kept only the flux's own value from a year earlier."
+        # Finding first, then what a bar means, then the two absence marks as
+        # notation. It ran the other way round, so a reader met 342 characters of
+        # bookkeeping before anything was claimed.
+        "The sharpest case is carbon dioxide three months ahead, where the models "
+        "chose none of the four measurements in any rebuild and kept only the "
+        "flux's own value from a year earlier. Where a grey bar stands, it is what "
+        "three seasonal terms account for: 95% of soil and air temperature, and "
+        "about 5% of the water table. Two marks stand where a number would mean "
+        "nothing instead: the date question does not apply to the flux's own past "
+        "values, which are not measurements taken at the site, and last month's "
+        "flux is unavailable to a model forecasting three or more months ahead."
     ),
 )
 

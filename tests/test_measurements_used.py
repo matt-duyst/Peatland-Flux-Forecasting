@@ -233,13 +233,21 @@ def test_the_two_kinds_of_empty_cell_are_told_apart():
     ps.plt.close(fig)
 
 
-def test_the_description_says_what_each_empty_cell_means_before_it_says_anything_else():
-    """A reader meeting a marked cell should not have to read to the end for it."""
+def test_the_description_leads_with_the_finding_and_ends_on_the_notation():
+    """Both marks are still explained, but not before anything is claimed.
+
+    This ran the other way round, on the reasoning that a reader meeting a marked
+    cell should not read to the end to find it. Against the convention the set
+    settled on, orienting then elements then finding then notation, that put 342
+    characters of bookkeeping ahead of the only claim the caption makes. The
+    marks are named on the panel where they are met; the caption is not where a
+    reader looks first for them.
+    """
     said = figures.MEASUREMENTS_TEXT.description
     assert "does not apply to the flux's own past values" in said
     assert "unavailable to a model forecasting three or more months ahead" in said
-    assert said.index("does not apply") < said.index("carbon dioxide")
-    assert said.index("does not apply") < said.index("seasonal terms")
+    assert said.index("carbon dioxide") < said.index("seasonal terms")
+    assert said.index("seasonal terms") < said.index("does not apply")
 
 
 def test_each_column_group_names_its_unit_under_the_ticks():
