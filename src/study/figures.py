@@ -32,7 +32,7 @@ from study import windows
 WATER_TABLE_ARTIFACTS = windows.WATER_TABLE_ARTIFACTS
 
 WATER_TABLE_TEXT = ps.FigureText(
-    title="Monthly water table elevation at Marcell Bog Lake Peatland, Minnesota (1990 to 2019)",
+    title="Monthly water table elevation at Marcell Bog Lake Peatland (1990 to 2019)",
     subtitle=(
         "Water table is one of the two measurements the reconstruction reads, and "
         "methane rises as it rises. The model only ever saw it across a 0.33 m band, "

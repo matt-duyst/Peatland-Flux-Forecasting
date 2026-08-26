@@ -1,6 +1,6 @@
-### Monthly water table elevation at Marcell Bog Lake Peatland, Minnesota (1990 to 2019)
+### Monthly water table elevation at Marcell Bog Lake Peatland (1990 to 2019)
 
-![Monthly water table elevation at Marcell Bog Lake Peatland, Minnesota (1990 to 2019)](figures/water_table_support.png)
+![Monthly water table elevation at Marcell Bog Lake Peatland (1990 to 2019)](figures/water_table_support.png)
 
 **Water table is one of the two measurements the reconstruction reads, and methane rises as it rises. The model only ever saw it across a 0.33 m band, because the flux record opens in 2009 after a decade of decline. Projecting back to 1990 asks for 0.29 m above that band, an excursion nearly as wide as the range the model was fitted on.**
 
