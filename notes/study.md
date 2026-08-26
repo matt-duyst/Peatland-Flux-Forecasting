@@ -843,6 +843,18 @@ What actually fits, at 8.2 pt with a heading, on a strip an eighth of the block:
 | heading row, three columns | 35.7 | 27.9% | −32.6, it reaches a 100% bar |
 | **title, two columns** | **58.4** | **45.7%** | **+15.2** |
 
+The heading names the marks rather than where they sit. "In the strip below"
+was right while these entries lived in the panel's key and pointed downward;
+from inside the strip it tells a reader only what they can already see. "What
+each bar shows" would have been the obvious replacement and is not honest: one
+of the two marks is a flat tick for a year with no months outside, which is a
+bar of no height and does not read as one, which is why it is drawn flat and in
+the panel's blue rather than as a hairline orange bar. "What each mark shows"
+covers both, and is the set's wording for exactly this case, heading the keys on
+the prediction error and residual figures where unlike marks are grouped. The
+set holds one near-duplicate, "What the marks show" on the flux figure, which
+should be brought into line when the pass reaches it.
+
 Only the last one clears, so the strip's key is one row of two under a title.
 Stacking is what costs the height, not the heading, and laying the entries
 across is what buys it back. The title is the site figure's device, so this is

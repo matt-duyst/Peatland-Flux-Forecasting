@@ -279,6 +279,15 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
     # heading is set. Laid across, the same entries take 43% and clear it by 19
     # points. The title device is the site figure's, so this is the set's other
     # heading rather than a new one.
+    #
+    # It names the marks rather than where they sit. Naming the location was
+    # right when these entries lived in the panel's key and pointed downward;
+    # from inside the strip it says only what a reader can already see. "What
+    # each bar shows" would not do, because one of the two is a flat tick for a
+    # year with no months outside, which is a bar of no height and does not read
+    # as one. This wording covers both and is the set's for exactly that: it
+    # heads the keys on the prediction error and residual figures, which group
+    # unlike marks the same way.
     strip_key = [
         Patch(facecolor=ps.OUTSIDE, edgecolor="white", hatch=ps.OUTSIDE_HATCH,
               label="Months outside"),
@@ -291,7 +300,7 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
         strip, handles=strip_key, labels=[h.get_label() for h in strip_key],
         loc="upper right", ncols=2, fontsize=8.2, borderpad=0.4,
         labelspacing=0.28, handlelength=1.5, handletextpad=0.5, columnspacing=1.4,
-        framealpha=1.0, title=r"$\bf{In\ the\ strip\ below}$",
+        framealpha=1.0, title=r"$\bf{What\ each\ mark\ shows}$",
         bbox_to_anchor=(0.995, 0.97))
     # Bold through the same mathtext the panel's headings use, so the two are
     # one device set two ways rather than two that happen to look alike.
