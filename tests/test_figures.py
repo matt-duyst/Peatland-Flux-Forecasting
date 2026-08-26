@@ -21,11 +21,31 @@ def frames():
     return series, months[12:], months[:12]
 
 
-def test_months_beyond_the_fitted_range_are_marked_and_counted():
+def test_each_legend_entry_does_one_job():
+    """A legend says what a mark means, and the range entry says where it sits.
+
+    How many months fall outside is a finding rather than a key, and the
+    description carries both counts. The elevations stay, because they are what
+    the dashed lines mark and a reader cannot read them off the axis.
+    """
     series, fit, reconstruction = frames()
     fig = figures.water_table_support(series, fit, reconstruction, artifacts=())
     labels = [t.get_text() for t in fig.axes[0].get_legend().get_texts()]
-    assert any("6 months above" in l for l in labels), labels
+    assert "Outside the fitted range" in labels, labels
+    assert not any(char.isdigit() for label in labels
+                   for char in label if "Fitted range," not in label), labels
+    assert any(label.startswith("Fitted range, ") and " to " in label
+               for label in labels), labels
+    ps.plt.close(fig)
+
+
+def test_months_beyond_the_fitted_range_are_marked_apart():
+    series, fit, reconstruction = frames()
+    fig = figures.water_table_support(series, fit, reconstruction, artifacts=())
+    marks = {(line.get_color(), line.get_marker())
+             for line in fig.axes[0].lines
+             if line.get_linestyle() == "None" and len(line.get_xdata())}
+    assert len(marks) == 2, f"inside and outside are two separate marks: {marks}"
     ps.plt.close(fig)
 
 
@@ -75,8 +95,23 @@ def test_the_figure_carries_its_own_words():
     assert figures.WATER_TABLE_TEXT.title
     assert figures.WATER_TABLE_TEXT.subtitle != figures.WATER_TABLE_TEXT.title
     body = ps.readme_block(figures.WATER_TABLE_TEXT, "water_table_support")
-    # The central term is defined for a reader arriving cold.
-    assert body.index("Reconstruction means") < body.index("Each point")
+    assert "Each point" in body
+
+
+def test_the_panel_defines_reconstruction_for_a_reader_arriving_cold():
+    """The definition moved out of the description and onto the panel.
+
+    The description used to open by saying what reconstruction means. It now
+    opens on the marks, and the term is defined where it is drawn: the two
+    period labels say which window the model was fitted on and which it
+    predicts into, which is the whole of the definition a reader needs here.
+    """
+    series, fit, reconstruction = frames()
+    fig = figures.water_table_support(series, fit, reconstruction)
+    drawn = " ".join(t.get_text() for t in fig.axes[0].texts)
+    assert "model predicts here" in drawn, drawn
+    assert "model fitted here" in drawn, drawn
+    ps.plt.close(fig)
 
 
 def annual_frame():

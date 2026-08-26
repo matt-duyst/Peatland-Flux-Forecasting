@@ -34,21 +34,19 @@ WATER_TABLE_ARTIFACTS = windows.WATER_TABLE_ARTIFACTS
 WATER_TABLE_TEXT = ps.FigureText(
     title="Monthly water table elevation at Marcell Bog Lake Peatland, Minnesota (1990 to 2019)",
     subtitle=(
-        "The water table runs 0.29 m past the fitted maximum, against a fitted range "
-        "only 0.33 m wide"
+        "Water table is one of the two measurements the reconstruction reads, and "
+        "methane rises as it rises. The model only ever saw it across a 0.33 m band, "
+        "because the flux record opens in 2009 after a decade of decline. Projecting "
+        "back to 1990 asks for 0.29 m above that band, an excursion nearly as wide as "
+        "the range the model was fitted on."
     ),
     description=(
-        "Reconstruction means estimating methane emissions for years before "
-        "measurements began in 2009, from relationships fitted on 2009 to 2019. "
-        "Each point is one month's mean. The shaded band marks the 115 months the "
-        "fit used. The water table fell through the 2000s, so the fit window opens "
-        "after the wetter state has gone, sampling only the drier conditions. The "
-        "dashed lines mark the highest and lowest water table they reached. Points "
-        "beyond them lie outside anything the model has seen: 107 above in runs "
-        "lasting years, six below by under 0.06 m. Those lines sit 0.33 m apart, "
-        "and the reconstruction runs 0.29 m above the upper one: the excursion is "
-        "nearly as wide as the whole fitted span. It stops at 2019 because "
-        "precipitation, a covariate it needs, ends there."
+        "Each point is one month's mean, and the shaded band marks the 115 months "
+        "the fit used. The dashed lines are the highest and lowest water table those "
+        "months reached. Everything beyond them is a value the model was never "
+        "shown: 107 months above, in runs of up to 44 consecutive months from 1995 "
+        "to 1998, and six below by no more than 0.06 m. The series stops in 2019 "
+        "because precipitation, which the model also needs, ends there."
     ),
 )
 
@@ -113,8 +111,9 @@ def water_table_support(
                markersize=4.4, label="Within the fitted range"),
         Line2D([], [], color=ps.OUTSIDE, marker=ps.OUTSIDE_MARKER, linestyle="none",
                markersize=5.0,
-               label=(f"Outside the fitted range "
-                      f"({int(above.sum())} months above, {int(below.sum())} below)")),
+               # A legend says what a mark means. How many carry it is a finding,
+               # and the description states both counts.
+               label="Outside the fitted range"),
         Line2D([], [], color=ps.BOUNDARY, linewidth=1.3, linestyle=(0, (7, 4)),
                label=f"Fitted range, {low:.2f} to {high:.2f} m"),
     ]
@@ -122,28 +121,8 @@ def water_table_support(
               loc="lower left", ncols=1, fontsize=8.6, borderpad=0.42,
               labelspacing=0.32, handlelength=1.9, handletextpad=0.6)
 
-    if above.any():
-        peak = int(np.nanargmax(np.where(above, values, np.nan)))
-        run = _run_length(above, peak)
-        ps.annotate(
-            ax,
-            f"Peak of {run} consecutive months\nabove the fitted maximum",
-            xy=(times[peak], values[peak]),
-            xytext=(times[peak] - pd.Timedelta(days=260), values[peak]),
-            ha="right", va="center",
-        )
     return fig
 
-
-def _run_length(flags: np.ndarray, index: int) -> int:
-    """Length of the unbroken stretch of True values containing one position."""
-    start = index
-    while start > 0 and flags[start - 1]:
-        start -= 1
-    end = index
-    while end + 1 < len(flags) and flags[end + 1]:
-        end += 1
-    return end - start + 1
 
 #: The three lines are three assumptions about one term, not three models, so
 #: they are named on the panel by what each assumes rather than by the internal
