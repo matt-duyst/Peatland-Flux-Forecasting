@@ -595,10 +595,19 @@ def _forecast_legend(ax) -> None:
         (Patch(facecolor=ps.NOT_DISTINGUISHABLE, edgecolor="none"),
          "Margin needed to differ from the average"),
     ]
+    # Right edge on the last horizon rather than on the frame. The axis carries
+    # a third of a category of margin past the final position so the twelve-month
+    # markers are not drawn on the spine, and anchoring to the frame left that
+    # margin as white space between the key and the panel edge. Both panels give
+    # the same figure: the horizontal axis is categorical and both run the same
+    # four horizons, so every series on both ends at the same position.
+    low, high = ax.get_xlim()
+    right = (max(ax.get_xticks()) - low) / (high - low)
     ps.legend(ax, handles=[h for h, _ in entries], labels=[label for _, label in entries],
-              loc="upper right", bbox_to_anchor=(0.995, 0.985), ncol=2, borderpad=0.7,
+              loc="upper right", bbox_to_anchor=(right, 0.985), ncol=2, borderpad=0.7,
               labelspacing=0.34, columnspacing=2.0, handlelength=2.2,
-              handletextpad=0.8, fontsize=ps.LEGEND_SIZE - 1.0, framealpha=1.0)
+              handletextpad=0.8, fontsize=ps.LEGEND_SIZE - 1.0, framealpha=1.0,
+              borderaxespad=0.0)
 
 
 def _underline_legend_title(fig, legend) -> None:
