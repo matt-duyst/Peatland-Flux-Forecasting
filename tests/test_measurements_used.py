@@ -257,6 +257,55 @@ def test_an_empty_cell_is_struck_rather_than_worded():
     ps.plt.close(fig)
 
 
+def test_a_strike_cannot_be_read_as_a_very_short_bar():
+    """Length does not separate them and cannot be made to.
+
+    The strike renders 16.6 px against a 9% bar's 19.6, and this figure draws
+    bars at 9% and 10%, so the two end within 3 px. Two things separate them and
+    both are held here, because a change to bar height or to the labelling rule
+    would remove the distinction without touching the strike at all.
+    """
+    fig = figures.measurements_used(real_panels())
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+
+    thickness, bar_height = None, None
+    for ax in fig.axes:
+        for line in ax.lines:
+            if len(line.get_xdata()) == 2 and line.get_color() == ps.MUTED:
+                thickness = line.get_linewidth() / 72.0 * ps.DPI
+        for patch in ax.patches:
+            top = ax.transData.transform((0, patch.get_y()))[1]
+            bottom = ax.transData.transform((0, patch.get_y() + patch.get_height()))[1]
+            bar_height = abs(top - bottom)
+    assert thickness is not None and bar_height is not None
+    # A strike is a different kind of object, not a thin bar.
+    assert thickness / bar_height < 0.15, (
+        f"strike is {100 * thickness / bar_height:.0f}% of a bar's height; "
+        "at this ratio it starts to read as a very short bar")
+
+    # Every bar carries its number, including a measured zero. No strike does.
+    numbers = sum(1 for ax in fig.axes for text in ax.texts
+                  if text.get_text().replace(".", "").isdigit())
+    bars = sum(1 for ax in fig.axes for _ in ax.patches)
+    strikes = sum(1 for ax in fig.axes for line in ax.lines
+                  if len(line.get_xdata()) == 2 and line.get_color() == ps.MUTED)
+    assert numbers == bars, "a bar without its number would read like a strike"
+    assert numbers + strikes == 60, "every cell is a number or a strike, never both"
+    ps.plt.close(fig)
+
+
+def test_the_strike_starts_where_a_bar_starts():
+    """No offset. Two pixels is too little to register and enough to invite a
+    reader to look for meaning in the gap, where there is none."""
+    fig = figures.measurements_used(real_panels())
+    for ax in fig.axes:
+        for line in ax.lines:
+            if len(line.get_xdata()) == 2 and line.get_color() == ps.MUTED:
+                assert line.get_xdata()[0] == 0.0
+    ps.plt.close(fig)
+
+
 def test_the_description_leads_with_the_finding_and_ends_on_the_notation():
     """Both marks are still explained, but not before anything is claimed.
 

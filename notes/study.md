@@ -877,6 +877,46 @@ nineteen at the same time: at five, the x axis is compressed enough that the key
 spans half the panel instead of a quarter, which is a different layout from the
 one being checked.
 
+## The strike, and why length is not what tells it from a bar
+
+An empty cell on the measurements figure carries a strike rather than a word.
+Two reasons a cell is empty were written into it, "does not apply" on the date
+column and "not available" on a horizon column, which is ten italic annotations
+and 1,070 px of text for cells that hold nothing. The description carries both
+reasons in one sentence and the panel carries one mark.
+
+**Length does not separate a strike from a short bar and cannot be made to.** At
+8.0 on the panel's 0 to 124 scale it renders 16.6 px, against 19.6 px for a 9%
+bar, and this figure draws bars at 9% and 10%. They end within 3 px of each
+other. Lengthening or shortening the strike only moves which bar it collides
+with.
+
+Two things do separate them:
+
+- **Thickness.** 2.9 px against a bar's 39.4, which is 7%. Nothing on the panel
+  is a thin bar, so the strike is a different kind of object rather than a small
+  one, and that reads at any length.
+- **The labelling rule.** 50 bars, 50 numbers, 10 strikes, no number on any of
+  them. Every bar carries its value including a "0" where the value is a measured
+  zero, and no strike carries one. A reader who has looked at two cells has the
+  grammar.
+
+Both are held by a test, because a change to bar height or to the number rule
+would remove the distinction without touching the strike or its constant.
+
+The strike starts where a bar starts. It began 1.0 in, which at this scale is 2
+px: too little for a reader to register as "not measured from the axis", and
+enough to invite them to look for meaning in the gap where there is none.
+
+**The explanation arrives last and that is correct.** A reader meets ten strikes
+before the sentence explaining them, which sits at the end of a five-line block
+at its cap. The mark does not depend on that sentence: it has to say "there is no
+number here and that is deliberate", which position and the missing number do on
+their own. What the sentence adds is which of two reasons applies, and that is
+caption material. The failure mode worth guarding is the opposite one, a reader
+inferring a wrong meaning before reaching the caption, and the only wrong reading
+available is "a very short bar", which the two separations above block.
+
 ## Where the prose sits on a figure, not just how much
 
 The measurements figure reads as the wordiest in the set and is not. On the three

@@ -1055,9 +1055,19 @@ DATE_AXIS = "% of variation"
 CHOSEN_AXIS = "% of rebuilds"
 
 #: How far the strike in an empty cell reaches, on the panel's 0 to 124 scale.
-#: Short enough to read as a mark rather than as a bar of that length, and long
-#: enough not to be taken for a tick.
-STRIKE_WIDTH = 9.0
+#: It starts where a bar starts. An earlier version began 1.0 in, which at this
+#: scale is 2 px: too little for a reader to register as "this is not measured
+#: from the axis" and enough to invite them to look for meaning in the gap, where
+#: there is none.
+#:
+#: Length is not what tells a strike from a bar and cannot be made to. At 8.0 it
+#: renders 16.6 px against a 9% bar's 19.6, and this figure draws bars at 9% and
+#: 10%, so the two end within 3 px. What separates them is thickness, 2.9 px
+#: against a bar's 39.4, and the labelling rule: every bar carries its number,
+#: including a "0" where the value is a measured zero, and no strike carries one.
+#: A change to bar height or to that rule would remove the distinction without
+#: touching this constant, which is why a test holds both.
+STRIKE_WIDTH = 8.0
 
 
 def usage_order(panels: dict[str, pd.DataFrame]) -> list[str]:
@@ -1102,7 +1112,7 @@ def _draw_usage_panel(
     # annotates inapplicable cells, so there is no convention being departed from,
     # and the description carries both reasons in one sentence.
     for position in positions[~drawn]:
-        ax.plot([1.0, STRIKE_WIDTH], [position, position], color=ps.MUTED,
+        ax.plot([0.0, STRIKE_WIDTH], [position, position], color=ps.MUTED,
                 linewidth=1.4, solid_capstyle="butt", zorder=3)
 
     if rule_after is not None:
