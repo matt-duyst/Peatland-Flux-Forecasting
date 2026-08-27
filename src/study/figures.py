@@ -1837,7 +1837,9 @@ SEASONAL_TEXT = ps.FigureText(
         "unexplained by it. That quarter is where the size of each season sits, "
         "and it varies more than fourfold on methane between its weakest year "
         "and its strongest, threefold on carbon dioxide, with neither showing a "
-        "trend. This year-to-year variation is what nothing tested here "
+        "trend. Structure left in a bottom row usually means the shape taken out "
+        "was the wrong one. Here it is the result. This year-to-year variation "
+        "is what nothing tested here "
         "predicted, across eight fitted models, four benchmarks and four "
         "measured drivers."
     ),

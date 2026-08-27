@@ -68,7 +68,7 @@ Across every evaluated year the methods fail in much the same way, missing by si
 
 **Each column is one gas and each row is one part of its record. The middle row is one average shape for the whole record, the same twelve values repeated every year, and the bottom row is what the measurements leave once that shape is taken out. What remains there is the size of each season.**
 
-The repeating shape accounts for 74% of the variation on methane and 71% on carbon dioxide, leaving roughly a quarter of each record unexplained by it. That quarter is where the size of each season sits, and it varies more than fourfold on methane between its weakest year and its strongest, threefold on carbon dioxide, with neither showing a trend. This year-to-year variation is what nothing tested here predicted, across eight fitted models, four benchmarks and four measured drivers.
+The repeating shape accounts for 74% of the variation on methane and 71% on carbon dioxide, leaving roughly a quarter of each record unexplained by it. That quarter is where the size of each season sits, and it varies more than fourfold on methane between its weakest year and its strongest, threefold on carbon dioxide, with neither showing a trend. Structure left in a bottom row usually means the shape taken out was the wrong one. Here it is the result. This year-to-year variation is what nothing tested here predicted, across eight fitted models, four benchmarks and four measured drivers.
 
 ### Which months each measurement and each analysis cover at Marcell Bog Lake Peatland
 

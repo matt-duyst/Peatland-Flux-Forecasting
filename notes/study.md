@@ -917,6 +917,28 @@ caption material. The failure mode worth guarding is the opposite one, a reader
 inferring a wrong meaning before reaching the caption, and the only wrong reading
 available is "a very short bar", which the two separations above block.
 
+## For after the pass: the wrap under-fills every description
+
+`_wrap_width` divides the drawable width by a character-width estimate of 0.545
+em, and the estimate is generous, so every description stops short of the width
+it is allowed:
+
+| figure | drawable | widest line renders | uses |
+|---|---|---|---|
+| seasonal cycle | 2152 px | 1990.5 | 92.5% |
+| measurements used | 1652 px | 1538.0 | 93.1% |
+| water table | 1652 px | 1593.9 | 96.5% |
+
+Roughly 7% of the width is unavailable across eleven figures, and that is why
+several blocks ran to an extra line during the visual pass when they sat near a
+boundary. Recovering it would give several of them a line back.
+
+**Not corrected now.** Changing the estimate reflows every description in the
+set, and doing that mid-pass would invalidate every line count already agreed. It
+is a decision for the set once the pass finishes, and it should be made by
+measuring rendered width rather than by tuning the constant until the counts look
+right.
+
 ## Where the prose sits on a figure, not just how much
 
 The measurements figure reads as the wordiest in the set and is not. On the three
@@ -942,6 +964,35 @@ is the one that dominates global methane variability.
 That is context beyond anything the figure set draws, so it belongs in the README
 above the figures rather than in a caption. Recorded here so the README pass
 picks it up rather than rediscovering it.
+
+## The pattern: corrected where it was noticed
+
+The sibling of the entry below, and the same class of failure running the other
+way. There, something that existed was not found and was written again. Here,
+something that existed in two places was changed in one.
+
+| | what changed | where it was applied | where it was not |
+|---|---|---|---|
+| 1 | the adopted window, 117 months to 115 | `study/figures.py` | every script, which kept building the nominal window |
+| 2 | the 2011 shortfall shares | prose in these notes | nothing computed them, so nothing could disagree |
+| 3 | the v5-5 correction to the seasonal numbers | the figure's description | these notes, which kept 0.54 and p = 0.119 |
+
+The third is the one that prompted this entry. Cutting six precise figures out of
+the seasonal description meant checking they were recorded, and four were not:
+the spread ratio and the amplitude trend p were **stale**, having been updated in
+the figure and not here, and the carbon dioxide trend p and both variance shares
+had **never been written down**. Removing them without checking would have lost
+two outright and left two contradicting the figure.
+
+**The fix is a test, and it is named so it is found.**
+`test_the_amplitudes_and_their_trend_tests_are_recorded` reads these notes and
+asserts every number that left the block is present in them. It is the only kind
+of guard that works here, because prose cannot be type-checked and a number
+living in two files will drift the moment one is edited alone.
+
+**What to check first, next time:** before removing a number from a figure,
+confirm it is recorded somewhere a test can see. Before *changing* one, grep for
+it across the repository rather than editing the place you are looking at.
 
 ## The pattern: reimplemented beside itself
 
@@ -3665,9 +3716,21 @@ the description instead. The name is now an axis label and is measured with
 everything else; the row labels are still figure text but are placed after the
 balance, from where each row ends up rather than from where it was allocated.
 
-The general form: anything positioned in figure fractions has to be placed after
-`balance_drawing_block`, and anything that has to be *measured* by it has to
-belong to an axes.
+**The rule, which is general and worth holding.** Anything positioned in figure
+fractions has to be placed *after* `balance_drawing_block`, and anything that has
+to be *measured* by it has to belong to an axes. Neither failure announces
+itself: a label naming the wrong row still renders, and a label sitting on the
+description still renders, so both survive a build and a test suite that does not
+look at where things landed. The helper measures `ax.get_tightbbox`, which is the
+whole of what it can see.
+
+**The row labels sit 9.5 px above their row centres, and this is pre-existing.**
+Each is two lines drawn about one point, the name with `va="bottom"` and the
+parenthetical with `va="top"`, so the point is the split between them rather than
+the centre of the block. The bold line is the taller, so the block hangs high.
+Recorded as known rather than fixed, and recorded so a later pass does not read
+it as something the balancing introduced: it predates every change made here and
+is identical on every row.
 
 **The six numbers the description used to carry, now that it carries three.**
 Recomputed from the current record with `AMPLITUDE_MIN_MONTHS = 10`, which is the
@@ -3733,6 +3796,18 @@ gaps running from −4 to 8 px across the six panels. They are now a uniform 5 p
 from the nearest tick label. It takes two passes: a rotated label's extent is not
 settled until it has been drawn where it will sit, and `set_position` does not
 hold on an axis label, which recomputes its own place on every draw.
+
+**The description is left of the panels, and that is inherent.** It begins 624 px
+left of them, because the row labels need that gutter, and ends 162 px short of
+their right edge. Relative to the drawing block it genuinely is shifted; relative
+to the canvas, which is what the title and subtitle are centred on, it sits
+exactly on the text margin at 108 px, which is where a left-set block belongs.
+
+It also reads as narrower than it is because its last line is 93 characters
+against 197 and stops over half the drawable width short. That is the ragged edge
+of a left-set block and not a placement error. Centring it to match the panels
+would trade a correct margin for an accidental one, and is not to be attempted on
+a later pass.
 
 **No legend, and the decision is deliberate.** The three row labels are the key:
 each is set in the colour of the series it names, beside the row it names, so a
