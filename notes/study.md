@@ -2041,6 +2041,38 @@ Water table is the one covariate the calendar cannot explain, at **4.2% for
 methane at lag 1** and **4.5% for carbon dioxide at lag 12**, against 95% for
 temperature, so it is genuinely non-seasonal information.
 
+**The screening result is a methane result that carbon dioxide follows only at
+the top of the ranking.** Ranking the four measurements by mean share of rebuilds
+across the four horizons, against the share of each the calendar explains:
+
+| | calendar | methane chosen | carbon dioxide chosen |
+|---|---|---|---|
+| soil temperature | 95% | 69% | 27% |
+| air temperature | 95% | 65% | 30% |
+| precipitation | 38 to 40% | 19% | **14%, the lowest** |
+| water table | 4 to 6% | **10%, the lowest** | 16% |
+
+The rank correlation between what the calendar explains and what the models chose
+is **+0.80 on methane and +0.60 on carbon dioxide**, and on carbon dioxide the
+bottom two invert: precipitation, which the calendar explains 38% of, is chosen
+less often than the water table, which it explains 6% of. Neither correlation is
+significant at four points (p = 0.20 and 0.40), which is the honest reading of a
+four-item ranking and a reason not to lean on the correlation itself.
+
+So "the models reached for what the date already predicts and left alone what it
+does not" holds on methane and holds only for the temperatures on carbon dioxide.
+The figure's description says "choosing temperature most and the water table
+least **on methane**" for this reason.
+
+**Two places state it more broadly than that supports, and neither is edited
+here.** The README says of the water table: "It is also the measurement the
+models chose least often." That is true on methane and false on carbon dioxide,
+where precipitation is lower at 14% against 16%. And the section above concludes
+from the temperature and water table shares alone, which is where the claim is
+strongest; it does not mention that precipitation breaks the pattern on one gas.
+The fix in both cases is one qualifier, not a retraction: the ordering by
+calendar share is right at the top and wrong at the bottom on one of two gases.
+
 **These water table figures are corrections, and they change what this section
 concludes.** The values published here before were 0.2% and 0.5% for the calendar
 share and r = 0.006 and −0.157 for the partial correlation, and all four were

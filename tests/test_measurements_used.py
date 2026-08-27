@@ -131,9 +131,15 @@ def test_the_water_table_is_the_mirror_image():
 
 
 def test_the_figure_names_the_water_table_rather_than_leaving_it_to_be_noticed():
-    """Absence reads as unremarkable, so the sharpest result is said in words."""
-    said = figures.MEASUREMENTS_TEXT.subtitle
-    assert "water table" in said and "the date cannot predict" in said
+    """Absence reads as unremarkable, so the sharpest result is said in words.
+
+    It is said in the description rather than the subtitle now. The subtitle sets
+    up the reading and stops short of answering it, so the answer has to be
+    somewhere, and the qualification it carries would not fit above.
+    """
+    said = figures.MEASUREMENTS_TEXT.description
+    assert "water table" in said
+    assert "water table least on methane" in said, "and the qualification with it"
 
 
 # --- what it draws ----------------------------------------------------------
@@ -209,8 +215,8 @@ def test_the_figure_asks_no_reader_to_know_the_method():
     """Plain terms or nothing: none of the working vocabulary reaches the page."""
     text = figures.MEASUREMENTS_TEXT
     said = " ".join([text.title, text.subtitle, text.description, figures.DATE_HEADING,
-                     figures.CHOSEN_HEADING, figures.DATE_AXIS, figures.CHOSEN_AXIS,
-                     figures.NOT_ASKED, figures.NOT_AVAILABLE]).lower()
+                     figures.CHOSEN_HEADING, figures.DATE_AXIS,
+                     figures.CHOSEN_AXIS]).lower()
     for jargon in ("boruta", "fold", "shadow", "survival", "survived", "lag",
                    "exogenous", "ridge", "screening", "covariate", "predictor"):
         assert jargon not in said
@@ -222,14 +228,32 @@ def test_the_seasonal_terms_are_not_a_row():
     assert not any("sin" in name or "seasonal term" in name.lower() for name in panel.index)
 
 
-def test_the_two_kinds_of_empty_cell_are_told_apart():
-    """One is a question that does not apply; the other is a value a model cannot
-    have. Drawn alike they would both read as data that went missing."""
+def test_an_empty_cell_is_struck_rather_than_worded():
+    """One mark for both reasons, and no text in the cell.
+
+    The two reasons were written into the cells, which is ten italic annotations
+    on a panel that already meets a reader with text in eight places. They differ
+    and the description says how; what the panel has to do is stop them reading
+    as data that went missing, and a strike does that. Nothing in this literature
+    annotates inapplicable cells, so no convention was departed from.
+    """
     fig = figures.measurements_used(real_panels())
-    marks = [text.get_text() for ax in fig.axes for text in ax.texts]
-    assert marks.count(figures.NOT_ASKED) == 2 * len(figures.FLUX_ROWS)
-    assert marks.count(figures.NOT_AVAILABLE) == 2 * 3      # one-month lag, three horizons
-    assert figures.NOT_ASKED != figures.NOT_AVAILABLE
+    fig.canvas.draw()
+    gases = {gas for _, gas, _ in figures.GAS_PANEL}
+    words = [text.get_text() for ax in fig.axes for text in ax.texts
+             if text.get_text() and text.get_text() not in gases
+             and not text.get_text().replace(".", "").isdigit()]
+    assert not words, f"no words in the cells: {words}"
+    # The row rule between the two gas blocks is also a two-point line, so the
+    # strikes are told apart by their ink rather than their shape.
+    strikes = [line for ax in fig.axes for line in ax.lines
+               if len(line.get_xdata()) == 2 and line.get_color() == ps.MUTED]
+    # two flux rows on each date column, plus the one-month lag at three horizons
+    assert len(strikes) == 2 * len(figures.FLUX_ROWS) + 2 * 3 == 10
+    said = figures.MEASUREMENTS_TEXT.description
+    assert "struck cell" in said
+    assert "not measurements taken at the site" in said
+    assert "unavailable three or more months ahead" in said
     ps.plt.close(fig)
 
 
@@ -244,10 +268,8 @@ def test_the_description_leads_with_the_finding_and_ends_on_the_notation():
     reader looks first for them.
     """
     said = figures.MEASUREMENTS_TEXT.description
-    assert "does not apply to the flux's own past values" in said
-    assert "unavailable to a model forecasting three or more months ahead" in said
-    assert said.index("carbon dioxide") < said.index("seasonal terms")
-    assert said.index("seasonal terms") < said.index("does not apply")
+    assert said.index("Read across a row") < said.index("differ in kind")
+    assert said.index("differ in kind") < said.index("struck cell")
 
 
 def test_each_column_group_names_its_unit_under_the_ticks():

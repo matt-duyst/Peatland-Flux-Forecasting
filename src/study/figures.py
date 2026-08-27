@@ -1002,34 +1002,38 @@ MEASUREMENTS_TEXT = ps.FigureText(
     title=("Which measurements the models used at Marcell Bog Lake Peatland "
            "(by forecast horizon)"),
     subtitle=(
-        # The clause naming the green bars is gone: the heading over them already
-        # reads "Chosen by the models (% of rebuilds)", same verb, same unit, same
-        # object, and the axis under it shows the range the clause described. What
-        # the grey bars contrast with is the choice rather than the green bars,
-        # which is why the sentence names the choice: cutting the clause took the
-        # antecedent of "something different" with it. It also carried the only
-        # naming of the water table, so the finding sentence names it rather than
-        # saying "the one thing the date cannot predict": absence reads as
-        # unremarkable, and the sharpest result has to be said in words.
-        "Each model predicts a fixed distance ahead, one month to twelve, and was "
-        "rebuilt every month as the record grew. Each time it chose which of the "
-        "measurements to use. The grey bars are no part of that choice: how much "
-        "of each measurement the date alone predicts. Read together, they say the "
-        "models chose the measurements the date already predicts, and chose least "
-        "the water table, the one thing the date cannot predict."
+        # "Inputs" rather than "measurements": two of the six rows are the flux's
+        # own past values, which the description says in the same breath are not
+        # measurements taken at the site, so naming all six that way makes the two
+        # blocks disagree on one figure.
+        "Each model predicts a fixed distance ahead, from one month to twelve, "
+        "and was rebuilt every month as the record grew. At every rebuild the "
+        "model selected which of the six inputs listed at the left to include, "
+        "and the green bars give the share of rebuilds in which each was "
+        "selected. The grey bars answer a separate question that has nothing to "
+        "do with the model: how much of each input's own variation can be "
+        "predicted from the calendar date alone. Reading the two together shows "
+        "whether the models reached for inputs carrying information the date "
+        "does not already supply."
     ),
     description=(
-        # Finding first, then what a bar means, then the two absence marks as
-        # notation. It ran the other way round, so a reader met 342 characters of
-        # bookkeeping before anything was claimed.
-        "The sharpest case is carbon dioxide three months ahead, where the models "
-        "chose none of the four measurements in any rebuild and kept only the "
-        "flux's own value from a year earlier. Where a grey bar stands, it is what "
-        "three seasonal terms account for: 95% of soil and air temperature, and "
-        "about 5% of the water table. Two marks stand where a number would mean "
-        "nothing instead: the date question does not apply to the flux's own past "
-        "values, which are not measurements taken at the site, and last month's "
-        "flux is unavailable to a model forecasting three or more months ahead."
+        # "On methane" is doing real work. Ranking by mean share across horizons,
+        # the water table is chosen least on methane at 10% but not on carbon
+        # dioxide, where precipitation is lower at 14% against 16%. The claim
+        # above it is likewise a methane finding that carbon dioxide follows only
+        # at the top: the rank correlation between what the date explains and what
+        # the models chose is +0.80 against +0.60, and the bottom two invert.
+        "Read across a row and the two blocks answer different questions, one "
+        "asking how often the models used that input and the other how much of "
+        "it the date already explains. The models reached for what the date "
+        "predicts and left alone what it does not, choosing temperature most and "
+        "the water table least on methane. The two gases differ in kind rather "
+        "than degree. Methane's models take soil and air temperature in almost "
+        "every rebuild one month out, while carbon dioxide's take them almost "
+        "never and lean instead on the flux's own value a year earlier. A struck "
+        "cell is one where no number could be computed, either because the "
+        "flux's own past values are not measurements taken at the site, or "
+        "because last month's flux is unavailable three or more months ahead."
     ),
 )
 
@@ -1050,10 +1054,10 @@ DATE_HEADING = "Predictable from the date\n(% of variation)"
 DATE_AXIS = "% of variation"
 CHOSEN_AXIS = "% of rebuilds"
 
-#: The two reasons a cell is empty, which are not the same reason and so are not
-#: drawn the same way. Neither is missing data.
-NOT_ASKED = "does not apply"
-NOT_AVAILABLE = "not available"
+#: How far the strike in an empty cell reaches, on the panel's 0 to 124 scale.
+#: Short enough to read as a mark rather than as a bar of that length, and long
+#: enough not to be taken for a tick.
+STRIKE_WIDTH = 9.0
 
 
 def usage_order(panels: dict[str, pd.DataFrame]) -> list[str]:
@@ -1073,14 +1077,14 @@ def _draw_usage_panel(
     color: str,
     ticked: bool,
     rule_after: int | None,
-    blank: str,
 ) -> None:
     """One column of bars: a share from nothing to everything, per measurement.
 
-    `blank` is what an empty cell means on this column, written into the cell.
-    A blank on the date column is a question that does not apply; a blank on a
-    horizon column is a value a model at that horizon cannot have. Left unmarked
-    they would look alike, and both would look like missing data.
+    An empty cell carries a strike rather than a number. The two reasons differ,
+    a question that does not apply on the date column and a value a model at that
+    horizon cannot have, but the mark is one: unmarked they would look like
+    missing data, and separately worded they cost ten annotations on a panel that
+    already meets a reader with text in eight places.
     """
     positions = np.arange(len(order))
     heights = np.array([values.get(name, np.nan) for name in order], dtype=float)
@@ -1091,9 +1095,15 @@ def _draw_usage_panel(
         share = 100 * height
         ax.text(share + 4.0, position, f"{share:.0f}", va="center", ha="left",
                 fontsize=ps.TICK_SIZE - 1.5, color=ps.MUTED, zorder=3)
+    # A strike where the bar would start, not a phrase. The two reasons a cell is
+    # empty were written into it, "does not apply" on the date column and "not
+    # available" on a horizon column, which is ten italic annotations and 1,070 px
+    # of text for cells that are simply empty. Nothing in this literature
+    # annotates inapplicable cells, so there is no convention being departed from,
+    # and the description carries both reasons in one sentence.
     for position in positions[~drawn]:
-        ax.text(3.0, position, blank, va="center", ha="left", style="italic",
-                fontsize=ps.TICK_SIZE - 2.0, color=ps.MUTED, zorder=3)
+        ax.plot([1.0, STRIKE_WIDTH], [position, position], color=ps.MUTED,
+                linewidth=1.4, solid_capstyle="butt", zorder=3)
 
     if rule_after is not None:
         ax.axhline(rule_after + 0.5, color=ps.GRID, linewidth=1.0, zorder=1)
@@ -1158,7 +1168,7 @@ def measurements_used(panels: dict[str, pd.DataFrame]) -> Figure:
         base = bottom + (1 - row) * (row_height + GAS_LABEL_PX / height_px)
         date = fig.add_axes((date_left, base, column, row_height))
         _draw_usage_panel(date, panel.attrs.get("calendar", {}), order,
-                          ps.DATE_SHARE, bottom_row, rule_after, NOT_ASKED)
+                          ps.DATE_SHARE, bottom_row, rule_after)
         date.set_yticklabels(order, fontsize=ps.TICK_SIZE, color=ps.INK)
         # Named in the same bordered box as the other figures, seated above the
         # panel rather than in its corner: the corner holds the first row, which
@@ -1169,16 +1179,27 @@ def measurements_used(panels: dict[str, pd.DataFrame]) -> Figure:
         for index, horizon in enumerate(horizons):
             ax = fig.add_axes((first + index * (column + gap), base, column, row_height))
             _draw_usage_panel(ax, panel[horizon], order, ps.FITTED, bottom_row,
-                              rule_after, NOT_AVAILABLE)
+                              rule_after)
             if row == 0:
                 fig.text(first + index * (column + gap) + column / 2,
                          base + row_height + 8 / height_px,
                          f"{horizon} month" + ("s" if horizon > 1 else ""),
-                         ha="center", va="bottom", fontsize=ps.LABEL_SIZE, color=ps.INK)
+                         # Bold, like every other panel identifier in the set:
+                         # the boxed gas labels, the residual check's four titles,
+                         # the year grid's years. These name the four columns and
+                         # were the only ones set normal.
+                         ha="center", va="bottom", fontsize=ps.LABEL_SIZE,
+                         fontweight="bold", color=ps.INK)
 
-    # Two headings rather than a legend: they name the two quantities the two
-    # colors stand for, so a key repeating them would say nothing the columns do
-    # not already say in the place a reader is looking.
+    # Two headings rather than a legend, and this figure should not gain one.
+    # Position is the encoding here, not color: the grey bars occupy one column
+    # and the green four, and neither appears in the other's, so a reader could
+    # lose the hue entirely and still read the panel. A key would say "grey means
+    # predictable from the date", which is the heading verbatim an inch above it.
+    # That is unlike the figures where a key earns its space, the forecast
+    # envelope, the water table months, the year panels, where two colors share
+    # one axis and position tells a reader nothing. It would also make nine the
+    # number of places this figure meets a reader with text before the caption.
     date_middle = date_left + column / 2
     chosen_middle = first + (left + width - first) / 2
     heading_base = top - (HEADING_PX - 8) / height_px
@@ -1189,8 +1210,11 @@ def measurements_used(panels: dict[str, pd.DataFrame]) -> Figure:
         fig.text(middle, heading_base, heading, ha="center", va="bottom",
                  fontsize=ps.LABEL_SIZE, fontweight="bold", color=ps.INK,
                  linespacing=1.4)
+        # Bold, because these are axis titles. Drawn as figure text rather than
+        # through set_xlabel, they bypass the style's axes.labelweight and were
+        # the only unbold axis titles in the set.
         fig.text(middle, bottom - 34 / height_px, axis, ha="center", va="top",
-                 fontsize=ps.LABEL_SIZE, color=ps.MUTED)
+                 fontsize=ps.LABEL_SIZE, fontweight="bold", color=ps.MUTED)
     return fig
 
 
