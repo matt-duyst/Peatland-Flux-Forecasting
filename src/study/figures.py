@@ -1813,25 +1813,33 @@ def covariate_availability(rows: list[dict],
 SEASONAL_TEXT = ps.FigureText(
     title="The seasonal cycle in monthly flux at Marcell Bog Lake Peatland",
     subtitle=(
-        "Each column is one gas and each row is one part of its record. The middle "
-        "row is one average shape for the whole record (the same twelve values "
-        "repeated every year). The bottom row is what the measurements leave once "
-        "that shape is taken out. It is where the size of each season lives. "
-        "Nothing tested here predicted it: eight fitted models, four benchmarks "
-        "and four measured drivers."
+        # It ended "It is where the size of each season lives. Nothing tested here
+        # predicted it", where the second "it" could be read as the row or as the
+        # size of the season, and the finding depended on which. The finding is in
+        # the description now and the subtitle stops at describing the rows.
+        "Each column is one gas and each row is one part of its record. The "
+        "middle row is one average shape for the whole record, the same twelve "
+        "values repeated every year, and the bottom row is what the measurements "
+        "leave once that shape is taken out. What remains there is the size of "
+        "each season."
     ),
     description=(
-        "What the repeating shape leaves is half the variation in the record: 0.51 "
-        "of the measurements' spread on methane and 0.53 on carbon dioxide. The "
-        "shape accounts for the rest, 74% of the variance on methane and 71% on "
-        "carbon dioxide. The size of the "
-        "season is what varies: methane's swing from lowest to highest month runs "
-        "33.7 to 150.6 across the years, a factor of 4.5, and carbon dioxide's 0.8 "
-        "to 2.4, a factor of 3.0, neither of them trending (p = 0.215 and 0.505). "
-        "The level was tested for a trend as well, and neither gas has one, so "
-        "nothing was removed for it. This shape is fitted on every observed month, "
-        "which is not what the forecast benchmark does: that one is rebuilt inside "
-        "each fold from the months up to it."
+        # The precise figures are in the notes: the spread ratios, the two swings,
+        # both trend p values, the level trend and the fold caveat. What a reader
+        # needs while looking is the share, the fold change and the fact that
+        # nothing reached it.
+        #
+        # "Neither showing a trend" rather than "neither of them trending": at
+        # p = 0.215 and 0.505 no trend was detected, which is not the same as
+        # none being there.
+        "The repeating shape accounts for 74% of the variation on methane and "
+        "71% on carbon dioxide, leaving roughly a quarter of each record "
+        "unexplained by it. That quarter is where the size of each season sits, "
+        "and it varies more than fourfold on methane between its weakest year "
+        "and its strongest, threefold on carbon dioxide, with neither showing a "
+        "trend. This year-to-year variation is what nothing tested here "
+        "predicted, across eight fitted models, four benchmarks and four "
+        "measured drivers."
     ),
 )
 
@@ -1903,6 +1911,10 @@ SEASONAL_ROW_GAP_PX = 64
 SEASONAL_COLUMN_GAP_PX = 108
 
 SEASONAL_TIME_AXIS = "Year"
+
+#: Points between the bottom row's tick labels and its axis name. The name used
+#: to be figure text placed 38 px below the row, which is 18.2 pt at this DPI.
+SEASONAL_TIME_AXIS_PAD_PT = 12.0
 
 #: Space between an axis name and the nearest of its tick labels. Left to
 #: matplotlib the name sits off the widest label on the axis, whichever one that
@@ -2047,10 +2059,14 @@ def seasonal_cycle(panels: dict[str, pd.DataFrame]) -> Figure:
                               y=1.0 + 52 / (heights[index] * height_px))
             axes.append(ax)
 
-        fig.text(base_x + column_width / 2,
-                 row_base(len(SEASONAL_ROWS) - 1) - 38 / height_px,
-                 SEASONAL_TIME_AXIS, ha="center", va="top", fontsize=ps.LABEL_SIZE,
-                 fontweight="bold", color=ps.INK)
+        # An axis label rather than figure text. As figure text it sat at a fixed
+        # fraction, so a block that moved underneath it left the name inside the
+        # panel, and placing it afterwards put it on the description instead,
+        # because a figure artist is not in the axes extent the block is balanced
+        # against. As a label it is measured with everything else.
+        axes[-1].set_xlabel(SEASONAL_TIME_AXIS, fontsize=ps.LABEL_SIZE,
+                            fontweight="bold", color=ps.INK,
+                            labelpad=SEASONAL_TIME_AXIS_PAD_PT)
 
     # Each axis name seated a fixed distance from its own widest tick label.
     # Left to matplotlib it sits off the widest label of the axis whatever the
@@ -2073,13 +2089,21 @@ def seasonal_cycle(panels: dict[str, pd.DataFrame]) -> Figure:
         drift = nearest - SEASONAL_NAME_GAP_PX - name.get_window_extent().x1
         ax.yaxis.set_label_coords(name.get_position()[0] + drift / panel.width, 0.5)
 
-    # Seated clear of the widest tick label and the axis name beside it.
+    # Balanced before the two sets of figure text are placed, not after. Both are
+    # at fixed fractions, so a block that moves underneath them leaves the row
+    # labels naming the wrong rows and the axis name inside the bottom panel.
+    ps.balance_drawing_block(fig, *fig.axes)
+
+
+    # Seated clear of the widest tick label and the axis name beside it, and
+    # centred on where each row actually sits rather than on where it was
+    # allocated.
     fig.canvas.draw()
     clear = max(label.get_window_extent().width for label in fig.axes[0].get_yticklabels()
                 if label.get_text())
+    rows = [fig.axes[index].get_position() for index in range(len(SEASONAL_ROWS))]
     _framed_rows(fig, left + gutter - (clear + 96) / width_px,
-                 [row_base(index) + heights[index] / 2
-                  for index in range(len(SEASONAL_ROWS))])
+                 [box.y0 + box.height / 2 for box in rows])
     return fig
 
 

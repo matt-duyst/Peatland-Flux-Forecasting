@@ -266,8 +266,14 @@ def test_every_panel_carries_its_own_labeled_time_axis():
     fig = figures.seasonal_cycle(panels())
     for ax in fig.axes:
         assert [label.get_text() for label in ax.get_xticklabels() if label.get_text()]
-    said = [text.get_text() for text in fig.texts]
-    assert said.count(figures.SEASONAL_TIME_AXIS) == len(figures.GAS_PANEL)
+    # An axis label on the bottom row of each column, not figure text. As figure
+    # text it sat at a fixed fraction and the balanced block moved out from under
+    # it; placed after the balance it landed on the description, because a figure
+    # artist is not in the extent the block is balanced against.
+    named = [ax for ax in fig.axes if ax.get_xlabel() == figures.SEASONAL_TIME_AXIS]
+    assert len(named) == len(figures.GAS_PANEL)
+    assert not [text for text in fig.texts
+                if text.get_text() == figures.SEASONAL_TIME_AXIS]
     ps.plt.close(fig)
 
 
@@ -312,24 +318,54 @@ def test_what_the_shape_leaves_is_filled_to_zero_rather_than_drawn_as_a_line():
     ps.plt.close(fig)
 
 
-def test_the_description_leads_with_the_share_of_the_spread():
+def test_the_description_gives_one_share_and_not_two():
     """Variance share and standard deviation share pull opposite ways, and a
-    reader takes whichever arrives first."""
+    reader takes whichever arrives first. The block used to carry both, 74% and
+    0.51, which are the same fact on two scales. It now carries the variance
+    share alone and states the remainder as a quarter; the spread ratios are in
+    the notes."""
     said = figures.SEASONAL_TEXT.description
-    assert said.index("0.51") < said.index("74%")
+    assert "74%" in said and "71%" in said
+    assert "0.51" not in said and "0.53" not in said
 
 
-def test_the_description_says_the_shape_is_not_the_benchmark_s():
-    """One is fitted on every observed month; the other is rebuilt inside a fold."""
+def test_the_fold_caveat_is_recorded_where_it_can_be_checked():
+    """One shape is fitted on every observed month; the benchmark is rebuilt
+    inside each fold. It is a real distinction and it is not what a reader needs
+    while looking, so it moved to the notes with the other precise figures."""
+    from pathlib import Path
+
     said = figures.SEASONAL_TEXT.description
-    assert "fitted on every observed month" in said
-    assert "rebuilt inside each fold" in said
+    assert "fitted on every observed month" not in said
+    # The notes are hard-wrapped, so a phrase can straddle a newline.
+    notes = " ".join(
+        (Path(__file__).resolve().parents[1] / "notes" / "study.md").read_text().split())
+    assert "fitted on every observed month" in notes
+    assert "rebuilt from the months up to the origin" in notes
 
 
-def test_the_description_reports_both_amplitudes_with_their_trend_tests():
+def test_the_amplitudes_and_their_trend_tests_are_recorded():
+    """The description gives the fold change in words and the notes give the
+    numbers. Nothing that left the block is unrecorded, which is the failure this
+    guards: two of these were stale in the notes and two were absent when the
+    block was cut."""
+    from pathlib import Path
+
     said = figures.SEASONAL_TEXT.description
-    for number in ("33.7", "150.6", "4.5", "0.8", "2.4", "3.0", "0.215", "0.505"):
-        assert number in said
+    assert "fourfold" in said and "threefold" in said
+    notes = " ".join(
+        (Path(__file__).resolve().parents[1] / "notes" / "study.md").read_text().split())
+    for number in ("33.7", "150.6", "0.215", "0.505", "74.2%", "71.5%"):
+        assert number in notes, f"{number} left the figure and is not in the notes"
+
+
+def test_no_trend_is_reported_as_undetected_rather_than_absent():
+    """At p = 0.215 and 0.505 nothing was detected, which is not the same as
+    nothing being there, and fourteen annual points have little power to find a
+    small trend."""
+    said = figures.SEASONAL_TEXT.description
+    assert "neither showing a trend" in said
+    assert "neither of them trending" not in said
 
 
 def test_the_subtitle_claims_only_what_was_tested():
@@ -337,8 +373,13 @@ def test_the_subtitle_claims_only_what_was_tested():
     and it is not the only bolded clause in any subtitle in the set."""
     text = figures.SEASONAL_TEXT
     assert "seasonal cycle" in text.title
-    assert "Nothing tested here predicted it" in text.subtitle
-    assert "eight fitted models, four benchmarks and four measured drivers" in text.subtitle
+    # The claim moved to the description, and with it the pronoun that made the
+    # subtitle ambiguous: "It is where the size of each season lives. Nothing
+    # tested here predicted it" left the second "it" readable as the row or as
+    # the size of the season, and the finding depended on which.
+    assert "Nothing tested here predicted it" not in text.subtitle
+    assert "nothing tested here predicted" in text.description
+    assert "eight fitted models, four benchmarks and four measured drivers" in text.description
     assert text.emphasize == ()
 
 

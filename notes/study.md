@@ -932,6 +932,17 @@ more characters in three blocks a reader can skip past in one movement.
 Worth holding when a figure feels wordy: count where the text sits, not only how
 much there is.
 
+## For the README pass: what the unpredictable quantity is worth globally
+
+Meng et al. attribute **70% of global methane emission anomalies between 1984 and
+2003 to interannual variability in wetland emissions**. The quantity this study
+finds unpredictable at this site, the size of each season rather than its shape,
+is the one that dominates global methane variability.
+
+That is context beyond anything the figure set draws, so it belongs in the README
+above the figures rather than in a caption. Recorded here so the README pass
+picks it up rather than rediscovering it.
+
 ## The pattern: reimplemented beside itself
 
 Five times now, something that already existed was not found and was written
@@ -1821,7 +1832,7 @@ the seasonal mean leaves over.**
 
 The diagnostics say what that residual is made of. Methane's seasonal amplitude
 varies **4.5-fold**, from 33.7 in 2021 to 150.6 in 2011, a coefficient of
-variation of 43%, with **no significant trend** (p = 0.119). It is not drifting;
+variation of 43%, with **no trend detected** (p = 0.215). It is not drifting;
 it varies without direction. The two lowest-amplitude years are exactly the two
 years climatology fails on. A time-varying climatology cannot help, because there
 is no trend for it to track.
@@ -3631,14 +3642,55 @@ A test asserts the drawn shape takes twelve distinct values and no more.
 **The caveat that is easy to skip and expensive to omit.** This shape is fitted on
 every observed month. The forecast benchmark is not: inside each fold it is
 rebuilt from the months up to the origin. Same idea, different operation, and a
-reader who took one for the other would misread both figures. It is the last
-sentence of the description and a test holds it there.
+reader who took one for the other would misread both figures.
+
+It was the last sentence of the description and is now here. It is a statement
+about how two figures relate rather than about what this one draws, and a reader
+looking at the panel does not need it to read the panel. A test holds it in these
+notes instead, so cutting it from the block could not lose it.
 
 **No trend row.** Neither gas trends anywhere near significance — methane
 p = 0.668 on the level, carbon dioxide p = 0.530 — and nothing was detrended
 anywhere in this study. A row flat by construction would take height from the
 bottom row while implying a component that is not there. One clause of the
 description instead.
+
+**Two figure artists had to become axes artists when the block was balanced.**
+The row labels are placed in the gutter at fixed figure fractions and the time
+axis name was too, so balancing the block moved the panels out from under both:
+the labels named the wrong rows and the axis name ended up inside the bottom
+panel. Placing the axis name after the balance did not fix it either, because a
+figure artist is not in the extent the block is balanced against, so it landed on
+the description instead. The name is now an axis label and is measured with
+everything else; the row labels are still figure text but are placed after the
+balance, from where each row ends up rather than from where it was allocated.
+
+The general form: anything positioned in figure fractions has to be placed after
+`balance_drawing_block`, and anything that has to be *measured* by it has to
+belong to an axes.
+
+**The six numbers the description used to carry, now that it carries three.**
+Recomputed from the current record with `AMPLITUDE_MIN_MONTHS = 10`, which is the
+threshold the figure itself uses:
+
+| | methane | carbon dioxide |
+|---|---|---|
+| share of variance the repeating shape explains | 74.2% | 71.5% |
+| what it leaves, as a share of the measurements' spread | 0.508 | 0.534 |
+| seasonal swing | 33.7 to 150.6, 4.5x | 0.81 to 2.40, 3.0x |
+| trend in that swing | p = 0.215 | p = 0.505 |
+| trend in the level | p = 0.668 | p = 0.530 |
+
+Two of these were wrong here and two were absent. The v5-5 correction moved the
+spread ratio from 0.54 to 0.51 and the amplitude-trend p from 0.119 to 0.215 in
+the figure and not in these notes, and the carbon dioxide trend p and both
+variance shares had never been written down at all. This is the reimplemented-
+beside-itself pattern in its other direction: one value, two homes, one updated.
+
+**On the wording of the trend.** The description said "neither of them trending"
+and now says "neither showing a trend". At p = 0.215 and 0.505 nothing was
+detected; that is not the same as nothing being there, and with fourteen and
+sixteen annual points the test has little power to find a small one.
 
 **The bottom row is the tallest**, at 1.5 against 1.0 and 0.8. It is where the
 finding is, and the row above it is twelve numbers repeated.
@@ -3658,7 +3710,7 @@ bar stands in, and that forces the text to be rotated. A 2024 figure-design
 checklist recommends keeping every label horizontal, since every degree of
 rotation slows reading. And the thing the bars existed to show is already one
 sentence of the description, stated exactly: what the average year leaves is
-**0.54 of the measurements' spread on methane and 0.53 on carbon dioxide**. A
+**0.51 of the measurements' spread on methane and 0.53 on carbon dioxide**. A
 number in words beats two grey rectangles a reader has to measure.
 
 **The one scale through the column stayed.** It was introduced for the bars but it
@@ -3681,6 +3733,14 @@ gaps running from −4 to 8 px across the six panels. They are now a uniform 5 p
 from the nearest tick label. It takes two passes: a rotated label's extent is not
 settled until it has been drawn where it will sit, and `set_position` does not
 hold on an axis label, which recomputes its own place on every draw.
+
+**No legend, and the decision is deliberate.** The three row labels are the key:
+each is set in the colour of the series it names, beside the row it names, so a
+legend would repeat three labels a reader is already reading. Hyndman and
+Athanasopoulos section 6.1, which is the reference for this figure type, carries
+panel labels and no key on its decomposition figures, which is this structure
+exactly. The set keys marks that share an axis and tell each other apart by
+colour; here each series has a row to itself.
 
 **Units are rotated at the left of each panel, which is the one place rotation is
 expected.** Set above the panel instead they read as belonging to the row beneath

@@ -66,9 +66,9 @@ Across every evaluated year the methods fail in much the same way, missing by si
 
 ![The seasonal cycle in monthly flux at Marcell Bog Lake Peatland](figures/seasonal_cycle.png)
 
-**Each column is one gas and each row is one part of its record. The middle row is one average shape for the whole record (the same twelve values repeated every year). The bottom row is what the measurements leave once that shape is taken out. It is where the size of each season lives. Nothing tested here predicted it: eight fitted models, four benchmarks and four measured drivers.**
+**Each column is one gas and each row is one part of its record. The middle row is one average shape for the whole record, the same twelve values repeated every year, and the bottom row is what the measurements leave once that shape is taken out. What remains there is the size of each season.**
 
-What the repeating shape leaves is half the variation in the record: 0.51 of the measurements' spread on methane and 0.53 on carbon dioxide. The shape accounts for the rest, 74% of the variance on methane and 71% on carbon dioxide. The size of the season is what varies: methane's swing from lowest to highest month runs 33.7 to 150.6 across the years, a factor of 4.5, and carbon dioxide's 0.8 to 2.4, a factor of 3.0, neither of them trending (p = 0.215 and 0.505). The level was tested for a trend as well, and neither gas has one, so nothing was removed for it. This shape is fitted on every observed month, which is not what the forecast benchmark does: that one is rebuilt inside each fold from the months up to it.
+The repeating shape accounts for 74% of the variation on methane and 71% on carbon dioxide, leaving roughly a quarter of each record unexplained by it. That quarter is where the size of each season sits, and it varies more than fourfold on methane between its weakest year and its strongest, threefold on carbon dioxide, with neither showing a trend. This year-to-year variation is what nothing tested here predicted, across eight fitted models, four benchmarks and four measured drivers.
 
 ### Which months each measurement and each analysis cover at Marcell Bog Lake Peatland
 

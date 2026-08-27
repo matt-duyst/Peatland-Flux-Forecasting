@@ -567,7 +567,7 @@ def canvas_area(text: FigureText, size: str = "wide", extra_left_px: int = 0,
     return fig, (left, axes_bottom, right - left, axes_top - axes_bottom)
 
 
-def balance_drawing_block(fig: Figure, *axes: plt.Axes) -> None:
+def balance_drawing_block(fig: Figure, *axes: plt.Axes, rounds: int = 6) -> None:
     """Give the drawing block the same air above it as below it.
 
     The gap above is what the title and subtitle blocks leave; the gap below is
@@ -591,31 +591,39 @@ def balance_drawing_block(fig: Figure, *axes: plt.Axes) -> None:
     Call after everything else is drawn on the axes, since the lower gap is
     measured to the tick labels and axis title rather than the frame.
     """
-    fig.canvas.draw()
-    renderer = fig.canvas.get_renderer()
     height_px = fig.get_size_inches()[1] * fig.dpi
     subtitle, description = fig.texts[1], fig.texts[2]
-    frames = [ax.get_window_extent(renderer) for ax in axes]
-    furniture = [ax.get_tightbbox(renderer) for ax in axes]
-    above = subtitle.get_window_extent(renderer).y0 - max(f.y1 for f in frames)
-    below = min(f.y0 for f in furniture) - description.get_window_extent(renderer).y1
-    grow = abs(above - below) / height_px
-    if grow < 1e-9:
-        return
+    # Iterated, because growing the block moves what it was measured against:
+    # taller panels put their tick labels somewhere new, so one pass overshoots
+    # wherever the block scales rather than simply shifts.
+    for _ in range(rounds):
+        fig.canvas.draw()
+        renderer = fig.canvas.get_renderer()
+        # Both gaps are measured to ink rather than to the frame. The lower one
+        # always was, because tick labels and an axis title hang below the frame.
+        # The upper one was measured to the frame, which is right only where
+        # nothing sits above it: the seasonal figure puts a boxed gas label
+        # there, and balancing to the frame would push it into the subtitle.
+        furniture = [ax.get_tightbbox(renderer) for ax in axes]
+        above = subtitle.get_window_extent(renderer).y0 - max(f.y1 for f in furniture)
+        below = min(f.y0 for f in furniture) - description.get_window_extent(renderer).y1
+        if abs(above - below) < 0.05:
+            return
+        grow = abs(above - below) / height_px
 
-    boxes = [ax.get_position() for ax in axes]
-    floor = min(b.y0 for b in boxes)
-    ceiling = max(b.y1 for b in boxes)
-    span = ceiling - floor
-    if below > above:
-        # The block drops its floor and stretches down into the gap.
-        base, scale = floor - grow, (span + grow) / span
-    else:
-        # The block keeps its floor and stretches up.
-        base, scale = floor, (span + grow) / span
-    for ax, box in zip(axes, boxes):
-        ax.set_position((box.x0, base + (box.y0 - floor) * scale,
-                         box.width, box.height * scale))
+        boxes = [ax.get_position() for ax in axes]
+        floor = min(b.y0 for b in boxes)
+        ceiling = max(b.y1 for b in boxes)
+        span = ceiling - floor
+        if below > above:
+            # The block drops its floor and stretches down into the gap.
+            base, scale = floor - grow, (span + grow) / span
+        else:
+            # The block keeps its floor and stretches up.
+            base, scale = floor, (span + grow) / span
+        for ax, box in zip(axes, boxes):
+            ax.set_position((box.x0, base + (box.y0 - floor) * scale,
+                             box.width, box.height * scale))
 
 
 def canvas(text: FigureText, size: str = "wide") -> tuple[Figure, plt.Axes]:
