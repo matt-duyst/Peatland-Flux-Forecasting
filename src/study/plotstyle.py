@@ -276,6 +276,11 @@ SIZES = {
 #: Years, percentages and measured values are always numerals and are not
 #: counts, so they do not enter into this.
 
+#: The least air `balance_drawing_block` will leave between the drawing block and
+#: the text above and below it. Reached only where the block does not fit, which
+#: is where growing cannot help and something has to give.
+MIN_BLOCK_GAP_PX = 18.0
+
 #: Fixed pixel allocations, so a figure's proportions do not depend on how much
 #: text it happens to carry.
 TITLE_BLOCK_PX = 96
@@ -608,7 +613,7 @@ def balance_drawing_block(fig: Figure, *axes: plt.Axes, rounds: int = 6) -> None
         above = subtitle.get_window_extent(renderer).y0 - max(f.y1 for f in furniture)
         below = min(f.y0 for f in furniture) - description.get_window_extent(renderer).y1
         if abs(above - below) < 0.05:
-            return
+            break
         grow = abs(above - below) / height_px
 
         boxes = [ax.get_position() for ax in axes]
@@ -621,9 +626,33 @@ def balance_drawing_block(fig: Figure, *axes: plt.Axes, rounds: int = 6) -> None
         else:
             # The block keeps its floor and stretches up.
             base, scale = floor, (span + grow) / span
-        for ax, box in zip(axes, boxes):
-            ax.set_position((box.x0, base + (box.y0 - floor) * scale,
-                             box.width, box.height * scale))
+        _resize(axes, boxes, floor, base, scale)
+
+    # Equal is not the whole job. A block can be taller than the space between
+    # the two text blocks, and then equalising only shares the overlap out: the
+    # availability figure's key gained two headed groups, 58 px of height its
+    # layout did not have, and both gaps came to −35 px. Growing is the normal
+    # case and is preferred, since rows the description does not use are not a
+    # reservation to defend; shrinking happens only when the block does not fit.
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    furniture = [ax.get_tightbbox(renderer) for ax in axes]
+    gap = min(subtitle.get_window_extent(renderer).y0 - max(f.y1 for f in furniture),
+              min(f.y0 for f in furniture) - description.get_window_extent(renderer).y1)
+    if gap >= MIN_BLOCK_GAP_PX:
+        return
+    boxes = [ax.get_position() for ax in axes]
+    floor = min(b.y0 for b in boxes)
+    span = max(b.y1 for b in boxes) - floor
+    shrink = 2 * (MIN_BLOCK_GAP_PX - gap) / height_px
+    _resize(axes, boxes, floor, floor + shrink / 2, (span - shrink) / span)
+
+
+def _resize(axes, boxes, floor: float, base: float, scale: float) -> None:
+    """Move and scale a block about its floor, keeping the gaps inside it."""
+    for ax, box in zip(axes, boxes):
+        ax.set_position((box.x0, base + (box.y0 - floor) * scale,
+                         box.width, box.height * scale))
 
 
 def canvas(text: FigureText, size: str = "wide") -> tuple[Figure, plt.Axes]:

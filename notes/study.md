@@ -3625,6 +3625,53 @@ inverse-variance weighting, which this figure gives independent reason to
 distrust — it already reduces effective sample size from 115 to 42.3, and now
 the residuals say its weights do not describe their spread.
 
+### One parenthetical went and one stayed, which looks inconsistent until stated
+
+*Months with both flux and drivers* lost its `(used to fit the model)`. *Months
+with drivers but no flux* kept its `(estimated by the model)`. The asymmetry is
+deliberate.
+
+The first restated twice over. The heading above it reads **Which months the
+model used**, so "used to fit the model" says the heading again, and the row name
+already says the months hold both flux and drivers, which is what makes them
+fittable. The second does not restate: the heading covers both rows, and the two
+rows mean opposite things, one being where the model learned and the other where
+it predicted. Without the parenthetical a reader has no way to tell which is
+which, because "used" in the heading is true of both.
+
+The upper block's parentheticals are a different device and are not affected.
+They carry units, one per row, and no heading can hold six of them.
+
+### The key splits as the panel does
+
+Four entries in one unheaded row read as one list of marks. They are two groups,
+and the division is the figure's own: *months covered* and *a month missing* say
+what the record holds, *set aside by the study* and *the range the model was
+fitted on* say what the study decided about it, which is the upper block against
+the lower. Headed in the set's device it is also narrower, 670 px against 1095,
+at the cost of 58 px of height.
+
+### `balance_drawing_block` can shrink, and this figure is why
+
+Those 58 px were not available. The block, key and axis name included, came to
+964 px between a subtitle and a description 894 px apart, so equalising the gaps
+only shared the 70 px overlap out: both came to **−35 px**, equal and both wrong.
+
+The helper only grew, on the reasoning that rows the description does not use are
+not a reservation to defend. That is right when there is slack and says nothing
+about the case where there is none. It now shrinks the block to
+`MIN_BLOCK_GAP_PX` when equalising leaves the gaps under it, and both ends here
+come to 19.3 and 18.0 px.
+
+**Growing stays the preferred case and shrinking is the exception**, because
+shrinking takes drawing area to pay for furniture. A figure that reaches it is
+saying its furniture has outgrown its layout, which is worth noticing rather than
+absorbing silently.
+
+**One bug found on the way.** The equalising loop `return`ed when the two gaps
+agreed, which is exactly the state the shrink step exists to inspect, so the step
+never ran. It breaks now.
+
 ### The availability figure's row ordering, after methane reached 2024
 
 **The rows sort by where each record ends, latest first, and that rule was chosen

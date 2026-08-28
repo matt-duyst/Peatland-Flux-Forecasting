@@ -167,7 +167,10 @@ def test_the_key_covers_every_mark_on_the_panel_and_carries_no_reasons():
     one of them is a hue that means something across the whole set."""
     fig = figure()
     labels = [text.get_text() for text in fig.axes[0].get_legend().get_texts()]
-    assert labels == [figures.PRESENT_LABEL, figures.MISSING_LABEL,
+    # Two headed groups now, filled down their columns. The four marks divide as
+    # the panel does: what the record holds against what the study decided.
+    assert labels == [figures.RECORD_HEADING, figures.PRESENT_LABEL,
+                      figures.MISSING_LABEL, figures.DECIDED_HEADING,
                       figures.ASIDE_LABEL, figures.FITTED_RANGE_LABEL]
     ps.plt.close(fig)
 
@@ -269,7 +272,7 @@ def test_the_first_heading_claims_nothing_about_where_things_were_measured():
 
 def test_the_description_uses_the_panel_s_own_word_for_the_measurements():
     said = figures.AVAILABILITY_TEXT.description
-    assert "models that use the drivers" in said
+    assert "Forecasts inherit the same limit" in said
     assert "environmental measurements" not in said
 
 
@@ -320,19 +323,24 @@ def test_the_description_says_what_the_window_cost_and_not_only_its_cause():
     said = figures.AVAILABILITY_TEXT.description
     assert "leaves 60 months of methane the tower recorded but the model cannot use" in said
     assert "discards" not in said
-    assert "48 months of flux" in said and "62 calendar months" in said
+    assert "48 months have accumulated" in said and "62 calendar months" in said
 
 
 def test_the_description_names_the_benchmark_tail_without_drawing_it():
     """A fourth mark for a clause is not worth it."""
-    assert "seasonal benchmarks alone reach 2024 on both gases" in \
+    assert "seasonal benchmarks, which need no drivers, reach 2024" in \
         figures.AVAILABILITY_TEXT.description
 
 
-def test_the_subtitle_says_the_windows_were_chosen():
+def test_the_subtitle_gives_the_mechanism_rather_than_asserting_the_choice():
+    """It said the spans were chosen from what was available rather than being
+    facts about the site, which is the conclusion. It now says what produces
+    them, which a reader can check against the bars: an analysis needing several
+    records at once can only run where all of them overlap."""
     said = figures.AVAILABILITY_TEXT.subtitle
-    assert "chosen from what was available" in said
-    assert "rather than being facts about the site" in said
+    assert "can only run where all of them overlap" in said
+    assert "follows directly from the block above" in said
+    assert "rather than being facts about the site" not in said
 
 
 def test_the_subtitle_describes_the_order_the_rows_are_actually_in():
@@ -404,16 +412,19 @@ def test_the_title_names_the_site():
 def test_the_subtitle_says_the_block_splits_at_both_ends():
     """The right edges say where the fit window had to stop. The left edges say
     why a reconstruction is possible at all, and nothing else on the figure
-    states it. Nineteen understates: three of the four environmental records
-    begin 1990-01 against carbon dioxide at 2009-01, and soil temperature begins
-    six months earlier still, so the figure claims less than it draws.
+    states it.
+
+    19 understates, deliberately and in two directions. Three of the four
+    environmental records begin 1990-01 against carbon dioxide at 2009-01, which
+    is 19 years exactly; against methane at 2009-04 it is 19 years and 3 months,
+    and soil temperature begins six months earlier still. The reconstruction runs
+    1990-01 to 2009-03, so the span it covers is the gap before methane rather
+    than the 19 years before carbon dioxide, and it is the larger of the two.
     """
     said = figures.AVAILABILITY_TEXT.subtitle
-    assert "begin nineteen years before either flux does" in said
-    assert "the room the reconstruction works in" in said
+    assert "begin 19 years before either flux does" in said
+    assert "that gap is the span the reconstruction covers" in said
     # Placed with the other statement about the measurement block, and before the
-    # boundary sentence, which stays the last thing read.
-    assert said.index("latest first") < said.index("nineteen years")
-    assert said.index("nineteen years") < said.index("The rows below")
-    assert said.rstrip().endswith("The study's boundaries fall where the shortest "
-                                  "records end.")
+    # sentence about the lower rows.
+    assert said.index("at the bottom") < said.index("19 years")
+    assert said.index("19 years") < said.index("The rows below")

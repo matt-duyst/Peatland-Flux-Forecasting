@@ -1513,25 +1513,29 @@ AVAILABILITY_TEXT = ps.FigureText(
     title=("Which months each measurement and each analysis cover at "
            "Marcell Bog Lake Peatland"),
     subtitle=(
-        "Each row in the upper block is one measurement, and the bar covers the "
-        "months it exists. They are ordered by where each record ends, latest "
-        "first. The environmental records begin nineteen years before either flux "
-        "does, which is the room the reconstruction works in. The rows below are "
-        "what each analysis covers: the months the model used, and the months its "
-        "forecasts were checked on. Those spans were chosen from what was "
-        "available rather than being facts about the site. The study's boundaries "
-        "fall where the shortest records end."
+        "Each row in the upper block is one measurement and the bar covers the "
+        "months it exists, ordered by where each record ends so the shortest sit "
+        "at the bottom. The environmental records begin 19 years before either "
+        "flux does, and that gap is the span the reconstruction covers. The rows "
+        "below show what each analysis could use, which follows directly from "
+        "the block above, since an analysis needing several records at once can "
+        "only run where all of them overlap."
     ),
     description=(
-        "Air temperature and precipitation stop at the end of 2019. That ends the "
-        "months the model could learn from, and leaves 60 months of methane the "
-        "tower recorded but the model cannot use. The check on forecasts stops in "
-        "2020 for the same reason, four years short of the flux, since the models "
-        "that use the drivers cannot run past them. It also cannot begin until 48 "
-        "months of flux have accumulated, which for methane took 62 calendar "
-        "months because of the gaps in 2013 and 2014. The seasonal benchmarks "
-        "alone reach 2024 on both gases. The two hollow marks are decisions rather "
-        "than absences."
+        # The framing sentence that used to open this is gone: the subtitle
+        # carries the mechanism, and stating it again as a claim repeats it.
+        # That frees the line the hollow marks need. They earn it, because the
+        # orange labels say why those months were set aside and not that the
+        # months exist, and on a coverage figure a hollow mark reads as missing
+        # data unless a reader is told otherwise.
+        "Air temperature and precipitation stop at the end of 2019, which ends "
+        "the months the model could learn from and leaves 60 months of methane "
+        "the tower recorded but the model cannot use. Forecasts inherit the same "
+        "limit, stopping in 2020 and running four years short of the flux. They "
+        "cannot begin until 48 months have accumulated, which for methane "
+        "took 62 calendar months because of the gaps in 2013 and 2014. Only the "
+        "seasonal benchmarks, which need no drivers, reach 2024 on both gases. "
+        "The two hollow marks are decisions rather than absences."
     ),
 )
 
@@ -1546,6 +1550,13 @@ AVAILABILITY_TEXT = ps.FigureText(
 #: slip into a heading.
 BLOCK_HEADINGS = ("What was measured (monthly means)", "Which months the model used",
                   "Which months the forecasts were checked on")
+
+#: The two groups the key splits into, which are the two the figure is built on.
+#: An unheaded row of four flattens the distinction: the first two say what the
+#: record holds and the second two say what the study decided about it, and that
+#: is the same division as the upper block against the lower.
+RECORD_HEADING = r"$\bf{What\ the\ record\ holds}$"
+DECIDED_HEADING = r"$\bf{What\ the\ study\ decided}$"
 TIME_AXIS = "Year"
 PRESENT_LABEL = "months covered"
 MISSING_LABEL = "a month missing"
@@ -1792,17 +1803,31 @@ def covariate_availability(rows: list[dict],
                         arrowprops=dict(arrowstyle="-", color=ps.OUTSIDE, linewidth=0.9,
                                         shrinkA=3, shrinkB=3))
 
+    # Two headed groups filled down their columns, not one row of four. The four
+    # entries divide exactly as the panel does: two say what the record holds and
+    # two say what the study decided about it, which is the upper block against
+    # the lower. Unheaded they read as one list of marks and the division the
+    # figure exists to draw is not in its key. It is also narrower this way, 670
+    # px against 1095, at the cost of 58 px of height the balance absorbs.
+    blank = Line2D([], [], linestyle="none", marker="none")
     entries = [
+        (blank, RECORD_HEADING),
         (Patch(facecolor=ps.MEASURED, edgecolor="none"), PRESENT_LABEL),
         (Line2D([], [], color=ps.MEASURED, linestyle="none", marker="|", markersize=10,
                 markeredgewidth=1.4), MISSING_LABEL),
+        (blank, DECIDED_HEADING),
         (Patch(facecolor="white", edgecolor=ps.OUTSIDE, linewidth=1.2), ASIDE_LABEL),
         (Patch(facecolor=ps.INSIDE, edgecolor="none"), FITTED_RANGE_LABEL),
     ]
     ps.legend(ax, handles=[h for h, _ in entries], labels=[label for _, label in entries],
-              loc="lower center", bbox_to_anchor=(0.5, 1.012), ncol=len(entries),
+              loc="lower center", bbox_to_anchor=(0.5, 1.012), ncol=2,
               framealpha=1.0, handlelength=1.8, handletextpad=0.7, columnspacing=2.0,
               borderpad=0.55, fontsize=ps.LEGEND_SIZE - 1.0)
+    # Balance first, rule the headings second. The rules are figure artists at
+    # fixed coordinates, so a block that moves afterwards leaves them striking
+    # through the text they were drawn under.
+    ps.balance_drawing_block(fig, ax)
+    _underline_legend_headings(fig, ax)
     return fig
 
 

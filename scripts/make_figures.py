@@ -230,7 +230,13 @@ def main() -> None:
     # Named by what the span is rather than by what was done to it, so a reader
     # meeting the figure first does not need the study's structure to read them.
     drew_on = [
-        {"name": "Months with both flux and drivers (used to fit the model)",
+        # No parenthetical on this one. The heading above it already says the
+        # model used these months and the row name already says it has both flux
+        # and drivers, so "(used to fit the model)" restates twice over. The row
+        # below keeps its parenthetical because the heading covers both rows and
+        # the two mean opposite things: one is where the model learned, the other
+        # where it predicted.
+        {"name": "Months with both flux and drivers",
          "first": built["fit"].min(), "last": built["fit"].max(),
          "months": len(built["fit"]), "lead": None, "support": True},
         {"name": "Months with drivers but no flux (estimated by the model)",
