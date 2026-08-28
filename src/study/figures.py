@@ -1534,8 +1534,7 @@ AVAILABILITY_TEXT = ps.FigureText(
         "limit, stopping in 2020 and running four years short of the flux. They "
         "cannot begin until 48 months have accumulated, which for methane "
         "took 62 calendar months because of the gaps in 2013 and 2014. Only the "
-        "seasonal benchmarks, which need no drivers, reach 2024 on both gases. "
-        "The two hollow marks are decisions rather than absences."
+        "seasonal benchmarks, which need no drivers, reach 2024 on both gases."
     ),
 )
 
@@ -1563,6 +1562,21 @@ MISSING_LABEL = "a month missing"
 ASIDE_LABEL = "set aside by the study"
 FITTED_RANGE_LABEL = "the range the model was fitted on"
 TRAINING_LABEL = "48 months of training first"
+
+#: The key's own geometry, tightened from the defaults so it spends less of the
+#: room between the subtitle and the panel. See the note in study.md for what
+#: each lever bought and where it stopped.
+LEGEND_HANDLE = 1.8
+LEGEND_TEXT_PAD = 0.5
+LEGEND_ROW_GAP = 0.22
+LEGEND_BORDER_PAD = 0.35
+
+#: How far the key sits above the panel, in axes fractions. The cheapest lever on
+#: this figure: the key's own geometry can give back about 10 px of height and no
+#: more, while the two gaps around it were the larger cost and neither is load
+#: bearing. Reduced until the key clears the panel by about the width of its own
+#: frame line and no further.
+LEGEND_LIFT = 1.004
 
 #: Bar geometry in row units. The bars are the figure, so they are heavy; the notch
 #: has to read as a break in one rather than as a mark on top of one, which is why
@@ -1809,20 +1823,40 @@ def covariate_availability(rows: list[dict],
     # the lower. Unheaded they read as one list of marks and the division the
     # figure exists to draw is not in its key. It is also narrower this way, 670
     # px against 1095, at the cost of 58 px of height the balance absorbs.
+    # One group to a row, each headed at its left, so the boundary between the two
+    # is a line break rather than a reader noticing which item has no marker.
+    # Five entries cannot go in one row: they measure 1897 px against 1652 of
+    # drawable width, and nothing short of 7.5 pt closes that, which is below the
+    # set's floor. Matplotlib fills columns top to bottom, so the order is
+    # interleaved and the shorter group is padded with an empty cell.
     blank = Line2D([], [], linestyle="none", marker="none")
+    covered = Patch(facecolor=ps.MEASURED, edgecolor="none")
+    missing = Line2D([], [], color=ps.MEASURED, linestyle="none", marker="|",
+                     markersize=10, markeredgewidth=1.4)
+    aside = Patch(facecolor="white", edgecolor=ps.OUTSIDE, linewidth=1.2)
+    fitted = Patch(facecolor=ps.INSIDE, edgecolor="none")
+    # The lead on a forecast row, which had a label written for it and never
+    # wired to anything: TRAINING_LABEL sat with no caller.
+    training = Line2D([], [], color=ps.MUTED, linewidth=1.1)
     entries = [
-        (blank, RECORD_HEADING),
-        (Patch(facecolor=ps.MEASURED, edgecolor="none"), PRESENT_LABEL),
-        (Line2D([], [], color=ps.MEASURED, linestyle="none", marker="|", markersize=10,
-                markeredgewidth=1.4), MISSING_LABEL),
-        (blank, DECIDED_HEADING),
-        (Patch(facecolor="white", edgecolor=ps.OUTSIDE, linewidth=1.2), ASIDE_LABEL),
-        (Patch(facecolor=ps.INSIDE, edgecolor="none"), FITTED_RANGE_LABEL),
+        (blank, RECORD_HEADING), (blank, DECIDED_HEADING),
+        (covered, PRESENT_LABEL), (aside, ASIDE_LABEL),
+        (missing, MISSING_LABEL), (fitted, FITTED_RANGE_LABEL),
+        (blank, ""), (training, TRAINING_LABEL),
     ]
     ps.legend(ax, handles=[h for h, _ in entries], labels=[label for _, label in entries],
-              loc="lower center", bbox_to_anchor=(0.5, 1.012), ncol=2,
-              framealpha=1.0, handlelength=1.8, handletextpad=0.7, columnspacing=2.0,
-              borderpad=0.55, fontsize=ps.LEGEND_SIZE - 1.0)
+              loc="lower center",
+              # Centred on the canvas, not on the axes. The row labels take a
+              # wide left gutter, so the axes occupies only the right two thirds
+              # and a key centred in axes fractions hangs off the canvas edge.
+              # Blended: x from the figure, y from the axes, so the key still
+              # rides the panel when the block is rebalanced.
+              bbox_to_anchor=(0.5, LEGEND_LIFT),
+              bbox_transform=blended_transform_factory(fig.transFigure, ax.transAxes),
+              ncol=4,
+              framealpha=1.0, handlelength=LEGEND_HANDLE, handletextpad=LEGEND_TEXT_PAD,
+              columnspacing=1.6, labelspacing=LEGEND_ROW_GAP,
+              borderpad=LEGEND_BORDER_PAD, fontsize=ps.LEGEND_SIZE - 1.0)
     # Balance first, rule the headings second. The rules are figure artists at
     # fixed coordinates, so a block that moves afterwards leaves them striking
     # through the text they were drawn under.

@@ -76,7 +76,7 @@ The repeating shape accounts for 74% of the variation on methane and 71% on carb
 
 **Each row in the upper block is one measurement and the bar covers the months it exists, ordered by where each record ends so the shortest sit at the bottom. The environmental records begin 19 years before either flux does, and that gap is the span the reconstruction covers. The rows below show what each analysis could use, which follows directly from the block above, since an analysis needing several records at once can only run where all of them overlap.**
 
-Air temperature and precipitation stop at the end of 2019, which ends the months the model could learn from and leaves 60 months of methane the tower recorded but the model cannot use. Forecasts inherit the same limit, stopping in 2020 and running four years short of the flux. They cannot begin until 48 months have accumulated, which for methane took 62 calendar months because of the gaps in 2013 and 2014. Only the seasonal benchmarks, which need no drivers, reach 2024 on both gases. The two hollow marks are decisions rather than absences.
+Air temperature and precipitation stop at the end of 2019, which ends the months the model could learn from and leaves 60 months of methane the tower recorded but the model cannot use. Forecasts inherit the same limit, stopping in 2020 and running four years short of the flux. They cannot begin until 48 months have accumulated, which for methane took 62 calendar months because of the gaps in 2013 and 2014. Only the seasonal benchmarks, which need no drivers, reach 2024 on both gases.
 
 ### Diagnostic check on model errors at Marcell Bog Lake Peatland (2009 to 2019)
 

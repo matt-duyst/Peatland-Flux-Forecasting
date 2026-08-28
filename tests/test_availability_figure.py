@@ -167,11 +167,25 @@ def test_the_key_covers_every_mark_on_the_panel_and_carries_no_reasons():
     one of them is a hue that means something across the whole set."""
     fig = figure()
     labels = [text.get_text() for text in fig.axes[0].get_legend().get_texts()]
-    # Two headed groups now, filled down their columns. The four marks divide as
-    # the panel does: what the record holds against what the study decided.
-    assert labels == [figures.RECORD_HEADING, figures.PRESENT_LABEL,
-                      figures.MISSING_LABEL, figures.DECIDED_HEADING,
-                      figures.ASIDE_LABEL, figures.FITTED_RANGE_LABEL]
+    # One group to a row, each headed at its left. Matplotlib fills columns top
+    # to bottom, so the order is interleaved and the shorter group is padded.
+    assert labels == [figures.RECORD_HEADING, figures.DECIDED_HEADING,
+                      figures.PRESENT_LABEL, figures.ASIDE_LABEL,
+                      figures.MISSING_LABEL, figures.FITTED_RANGE_LABEL,
+                      "", figures.TRAINING_LABEL]
+    ps.plt.close(fig)
+
+
+def test_the_lead_on_a_forecast_row_is_keyed():
+    """A thin rule marks the months a model had to accumulate before it could
+    forecast. It was drawn and never keyed, and TRAINING_LABEL was written for it
+    and never wired to anything, so the label sat with no caller."""
+    fig = figure()
+    labels = [text.get_text() for text in fig.axes[0].get_legend().get_texts()]
+    assert figures.TRAINING_LABEL in labels
+    leads = [line for line in fig.axes[0].lines
+             if line.get_color() == ps.MUTED and len(line.get_xdata()) == 2]
+    assert leads, "the mark the entry keys is drawn"
     ps.plt.close(fig)
 
 
@@ -281,15 +295,25 @@ def test_no_block_name_carries_a_comma():
         assert "," not in heading
 
 
-def test_the_key_is_framed_and_centered_over_the_panel():
+def test_the_key_is_framed_and_centered_on_the_canvas():
+    """Centred on the canvas, not on the panel.
+
+    The row labels take a wide left gutter, so the panel occupies only the right
+    two thirds. A key wider than the panel and centred on it hangs off the canvas
+    edge, which is what the five-entry key did before its anchor was blended: x
+    from the figure, y from the axes so it still rides the panel when the block
+    is rebalanced.
+    """
     fig = figure()
     ax = fig.axes[0]
     fig.canvas.draw()
     key = ax.get_legend()
     assert key.get_frame_on()
     box = key.get_window_extent()
-    panel = ax.get_window_extent()
-    assert abs((box.x0 + box.x1) / 2 - (panel.x0 + panel.x1) / 2) < 12
+    width = fig.get_size_inches()[0] * fig.dpi
+    assert abs((box.x0 + box.x1) / 2 - width / 2) < 12
+    assert box.x0 >= ps.MARGIN_PX["left"] - 12, "the key stays inside the margins"
+    assert box.x1 <= width - ps.MARGIN_PX["right"] + 12
     ps.plt.close(fig)
 
 
