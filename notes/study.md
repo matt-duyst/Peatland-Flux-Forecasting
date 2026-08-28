@@ -3660,6 +3660,62 @@ fitted on* say what the study decided about it, which is the upper block against
 the lower. Headed in the set's device it is also narrower, 670 px against 1095,
 at the cost of 58 px of height.
 
+### Defaults nobody chose, swept across the set
+
+Two spacings in this pass turned out to be matplotlib defaults that had never
+been decided: `borderaxespad` at half a font unit on the forecast key, which left
+it 8.85 px short of the series end it was meant to align with, and this figure's
+`bbox_to_anchor` at 1.012, worth more than every geometry lever combined. Both
+were binding constraints nobody had picked.
+
+Swept, without changing anything. Five of the twelve keys in the set still sit at
+one default or both:
+
+| figure | anchor | inset |
+|---|---|---|
+| water table | default | 0.68, chosen |
+| flux, per panel | **default** | **default** |
+| site figure, network panel | **default** | **default** |
+| reconstruction, panel and strip | chosen | **default** |
+| coefficient stability | chosen | **default** |
+| prediction error, residual check, site panels a and c, availability | chosen | chosen or zero |
+
+Rendered insets from the corner each is anchored to: water table 11.3 px, site
+network 8.8, reconstruction panel 33.3 and 20.3, reconstruction strip 16.8 and
+12.4, flux 32.5 and 20.2, coefficient stability 12.2, prediction error 20.3 and
+24.3.
+
+The spread runs 8.8 to 33.3 px for the same relationship, a key sitting in a
+panel corner, and nothing chose any of it. Whether that matters is a question for
+after the pass, and the answer is probably that the four keys inset by more than
+20 px are giving away panel area for nothing. Recorded rather than acted on,
+because changing five keys at once at the end of a pass is how a consistent set
+becomes an inconsistent one.
+
+### The four elements step down evenly now
+
+Measured before: title to subtitle 30.38, subtitle to key 18.06, key to panel
+11.74, panel to caption 18.00. The key's clearance was the odd one, and it was
+odd because two things set it: the anchor, and `borderaxespad` at its default.
+
+`borderaxespad` is zero now, so the anchor is the whole of the distance, and the
+anchor is computed after the block settles from `MIN_BLOCK_GAP_PX` and the
+panel's final height. The three gaps around the key are then the same number by
+construction rather than by tuning: **18.72, 17.74, 18.01**.
+
+**The floor is a chosen value, not a hard constraint**, and only this figure
+reaches it. Every other figure balances above it, from 23.8 px on the seasonal
+split to 102.3 on the measurements figure, so lowering it would change this
+figure alone. It was not lowered: 18 px is what the block already keeps from the
+caption, and the point was to make the four elements agree rather than to make
+them smaller.
+
+**The title gap is the remaining outlier at 30.38 px**, and it is not this
+figure's to fix. `TITLE_BLOCK_PX` reserves 96 px for 29 px of title ink, and the
+gap that leaves is the same on all eleven figures. Closing it is a set-wide
+decision, worth about 12 px on every figure, and belongs with the wrap
+conservatism as something to settle once the pass ends.
+
 ### The key's five entries, and what the levers were worth
 
 The lead on a forecast row, a thin rule marking the months a model had to

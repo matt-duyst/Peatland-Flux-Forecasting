@@ -1554,8 +1554,13 @@ BLOCK_HEADINGS = ("What was measured (monthly means)", "Which months the model u
 #: An unheaded row of four flattens the distinction: the first two say what the
 #: record holds and the second two say what the study decided about it, and that
 #: is the same division as the upper block against the lower.
-RECORD_HEADING = r"$\bf{What\ the\ record\ holds}$"
-DECIDED_HEADING = r"$\bf{What\ the\ study\ decided}$"
+#: Bold and a colon, not bold and a rule. A rule beneath a heading is how a
+#: heading governs a column stacked under it, which is what these did when the
+#: key had two columns. At the left of a row it governs what is beside it, the
+#: rule marks nothing the boldness has not already marked, and a colon is the
+#: ordinary separator between a label and what it introduces.
+RECORD_HEADING = r"$\bf{What\ the\ record\ holds:}$"
+DECIDED_HEADING = r"$\bf{What\ the\ study\ decided:}$"
 TIME_AXIS = "Year"
 PRESENT_LABEL = "months covered"
 MISSING_LABEL = "a month missing"
@@ -1571,12 +1576,12 @@ LEGEND_TEXT_PAD = 0.5
 LEGEND_ROW_GAP = 0.22
 LEGEND_BORDER_PAD = 0.35
 
-#: How far the key sits above the panel, in axes fractions. The cheapest lever on
-#: this figure: the key's own geometry can give back about 10 px of height and no
-#: more, while the two gaps around it were the larger cost and neither is load
-#: bearing. Reduced until the key clears the panel by about the width of its own
-#: frame line and no further.
-LEGEND_LIFT = 1.004
+#: The key's clearance above the panel is not a constant. It is set after the
+#: block settles, from `MIN_BLOCK_GAP_PX` and the panel's final height, so the
+#: gap under the key matches the gap over it and the four elements step down
+#: evenly. `borderaxespad` goes to zero so the anchor is the whole of it: at the
+#: default half font unit the anchor controlled only part of the distance, which
+#: is how a matplotlib default nobody chose came to set this spacing.
 
 #: Bar geometry in row units. The bars are the figure, so they are heavy; the notch
 #: has to read as a break in one rather than as a mark on top of one, which is why
@@ -1851,17 +1856,24 @@ def covariate_availability(rows: list[dict],
               # and a key centred in axes fractions hangs off the canvas edge.
               # Blended: x from the figure, y from the axes, so the key still
               # rides the panel when the block is rebalanced.
-              bbox_to_anchor=(0.5, LEGEND_LIFT),
+              bbox_to_anchor=(0.5, 1.0),
               bbox_transform=blended_transform_factory(fig.transFigure, ax.transAxes),
               ncol=4,
               framealpha=1.0, handlelength=LEGEND_HANDLE, handletextpad=LEGEND_TEXT_PAD,
               columnspacing=1.6, labelspacing=LEGEND_ROW_GAP,
-              borderpad=LEGEND_BORDER_PAD, fontsize=ps.LEGEND_SIZE - 1.0)
-    # Balance first, rule the headings second. The rules are figure artists at
-    # fixed coordinates, so a block that moves afterwards leaves them striking
-    # through the text they were drawn under.
+              borderpad=LEGEND_BORDER_PAD, borderaxespad=0.0,
+              fontsize=ps.LEGEND_SIZE - 1.0)
+    # No rules here: the headings carry colons instead, so nothing has to be
+    # drawn after the block settles. `_underline_legend_headings` is untouched
+    # and still serves the three figures whose headings sit above their columns.
     ps.balance_drawing_block(fig, ax)
-    _underline_legend_headings(fig, ax)
+    # The key rides the panel at the same clearance the block keeps from the text
+    # above and below it, so the four elements step down evenly. Set from the
+    # panel's final height, which is only known once the block has settled.
+    ax.get_legend().set_bbox_to_anchor(
+        (0.5, 1.0 + ps.MIN_BLOCK_GAP_PX / ax.get_window_extent().height),
+        transform=blended_transform_factory(fig.transFigure, ax.transAxes))
+    ps.balance_drawing_block(fig, ax)
     return fig
 
 
