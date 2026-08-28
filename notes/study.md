@@ -3710,11 +3710,30 @@ figure alone. It was not lowered: 18 px is what the block already keeps from the
 caption, and the point was to make the four elements agree rather than to make
 them smaller.
 
-**The title gap is the remaining outlier at 30.38 px**, and it is not this
-figure's to fix. `TITLE_BLOCK_PX` reserves 96 px for 29 px of title ink, and the
-gap that leaves is the same on all eleven figures. Closing it is a set-wide
-decision, worth about 12 px on every figure, and belongs with the wrap
-conservatism as something to settle once the pass ends.
+**The title gap was the remaining outlier at 30.38 px, and it closed without a
+set-wide change.** `canvas_area` already carries `measured_text`, an opt-in that
+seats the subtitle one `TEXT_GAP_PX` under what the title actually occupies
+rather than under the share allotted to it. The allotment gives a title 1.9 times
+its own point size, 59.4 px for 29 px of ink, so the gap a reader sees below a
+one-line title is the leftover rather than a chosen distance. Measured, it is 26
+px, and the 4.4 px difference goes to the block where the key needs it.
+
+The four gaps are now **26.00, 18.90, 17.55, 18.01**. The title gap is the widest
+and should be: it separates the two blocks a reader reads before the panel, where
+the other three separate elements inside one reading.
+
+**26 px is `TEXT_GAP_PX`, and it was chosen rather than inherited** — the
+constant exists precisely so that a measured gap does not double when a title
+wraps. It is the floor here in the sense that nothing moves the subtitle closer
+without changing it, and changing it would move the residual check, which is the
+only other figure asking to be measured.
+
+**What this does not settle.** Nine figures still take the allotment, so their
+subtitles still sit under a gap that is the leftover of a share rather than a
+decision. Turning `measured_text` on across the set is worth about 4 px each and
+would make one rule govern all eleven, but it moves every subtitle, so it belongs
+with the wrap conservatism and the default legend insets as a decision for after
+the pass.
 
 ### The key's five entries, and what the levers were worth
 

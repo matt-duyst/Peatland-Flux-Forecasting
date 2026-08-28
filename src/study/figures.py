@@ -1757,7 +1757,13 @@ def covariate_availability(rows: list[dict],
     full-height guides were drawn at those boundaries before the ordering did the
     work, and went with it.
     """
-    fig, (left, bottom, width, height) = ps.canvas_area(AVAILABILITY_TEXT, size="standard")
+    # Measured rather than allotted. The allotment gives the title a share of its
+    # own height, 59.4 px for 29 px of ink, so the subtitle sat 30.4 px under a
+    # title while the key beneath it had 11.7. Measuring seats the subtitle one
+    # gap under what the title actually occupies and hands the difference to the
+    # block, where the key needs it.
+    fig, (left, bottom, width, height) = ps.canvas_area(
+        AVAILABILITY_TEXT, size="standard", measured_text=True)
     width_px, height_px = ps.SIZES["standard"]
     gutter = NAME_GUTTER_PX / width_px
     key_band = KEY_BAND_PX / height_px
