@@ -346,8 +346,8 @@ results.
 
 Weighting is by inverse variance, using the standard errors the ingestion layer
 carries on each monthly mean. It is not a neutral choice: it reduces effective
-sample size from 115 to 42.3 and gives July and August 1.8% and 1.3% of total
-weight against an equal share of 8.5%, because high-flux months are variable
+sample size from 115 to 42.11 and gives July and August 1.8% and 1.3% of total
+weight against an equal share of 8.3%, because high-flux months are variable
 months. It was adopted because it was the most consistent configuration across
 all four holdout experiments, not on principle.
 
@@ -969,13 +969,16 @@ picks it up rather than rediscovering it.
 
 The sibling of the entry below, and the same class of failure running the other
 way. There, something that existed was not found and was written again. Here,
-something that existed in two places was changed in one.
+something that existed in two places was changed in one. Which of the two places
+is the correct one varies: in the first three the figure was right and the record
+stale, in the fourth the record was right and the figure stale.
 
 | | what changed | where it was applied | where it was not |
 |---|---|---|---|
 | 1 | the adopted window, 117 months to 115 | `study/figures.py` | every script, which kept building the nominal window |
 | 2 | the 2011 shortfall shares | prose in these notes | nothing computed them, so nothing could disagree |
 | 3 | the v5-5 correction to the seasonal numbers | the figure's description | these notes, which kept 0.54 and p = 0.119 |
+| 4 | the 2015 month-size correction | these notes, which say **middle** third | the figure's description, which went on saying *all small ones* |
 
 The third is the one that prompted this entry. Cutting six precise figures out of
 the seasonal description meant checking they were recorded, and four were not:
@@ -990,9 +993,28 @@ asserts every number that left the block is present in them. It is the only kind
 of guard that works here, because prose cannot be type-checked and a number
 living in two files will drift the moment one is edited alone.
 
+**The fourth runs the other way, and it is the worst of the four.** Here the
+notes were right and the figure was wrong. `Facet the prediction error figure by
+year` wrote the note that 2015's months sit in the **middle** third of methane's
+size distribution, not the smallest, precisely because an earlier pass had
+credited the whole 2015 difference to which months the year contains. The very
+next commit, `State both halves of the 2015 claim`, then put *its months are all
+small ones* into the description. A note written to prevent a claim was
+contradicted by the next commit to touch the claim, and the contradiction sat
+there through every regeneration since, because regenerating a figure checks that
+it draws without error and never that its prose agrees with the record.
+
+Nothing would have caught it but reading the description back against the notes
+line by line. A draft of the same description reproduced the error a second time,
+which is what finally surfaced it.
+
 **What to check first, next time:** before removing a number from a figure,
 confirm it is recorded somewhere a test can see. Before *changing* one, grep for
-it across the repository rather than editing the place you are looking at.
+it across the repository rather than editing the place you are looking at. And in
+both directions, at every text block: **any number or claim leaving a text block
+must be verified against these notes, and any claim entering one must be verified
+against the outputs.** The third instance is the first half of that rule failing,
+the fourth is the second half.
 
 ## The pattern: reimplemented beside itself
 
@@ -1034,6 +1056,55 @@ Two of these are recorded in more detail where they were found, and those notes
 stay: the window exclusion and `TARGET_END` above, and the orphaned residuals
 module in the 2011 section. Someone arriving at either should find this table
 from there.
+
+## The pattern: assuming the record is the side that moved
+
+A verification that finds a recorded number disagreeing with a fresh computation
+has established a disagreement and nothing more. It has not established which
+side is wrong. Both defaults are available and only one of them was taken.
+
+Checking the prediction-error description turned up six recorded values that a
+reimplementation did not reproduce, and all six were reported as **v5-5 drift**:
+numbers correct when written and stale since the switch. That reading was adopted
+and acted on, and the instruction that followed was to overwrite four of them
+with the recomputed values. It was wrong on every count that mattered:
+
+| recorded | reimplementation | what was actually true |
+|---|---|---|
+| 4 bins, 1.93 | 1.84 | record correct; bin edges taken from the months, not the rows |
+| 5 bins, 1.99 | 2.02 | record correct; bin edges taken from the rows, not the months |
+| carbon dioxide 2014, 1.18 | 1.200 | record correct; it is what `year_ratio` returns |
+| leave-one-out, 2.23 | 2.36 | near miss, and still unreproduced |
+| worst month dropped, 1.62 | 1.20 | unreproduced under eight readings |
+| continuous log-log, 2.08 | 2.31 to 3.55 | unreproduced; recorded value is outside the range of its own named computation |
+
+Three of the four substitutions would have replaced a correct value with a wrong
+one **while claiming to correct the record**, and the notes would have carried the
+error with a verification pass standing behind it. That is worse than the drift
+they were meant to fix, because a number nobody has checked is merely unverified
+where a number wrongly corrected is now attested.
+
+**What settled it was reproducing the record's own basis rather than a
+reasonable one.** `year_ratio` takes its bin edges from the 57 monthly
+measurements and then cuts the 456 method-rows with them, which is neither of the
+two obvious implementations. Matching that recovered three rows exactly. Two rows
+still do not come back, and the difference between *unreproduced* and *moved* is
+the whole finding: an unreproduced number may be right, wrong, or computed some
+fourth way, and substituting the current value for it asserts one of those three
+without evidence.
+
+**The data had not moved at all.** That was checkable and was not checked before
+the drift was asserted. The forecast files grew at the switch, but the exogenous
+family still ends at 2020-12, so `shared_targets` intersects to the same 456 rows.
+Reading the pre-switch files out of the commit that wrote the table and running
+every control on both gives identical values to three decimals.
+
+**What to check first, next time:** before concluding a record drifted,
+reproduce the basis the record was computed on, and check whether the inputs
+moved at all. Where the inputs are versioned this is a `git show` and one run,
+and it is the difference between correcting the record and corrupting it. Where
+the original computation was never committed, as here, say so and record the
+number as unreproduced rather than replacing it.
 
 ## An audit that could not see the thing it was for
 
@@ -2876,32 +2947,96 @@ for the size of its months. Both are true and independent:
 because a ratio built on binned means can be an artifact of where the bin edges
 fall or of one bad month. Methane's 2015 against every other methane year:
 
-| control | 2015 | next highest |
-|---|---|---|
-| 3 size bins, mean (the reported figure) | **1.68** | 1.16 (2017) |
-| 4 size bins, mean | 1.93 | 1.10 (2017) |
-| 5 size bins, mean | 1.99 | 1.13 (2017) |
-| 3 size bins, median | 1.37 | **1.37 (2017)** |
-| 3 bins, each year's worst month dropped | 1.62 | 1.18 (2017) |
-| continuous log-log fit, no bins at all | 2.08 | 1.16 (2017) |
+| control | 2015 | next highest | reproduced |
+|---|---|---|---|
+| 3 size bins, mean (the reported figure) | **1.68** | 1.16 (2017) | yes, and it is what `year_ratio` returns |
+| 4 size bins, mean | 1.93 | 1.10 (2017) | yes, edges from the 57 months |
+| 5 size bins, mean | 1.99 | 1.13 (2017) | yes, edges from the 456 method-rows |
+| 3 size bins, median | 1.37 | **1.37 (2017)** | yes |
+| 3 bins, each year's worst month dropped | 1.62 | 1.18 (2017) | **no**, nearest reached is 1.59 / 1.12 |
+| continuous log-log fit, no bins at all | 2.08 | 1.16 (2017) | **no**, every log-log form gives 2.3 or more |
 
-It holds under every control, and **dropping each year's worst month still leaves
-1.62**, so it is not the single July 2015 miss carrying it. The one measure where
-2015 does not stand alone is the median, where it ties 2017 at 1.37; a median over
-eight months is a coarse instrument and it is recorded rather than hidden. The
-description quotes **1.7**, the most conservative of the mean-based figures, and
-the range across controls is 1.4 to 2.1.
+It holds under every control that reproduces. The one measure where 2015 does not
+stand alone is the median, where it ties 2017 at 1.37; a median over eight months
+is a coarse instrument and it is recorded rather than hidden. The description
+quotes **1.7**, the lowest of the mean-based figures, and the range across the
+four controls that reproduce is **1.4 to 2.0**.
+
+**Two rows of that table cannot be reproduced, and that is a different problem
+from a number that moved.** No script was ever committed for these controls, so
+the only record of them is the table itself. A reimplementation recovers four
+rows exactly and cannot reach the other two under any variant tried:
+
+- **Worst month dropped, recorded 1.62 / 1.18.** Eight readings of "drop each
+  year's worst month" were tried: dropping the year's largest single method-miss
+  (1.59 / 1.12), aggregating each month over methods and dropping the year's
+  largest (1.20 / 0.96), dropping from the numerator only (1.22 / 0.91), dropping
+  from numerator and baseline together (1.42 / 1.01), taking the mean of
+  per-month ratios (1.15 / 1.04), the median form (1.11 / 0.75), and dropping the
+  worst month from 2015 alone (1.20 / 1.16). None gives 1.62.
+- **Continuous log-log fit, recorded 2.08 / 1.16.** Every genuine log-log fit
+  gives 2.31 at the lowest and 3.55 at the highest, depending on whether the fit
+  is over months or method-rows and whether the year's ratio is a ratio of means,
+  a mean of ratios, or a median. The recorded 2.08 is only approached by fits
+  that are **not** log-log: a linear fit gives 2.14 / 1.13 and a proportional one
+  2.01 / 1.15. The recorded value is outside the range of the computation its own
+  label names.
+
+**The conclusion those two rows were carrying still stands; the numbers do not.**
+The point of dropping each year's worst month was that the finding is not the
+single July 2015 miss carrying it, and under every one of the eight readings above
+2015 is still the highest year. The margin is thinner than 1.62 against 1.18
+suggests: on the most natural reading, aggregating each month over the methods and
+dropping the year's largest, it is **1.20 against 0.96**. The claim survives, the
+figure quoted for it does not.
+
+**The research behind the panel labels and the key.** Wilke, *Fundamentals of
+Data Visualization*, establishes that small multiples need no alphabetical panel
+labels: the faceting variable identifies each panel, and an added *a, b, c* names
+a panel that already has a name. This figure follows it. Each panel carries its
+year in bold above it and nothing else, and the two rows carry a boxed gas name
+rather than a row letter. Nothing in the figure or in either text block refers to
+a panel by position.
+
+The Caltech data-visualization handout gives the rule that settled the key: with
+**three or fewer groups**, either a caption naming the marks or a legend works,
+and the choice is between them rather than a licence for both. Three marks is
+exactly what this figure has, and it took the legend. That is what makes the
+restatement a fault rather than a redundancy worth keeping: the subtitle carried
+*The grey points are the months of every other year, repeated behind every panel*
+while the key's second entry read *The months of every other year*. One of the
+two had to go, and the key is where a reader looks for what a mark means. The
+sentence went.
+
+**The four rows that reproduce were not computed under one rule.** The 4-bin row
+comes back only with bin edges taken from the 57 monthly measurements, and the
+5-bin row only with edges taken from the 456 method-rows. `year_ratio` itself
+mixes the two, taking edges from the months and cutting the rows. No single basis
+returns both 1.93 and 1.99, which is why a fresh reimplementation appears to
+disagree with the table until each row is matched to its own basis. That is a
+defect in the table, not in the finding.
+
+**None of this is v5-5 drift, and an earlier pass of this section wrongly said it
+was.** The forecast files did grow at the switch, from 1284 to 1860 rows on
+methane's autoregressive family, but the exogenous family still ends at 2020-12,
+so `shared_targets` intersects to the same 456 rows over 2015-03 to 2020-01 that
+it did before. Reading the pre-switch files out of the commit that added this
+table and running the controls on both gives **identical values to three decimals
+on every row**. The switch did not reach this figure at all.
 
 **The baseline includes the year it is measuring, which understates the ratio.**
 `year_ratio` divides a year's mean absolute error by what months of its size are
 missed by **across the whole record**, 2015 included. Since 2015's own large
 misses inflate the bin means it is compared against, the comparison is
 conservative. Leaving each year out of its own baseline gives methane
-**2015: 2.23**, 2016: 0.66, 2017: 1.22, 2018: 0.98, 2019: 0.54. The figure quotes
-**1.7**, the conservative form, and the description says *months of the same size
-across the record* rather than *elsewhere in the record* for that reason: the
-second phrasing would describe the leave-one-out baseline and would go with 2.2,
-not 1.7. Both are recorded; the smaller claim is the one drawn.
+**2015: 2.23**, 2016: 0.66, 2017: 1.22, 2018: 0.98, 2019: 0.54. A reimplementation
+gets 2.28, 0.66, 1.14, 1.02, 0.53, which is the same result reached a slightly
+different way rather than a match; like the two rows above it, the exact form was
+never committed. The figure quotes **1.7**, the conservative form, and the
+description says *months of the same size across the record* rather than
+*elsewhere in the record* for that reason: the second phrasing would describe the
+leave-one-out baseline and would go with 2.2, not 1.7. Both are recorded; the
+smaller claim is the one drawn.
 
 **Carbon dioxide has nothing of the kind.** Its widest ratio on a full year is
 1.18 in 2014, and 2015 sits at 1.07. No carbon dioxide year separates on either
@@ -2914,6 +3049,111 @@ description no longer spends a clause on it.
 **Regressing the four full methane years' mean error on their amplitude gives
 p = 0.33 on four points**, which is not a result and is not quoted anywhere on
 the figure.
+
+**The balance, and the two things it needed that no earlier figure did.** This
+figure had the worst split in the set, **85 px of air under the subtitle against
+163 px over the description**. `balance_drawing_block` closed it to **35.6 px at
+both ends**, the panel block growing from 782 to 860 px. Getting there took two
+additions to the helper, both of which are about the same thing: this is the first
+figure whose drawing block is not made only of axes.
+
+- **`extra`,** artists measured as the block's edges though they are not axes.
+  The top of this block is a boxed gas label, which stands above the year labels
+  rather than on a panel, and the bottom of it is the key wherever the key falls
+  back to a band under the rows. A balance measuring the panels alone drives the
+  first into the subtitle and lets the panels walk through the second.
+- **`reflow`,** a callback run after every resize. Moving an axes does not move a
+  figure text placed against it, and this figure has six such texts and a key.
+  Left behind they slide out from under the block, which is the fault the
+  seasonal figure hit and fixed by converting one text to an axis label. That
+  will not work here, so instead every piece of furniture is built by one
+  function and the balancer calls it. The measurement is stale without this: the
+  next round measures against where the label used to be.
+
+Both default to doing nothing, so the other nine callers are unchanged.
+
+**The gap under the block was reported as 35.6 px and was 1.5 px.** The row axis
+names are figure text, so they were outside the balance entirely: it equalised to
+the carbon dioxide **tick labels** and left the axis name hanging 34 px below
+them, which put it 1.5 px clear of the description. The figure looked balanced in
+the numbers and was nearly touching on the canvas. This is the same class as the
+gas label at the other end, and it is why `extra` exists; the axis names simply
+were not put in it. Both ends of this block are furniture rather than panels, and
+neither was measured until it was looked for.
+
+**Three things had to be settled before the axis names could be enlarged**, since
+enlarging ink that was never measured drives it straight through the description.
+They are separate decisions and are recorded separately.
+
+1. **The axis names are measured.** They are now the block's floor, which is what
+   the description is set against.
+2. **`edges`,** a third parameter on the balancer: the two references to
+   equalise, given as a callable rather than taken from the ink. The default is
+   still the ink and the other nine callers are unchanged. It exists because *what
+   should look symmetric* and *what must not collide* are different questions on
+   this figure, and answering them with one measurement answers neither. The
+   balance runs against named references; the clearance check that follows still
+   runs against every piece of ink.
+3. **The references are the nearest ink at each end**, which is the balancer's
+   default: the boxed gas name above the top row, and the carbon dioxide axis
+   name below the bottom one. Both gaps come to **35.56 px**, equal to 0.000.
+
+**The pairing that was tried first, and why it was dropped.** Balancing the
+methane panel's **top border** against the carbon dioxide axis name was built and
+rendered. It equalises at 111.1 px and is wrong, because the two references are
+not comparable: the top gap **contains the gas label**, 75.5 px of its 111.1,
+leaving 35.6 px of air, while the bottom gap is 111.1 px of nothing. The figure
+measured symmetric and read bottom-heavy, with a band of white under the last row
+about three times the air under the subtitle. It also cost panel height, **232.9
+px against 260.1**, because the block has to shrink to find the top gap room the
+gas label does not leave it.
+
+Ink to ink is right here for a reason worth keeping: **both ends of this block are
+furniture rather than panel.** A boxed gas name stands above the top row and the
+row's axis name hangs below the bottom one, each an object in the margin at its
+own end. Treating the two alike is what makes the white space alike. The panel
+border is not the edge of anything a reader sees at the top, because the gas label
+is drawn above it.
+
+Against the 273.8 px the panels had before any of this, the cost of measuring the
+axis names at all is **13.7 px**. That is the price of the 1.5 px gap being real.
+
+**The axis names are 10.5 pt, up from 9.0.** At 9.0 they were the same size as the
+bold year label over every panel, and two bold labels at one size in one figure
+compete: a reader has nothing but position to tell a panel's name from the row's
+quantity. The ladder is now **7.5 tick labels, 9.0 year labels, 10.5 axis names,
+11.1 gas names**, which steps at every level and keeps the boxed gas names largest
+because they name the row. 10.5 rather than 11.0 for that reason; at 11.0 the
+competition moves to the gas names instead of being removed.
+
+**The key's left margin is measured, not written down.** It sits on the
+**description's first word at x = 108.0**, exact to 0.00 px. It was set on the
+carbon dioxide axis name at x = 139.2 instead, which lined it up with the nearest
+thing rather than with the page. Centering the key on that name was tried first
+and is not available at all: the key is **577 px wide against a 25 px axis name**,
+and a shared center line carries its left edge to **x = −136**, off the canvas.
+The edge is read off the drawn text each time the furniture is placed rather than
+stored as an offset, because both the grid and the key's own width have moved
+during this figure's life and an offset records the answer to a question rather
+than the question.
+
+**What the key's size costs, and what the move bought back.** At 8.2 pt with
+`labelspacing` and `borderpad` at 1.0 it is 577 × 157 px, against 525 × 106
+before. Aligned to the axis name its right edge landed at 716.2 with the methane
+row's own axis name beginning at 726.3, a clearance of **10.1 px**, the tightest
+horizontal gap on the figure and the binding constraint on the key. Moving it to
+the description's margin took it 31.2 px left, and the clearance is now **39.5
+px**. The two changes were asked for separately and the second is what makes the
+first safe.
+
+**`borderaxespad` had to be taken to zero.** With `loc="center left"` matplotlib
+insets the box from its anchor by half a font size, 8.6 px here, which put the key
+almost but not quite on the axis name's edge. Almost-aligned reads as a mistake
+where unaligned reads as a margin.
+
+**The gas labels stand 64 px above their panels**, up from 56. At 56 the frame's
+lower edge sat on the year labels and the two read as one stack rather than as a
+name over a row of years.
 
 **Why the 2020 column holds one month, checked rather than assumed.** Both 2020
 panels show a single point and it is correct. The panel takes only the months
@@ -3409,6 +3649,15 @@ a failed assumption, more often than not.
 
 **The band is the equal local levels construction** of Weine, McPeek and Abney
 (2023), *Journal of Statistical Software* 106(10), implemented in R as `qqconf`.
+
+**The term is "simultaneous testing band", and a writeup should use it.** That
+paper and its package use it and "global testing band" throughout, and the
+distinction from a *confidence* band is deliberate: this is a hypothesis test on
+the whole sample rather than an interval around an estimate, which is why one
+point outside it is decisive and why the pointwise level is 0.002079 rather than
+0.05. The figure stays in plain language — the key says *95% band (covering all
+115 points at once)*, whose parenthetical is the property that separates a
+simultaneous band from a pointwise one — but the term belongs in prose.
 Every order statistic is tested at one common level chosen so that the chance of
 *any* point escaping is the level asked for the whole figure. At n = 115 and a
 5% global level that local level is **0.002079**: each point is held about
@@ -3579,6 +3828,57 @@ disagree and nothing on the panel says which fit is primary. The unweighted row
 is the one to read for the distribution: the weighted row tests the weights as
 well as the errors, and it is the weights that fail there.
 
+**The block is balanced by translation, not by growth.** This was the only figure
+in the set calling neither `balance_drawing_block` nor the site figure's
+`_balance_gaps`, and it sat **28.0 px** under the subtitle against **75.4 px** over
+the description. It is now **51.7 px** at both ends.
+
+It could not use the balancer as the other nine do. That one grows the block into
+the larger gap, and these four panels are **square in pixels** because the
+reference they carry is a line of equality: stretched vertically to fill 47 px the
+1:1 line would no longer be at 45 degrees, which is the one thing these panels have
+to be. `balance_drawing_block` gained a `grow=False` mode that slides the block by
+half the difference and leaves its size alone, and the four panels measure
+609.00 x 609.00 after it.
+
+Adding the balance also moved the heading rule, which now has to be drawn after
+it. This figure had been escaping the rule-position fault by luck: it did not
+balance, and `_underline_legend_headings` was the last call in the last helper.
+`_distribution_key` now returns its axes and the caller rules it once the block has
+settled.
+
+**The key is centred in the band below the panels, and the balance settles with
+it.** It had sat 36.8 px under the panels and 64.6 px over the description, which
+is the wrong way round for an object a reader meets on the way down. Centring it
+is not independent of the balance: the key is the block's floor, so moving it
+moves what the balance measures. The two are solved together — `seat_key` centres
+the key in the band on every round and the balancer equalises the outer gaps —
+and they converge on **three gaps of one number, 55.33 px**: under the subtitle,
+between the panels and the key, and between the key and the description.
+
+**The key's drawn extent is not its axes.** The legend is 120.3 px tall in a 92.0
+px band and overflows downward by **32.6 px**, which is deliberate and explained at
+`_distribution_key`. Both the seating and the balance measure the legend rather
+than the axes it sits in, and the legend goes into `extra` for the same reason.
+Measured from the axes the lower gap reads 87.9 px where it is 55.3.
+
+**Two questions the description rewrite left open**, recorded because neither is
+settled by measurement alone.
+
+*It carries 554, which a reader cannot check.* Every other precise number on this
+figure went to these notes under the rule that a figure's text carries only what a
+panel can be checked against, and the weights are drawn nowhere. It earns its place
+only if *these weights do not track how the errors vary* needs a magnitude to be a
+claim rather than an assertion.
+
+*It dropped the conflation sentence to make room.* The published Laplace result
+came from comparing two instruments against each other and was a different
+quantity: 7,028 on 36,000-odd analyzer differences against −0.31 on 115 model
+residuals. That sentence and the weighted-row account will not both fit, since the
+description's allocation is five lines and holds about 643 characters. The
+weighted row won because it is **drawn** and the conflation is not: two of four
+panels were rejecting decisively with no account anywhere on the canvas.
+
 **"Quantile" and "residual" are allowed.** The rule against terms a reader would
 have to decode is about this study's own vocabulary — Boruta, fold, survival,
 lag, screening, covariate — and not about standard statistics. On a quantile plot
@@ -3611,17 +3911,57 @@ each:
 | **Gaussian, one constant scale (weights wrong)** | **+97.9 [+65.7, +133.3]** |
 | Laplace, one constant scale (weights wrong) | +114.6 [+77.5, +167.9] |
 
-The observed **+95.84** sits on top of the third row and far outside the second.
+The observed **+95.84** sits on top of the third row and far outside the second. It
+also sits inside the fourth, so it separates wrong weights from right weights and
+says nothing about which distribution the errors have.
+
+**This table reproduces, and that is worth recording.** Re-derived from the setup
+described above, 400 draws against the real weights, all four means land within 1
+to 3 units: −11.2, +15.2, +98.8, +117.3. Set that beside the coefficient stability
+figure's six controls, where two could not be recovered under any variant tried
+and the recorded value for one of them lay outside the range of the computation
+its own label named. Both tables were written the same way, from a script that was
+never committed; only one of them survives re-derivation. Which it is cannot be
+known without trying, and the entry on **assuming the record is the side that
+moved** is about what happens when that is not tried.
+
+**The 554-fold span does not imply unequal spread, and a draft of the description
+said it did.** If the weights were right, scale proportional to 1/w, then
+multiplying residuals by w would make the scaled residuals **homoscedastic** —
+that is the entire purpose of inverse-variance weighting, and the top two rows of
+the table show it, at gaps of −11 and +15 with no artifact. The spread is unequal
+because the weights are **wrong**: the errors carry roughly one constant scale
+while the weights vary 554-fold, so scaling manufactures the variability instead
+of removing it. The conclusion the draft drew, that the weighted row tests the
+weights rather than the errors, is right and is what the simulation licenses. The
+reason it gave was the inverse of the mechanism.
 So the weighted row is evidence that **the weights do not match the dispersion of
 the errors**, not that the errors are Laplace. Both shapes fail its band test,
 which says the same thing.
 
-**Set beside the published finding, with the distinction stated.** The ingestion
-layer reproduced Deventer's result at **ΔAIC = 7,028 in favor of Laplace**, on
+### The conflation this figure was built to establish
+
+**This is the finding, and it now lives only here.** The ingestion layer
+reproduced Deventer's result at **ΔAIC = 7,028 in favor of Laplace**, on
 36,000-odd paired analyzer differences. This figure finds **ΔAIC = −0.31** on 115
 model residuals. The two numbers are the same statistic on different quantities:
 measurement disagreement between two instruments against the error of a fitted
-model, and the first was never evidence for the second.
+model, and **the first was never evidence for the second**. The study chose least
+absolute deviations because it is maximum likelihood under Laplace error, on a
+published Laplace result that turns out to be about something else.
+
+It is recorded here rather than on the canvas because the figure's own text was
+distilled to what a reader needs while looking, and none of this can be read off a
+panel. Three things left the description together and all three are in these
+notes: why the estimator was chosen, that the published result measured a
+different quantity, and that the estimator stays robust either way. A test asserts
+each of them is still written down, on the pattern the seasonal figure set when
+six numbers were cut from its block and four turned out to be stale or missing.
+
+**It is also the second conflation of this kind this project has caught.** The
+first was the wet-end directional expectation carried as a literal after the study
+had adopted a different window; both are a number that was true of one quantity
+being used for another without the substitution being noticed.
 
 **What does not follow from the negative result.** Least absolute deviations
 stays consistent and robust whether or not the errors are Laplace; it stops being
@@ -3631,7 +3971,7 @@ training residuals, which assume no shape at all, so they are untouched. What is
 touched is the **Laplace interval variant** in `fitting.laplace_interval`, which
 should now be read as a convenience rather than as a fitted distribution, and the
 inverse-variance weighting, which this figure gives independent reason to
-distrust — it already reduces effective sample size from 115 to 42.3, and now
+distrust — it already reduces effective sample size from 115 to 42.11, and now
 the residuals say its weights do not describe their spread.
 
 ### One parenthetical went and one stayed, which looks inconsistent until stated
@@ -4474,17 +4814,21 @@ which is a different question; the extrapolation literature concerns prediction
 accuracy beyond the training range rather than coefficient stability within it.
 The design is from first principles, with one device adopted: Bartley et al.
 (2019), *PLOS One*, shade regions of extrapolation in darker grey beside
-prediction intervals, using leverage to set the boundary. Here the shaded region
-is what the reconstruction requires the coefficient to hold across.
+prediction intervals, using leverage to set the boundary. That device was adopted
+and has since been dropped: what the reconstruction requires the coefficient to
+hold across is drawn as an **arrow**, not as a shaded region, and the ground the
+fill used to cover is where the key now sits. Four sentences in this section were
+still describing the fill after it was removed and are corrected here.
 
 **The axis is the water table, not the experiment.** Metres from the wettest
 month in the full fit, so zero is the wet edge of the evidence and the five
 refits fall at 0.00, −0.05, −0.07, −0.10 and −0.12. That one decision is what
 makes the qualification visible rather than asserted: every refit occupies
 **0.12 m** on the left, and the region the reconstruction needs runs **0.29 m**
-to the right of everything, two and a half times wider than the whole experiment,
-with nothing drawn inside it. The share dropped is annotated above each point, so
-the experimental knob is still legible.
+to the right of everything, **2.4 times** wider than the whole experiment, with
+nothing drawn inside it. The share dropped is no longer annotated anywhere: it was
+the old top row and it went when that row became a proper axis, as the paragraph
+on the two directions below records.
 
 **One key for both panels, in the ground the fill used to cover.** The first
 build named the two treatments and nothing else, leaving five unexplained marks
@@ -4514,12 +4858,138 @@ mechanism instead of the role and was opaque.
 months held out actually reached, with its label beside it rather than over it.
 Everything else it held has moved to where it belongs.
 
+**Both panel names are centred over their panels**, and centred on the axes
+frame rather than on the tight bounding box. The distinction matters here: the
+rotated axis name and the tick labels stand outside the axes, so the tight box
+reaches 79.8 px further left than the frame and centring on it would pull each
+name 39.9 px off the middle of the panel a reader sees. An axes fraction of 0.5
+is the frame's middle by definition, which is why this one is expressed as a
+fraction and not measured.
+
+They had been right-aligned at 0.984, which put them **722.7 px and 688.8 px off
+centre**, reading as notes in a corner rather than as the names of the rows. Two
+other figures in the set already centre their panel names at `x=0.5`, so this
+brings the third into line rather than inventing a third treatment.
+
+**A fraction is not always the thing that drifts.** The key on this figure and the
+heading rules across three all drifted because they were seated against another
+object's measured position before the balance moved it. These names are not that
+case: `balance_drawing_block` rescales panels vertically and leaves x untouched, so
+a horizontal fraction cannot drift, and the vertical fraction rides the panel it
+names. What the shared fraction does produce is an inconsistency of a different
+kind: 0.952 of a 710.8 px panel and of a 245.6 px one puts the two names **34.1 px
+and 11.8 px** below their own spines. Both clear, and it is recorded rather than
+changed.
+
+**The months axis name was 528 px from anything it named.** It was centred on the
+axes, which is 1652 px wide, while the five fits it counts occupy the leftmost 466
+of them; the name sat over the empty ground the arrow crosses. It is now seated on
+its own numbers, offset 0.00 px, and 10 px above them. Two traps in that:
+`set_label_coords` reads its pair in axes fractions and 1.0 is the top of the axes
+rather than the top of the tick labels, which stand outside it, so the first
+attempt dropped the name into the row of numbers. And seating it after the balance
+made it the block's top ink at a height the balance had never measured, leaving the
+two gaps disagreeing; it is seated inside the reflow instead.
+
+**The month counts are bold and nothing new is boxed.** They are the sample size
+every point rests on, which is a reading rather than apparatus, and the
+percentages at the other end of each path were already bold. Boxing them was
+considered and refused: this set borders panel names and nothing else, so a second
+kind of box on one panel costs the border the one meaning it carries.
+
+**The key drew marks the figure does not contain, twice over, and both faults
+were structural rather than careless.**
+
+*Open markers drawn solid.* The two paths are drawn with `markerfacecolor="white"`
+and `markeredgewidth=1.4`, so the panel shows hollow rings. Those two settings were
+added at the `errorbar` call, and the key does not go through that call: it builds
+its handles from the `TREATMENTS` style dict, which did not carry them. The panel
+drew open marks and the key drew solid ones for as long as this figure has had a
+key. Both settings now live in the dict, so the key and the panel read one source.
+Correcting the instance would have left the mechanism; moving the properties
+removes it.
+
+*Three ticks where the panel draws one.* A legend lays every handle on three
+sample points and draws the marker at each of them. Two entries were markers on a
+line, so *Where the coefficient landed in 500 resamples* rendered as **three**
+ticks in a row where the panel draws one capped interval, and the bracket rendered
+with a **third tick in its middle** where the strip has two at its ends. Neither
+had been noticed, and neither reads as an error: at this size three ticks in a row
+read as one thick mark. Both are now drawn by handlers, `_IntervalHandler` and
+`_BracketHandler`, which draw the pieces the panel and the strip actually draw.
+
+`test_the_key_draws_the_marks_the_panel_draws` holds both: every marker property
+the panel sets is read back off the key's own handles, and the bracket's ticks are
+asserted to be at its ends.
+
+**The four percentages said nothing about what they measured.** Each is
+`100 × (y[-1] / y[0] − 1)`, that coefficient's total change from the 115-month fit
+to the 69-month one. They had been cut from the description on the reasoning that
+the panel labels them directly, which was wrong: the panel shows the numbers
+without saying they are totals across the whole experiment. The clause is back in
+the description rather than in the key, because the mark is text and would need a
+blank handle in a bordered key where every other row has one. It cost nothing: the
+block stays at three lines and its last line grows from **36 characters to 121**,
+settling the widow the rewrite had left.
+
+**`set_bbox_to_anchor` reads a bare pair as axes fractions.** Handed display
+pixels it multiplies them by `transAxes` again. Seating the key over the annotation
+that way put it at x 1,905,754 on an 1800 px canvas. Convert with
+`ax.transAxes.inverted()` first.
+
+**The block is balanced, and both ends of it are furniture.** It sat **34.0 px**
+under the subtitle and **146.8 px** over the description, the widest split left in
+the set once the year figure was fixed. `balance_drawing_block` closes it to
+**33.98 px** at both ends, and because the balancer grows into the larger gap
+rather than recentring, the drawing block gains all **112.8 px**: its ink runs
+1099.4 px against 986.6, **11.4% taller**. Nothing was traded for it.
+
+Two things had to be handed in. The x-axis name below the strip is figure text and
+the panel names, the percentages and the key are axes text, so none of them
+reaches the balancer through `get_tightbbox`; they are passed as `extra`. Only the
+axis name needs a `reflow`, since every other one is placed against the panel or
+strip it belongs to and moves with it.
+
+**The key's outer inset was the default and is now zero.** The anchor
+`(0.998, 0.90)` was chosen and `borderpad` was already taken to 0.0, so the only
+thing left standing between the key and the corner it names was `borderaxespad`
+at matplotlib's default half a font size: **8.85 px** at 150 dpi, putting the box
+**12.2 px** inside the axes where 3.3 px was asked for. Both numbers appear in the
+legend-anchor sweep table and they are the same inset measured from two
+references, the chosen anchor and the axes corner.
+
+**A heading rule does not move with the heading, and two figures had drifted
+apart from theirs.** `_underline_legend_headings` draws each rule as a figure
+artist at fixed figure coordinates. `balance_drawing_block` moves the axes its
+legend rides on. Rule first and the line stays where the heading used to be.
+
+Balancing this figure put the rule 5.6 px above the bottom of its own text, which
+is through the lower third of a bold capital. Auditing the rest turned up two more,
+both older than this session:
+
+| figure | fault | how long |
+|---|---|---|
+| reconstruction series | ruled at line 323, balanced at 325; both headings struck through | since the figure was first balanced |
+| observed and predicted | ruled before *and* after the balance; two artists per heading, the first stale | same |
+| coefficient stability | introduced by this session's balance | one build |
+
+The seasonal figure already carried a comment saying to balance before ruling, so
+the rule was known and had been applied in one place and not the other two. That
+is the *corrected where it was noticed* pattern again, and it is the fifth
+instance.
+
+**The fix is a test.** `test_every_ruled_legend_heading_is_ruled_under_its_own_text`
+asserts one rule per heading and every rule below its own text box. It reads as a
+strike at this size rather than as an error, which is why three builds of three
+figures went out with it: nobody looking at the figure would call it a bug, and
+only measuring the two boxes against each other says so.
+
 **The axis names are seated by measurement.** One panel's ticks read 7 and the
 other's 0.12, so a fixed inset either collided with the second or stranded the
 first far to the left. `_seat_axis_names` measures the widest tick label across
 both panels and sets both names just clear of it.
 
-**The holdout bracket sits against the shaded region.** The wettest-decile test
+**The holdout bracket sits against the arrow.** The wettest-decile test
 trained to 413.41 and reached 413.46, so it demonstrated transfer over 0.05 m
 against the 0.29 m required. Drawn as two lengths on one axis, the 17% is a thing
 a reader measures by eye rather than a number to be taken on trust.
@@ -4560,7 +5030,7 @@ the figure.
 a correlation on five points and would read as more than it is. The month counts
 per step, 115 down to 69. The three reconstruction variants. Knox et al. (2021)
 and the nuclear verification study. The wettest-decile tie instability. And any
-curve through the shaded region, which is the one thing the figure exists to
+curve drawn along the arrow, which is the one thing the figure exists to
 refuse.
 
 **A shortened axis name.** "Coefficient, as a percentage of its value on the

@@ -1,13 +1,38 @@
-# The 2025 BASE product, held alongside the 2022 export
+# The 2025 BASE product, which the pipeline now reads
 
-A second copy of the same AmeriFlux data product, downloaded 2026-08-09 and kept
-beside the export the pipeline reads rather than replacing it. Nothing in
-`src/ingest` or `src/study` reads anything described here. The pipeline's inputs
-are unchanged, and no study result has been recomputed against this product.
+A second copy of the same AmeriFlux data product, downloaded 2026-08-09. It was
+held alongside the 2022 export at first and **is now what the pipeline reads for
+both gases.**
 
 The purpose was to test whether the methane series was reprocessed between
 releases, which `notes/study.md` recorded as unresolvable, and to obtain the
-variables the export lacks. Both questions are now answered.
+variables the export lacks. Both questions are now answered, and answering them
+is what made the switch safe to make.
+
+**This header used to say the opposite, and it was left standing after the switch
+that falsified it.** It read: *kept beside the export the pipeline reads rather
+than replacing it. Nothing in `src/ingest` or `src/study` reads anything described
+here. The pipeline's inputs are unchanged, and no study result has been recomputed
+against this product.* Of those, two are now false and the third is true only on a
+reading that misleads:
+
+- **The pipeline's inputs are not unchanged.** `scripts/04_merge_qc_aggregate.py`
+  calls `base_v55.load_methane()`, and `scripts/05_build_co2.py` calls
+  `base_v55.load_base()`. Carbon dioxide always came from this product, because
+  the 2022 workbook carries no carbon dioxide column; methane joined it at commit
+  `fbc39d2`. The Excel export is still read, by script 01 alone, to characterise
+  the derived `FCH4 Data.csv` subset.
+- **Every study result has been recomputed against it.** The switch is why the
+  monthly series now reaches 2024 and why `TARGET_END` moved from 2021-12 to
+  2024-12.
+- **Nothing in `src/ingest` or `src/study` imports `validation.base_v55`**, which
+  is literally still true and is not the point: the module lives in
+  `src/validation/`, the numbered scripts import it, and what those scripts write
+  is what `src/study` reads. The sentence was accurate about imports and wrong
+  about provenance, which is the more useful thing for a reader to know.
+
+This is the notes-versus-code drift pattern, and it is the one instance where the
+README was right and this record was wrong. The other four ran the other way.
 
 ## Provenance
 

@@ -8,6 +8,8 @@ it.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -291,8 +293,15 @@ def test_the_subtitle_says_what_kind_of_plot_this_is_before_anything_else():
     said = figures.DISTRIBUTION_TEXT.subtitle
     assert said.startswith("This is a quantile-quantile plot, which compares the "
                            "errors the model made against the errors a named "
-                           "distribution predicts, on a log scale.")
-    assert "Points falling on the 1:1 line are errors matching the distribution" in said
+                           "distribution predicts.")
+    # Not "on a log scale": all four axes are linear and what is logged is the
+    # quantity, which the axis names carry as "(log flux)".
+    assert "log scale" not in said
+    # And not "errors matching the distribution": a point on the line is one order
+    # statistic sitting where the fitted distribution puts it. A distribution is
+    # matched by the whole sample, not by a point.
+    assert "quantiles the distribution places exactly right" in said
+    assert "errors matching the distribution" not in said
 
 
 def test_the_subtitle_is_short_enough_to_leave_the_panels_the_canvas():
@@ -300,7 +309,10 @@ def test_the_subtitle_is_short_enough_to_leave_the_panels_the_canvas():
     than under data. The construction detail went: how a quantile plot is built
     helps neither the reader who knows the form nor the one who does not."""
     said = figures.DISTRIBUTION_TEXT.subtitle
-    assert len([s for s in said.split(". ") if s.strip()]) == 3
+    # Four sentences since the band clause was split out. It had carried three
+    # ideas at once and "covers all 115 at once" was the heaviest with the least
+    # explanation, because a reader does not know what the alternative would be.
+    assert len([s for s in said.split(". ") if s.strip()]) == 4
     assert ps.wrap_subtitle(said, ps.SIZES["quad"][0]).count("\n") + 1 <= 4
     for gone in ("sorted smallest to largest", "at one position in that order",
                  "predicts for that position"):
@@ -319,44 +331,66 @@ def test_the_subtitle_says_the_band_is_global_and_what_escaping_it_means():
     """That it covers all 115 at once is what makes one escape decisive; a band
     each point held on its own would be escaped by most correct samples."""
     said = figures.DISTRIBUTION_TEXT.subtitle
-    assert "covers all 115 points at once" in said
-    assert "a single point outside it is enough to say the distribution does not hold" in said
+    assert "all 115 points should fall inside it together" in said
+    assert "a single point outside is enough to say the distribution does not hold" in said
 
 
 def test_the_description_carries_no_number_a_reader_cannot_check():
     """The counts, the gap and the factor are precise and none of them can be
     read off a panel, so they are in the notes."""
     said = figures.DISTRIBUTION_TEXT.description
+    # 554 is back on the list and the rule stands unqualified. It went out with
+    # the sentence that carried it: the weighted row is a clause now, not three.
     for moved in ("554", "96", "0.31", "11 months", "61", "AIC", "factor of"):
         assert moved not in said
 
 
-def test_the_description_says_why_the_estimator_was_chosen_before_testing_it():
-    """A null result on an assumption means nothing to a reader who does not know
-    the assumption was load-bearing."""
+def test_what_left_the_description_is_written_down_where_a_test_can_see_it():
+    """Three things went out together when the block was distilled to what a reader
+    needs while looking: why the estimator was chosen, that the published Laplace
+    result measured a different quantity, and that the estimator stays robust
+    either way. None can be read off a panel, so all three belong in the notes —
+    and the seasonal figure is why this test exists, since six numbers were cut
+    from its block and four turned out to be stale or never recorded at all.
+    """
+    notes = (Path(__file__).resolve().parents[1] / "notes" / "study.md").read_text()
+    for kept in ("maximum likelihood under Laplace error",
+                 "the first was never evidence for the second",
+                 "stays consistent and robust whether or not the errors are Laplace"):
+        assert kept in notes, kept
+    # And the conflation is a section of its own, not a line inside one.
+    assert "### The conflation this figure was built to establish" in notes
+
     said = figures.DISTRIBUTION_TEXT.description
-    assert said.startswith("Fitting by least absolute deviations is optimal when "
-                           "errors follow a Laplace distribution, which is why "
-                           "this study chose it.")
-    assert "equally consistent with Laplace and with Gaussian" in said
-    assert "not supported by the model's own residuals" in said
+    for gone in ("optimal when errors follow", "two instruments", "remains robust"):
+        assert gone not in said
 
 
-def test_the_description_names_the_conflation():
-    """The published result is about two instruments compared against each other;
-    the assumption is about a fitted model's error."""
+def test_the_description_accounts_for_the_weighted_row_it_used_to_ignore():
+    """Two of the four panels reject decisively, at 11 and 61 points outside, and
+    neither text block said anything about them: half the figure was uncaptioned.
+
+    What replaced the conflation sentence, which said the published Laplace result
+    came from comparing two instruments against each other and was a different
+    quantity. Both will not fit: restoring it costs a sixth line the description's
+    allocation does not have. The conflation stays in the notes, where the figures
+    it rests on (7,028 against 36,000 analyzer differences) already live; the
+    weighted row could not, because it is drawn.
+    """
     said = figures.DISTRIBUTION_TEXT.description
-    assert "comparing two instruments against each other" in said
-    assert "a different quantity" in said
+    assert "The two weighted panels fail for a reason of their own" in said
+    assert "tests the weighting rather than the distribution" in said
 
 
 def test_the_description_bounds_the_null_result():
     """Without this a reader is left working out what a failed assumption breaks.
     The estimator stays robust and the intervals never used the distribution."""
     said = figures.DISTRIBUTION_TEXT.description
-    assert "remains robust either way" in said
-    assert "intervals are empirical rather than distributional" in said
-    assert "nothing downstream changes" in said
+    # Bounded by what the intervals are rather than by what the estimator stays.
+    # `fitting.empirical_interval` takes the quantiles of the training residuals
+    # and assumes no shape, which is the claim that makes the null harmless.
+    assert "Nothing here changes what the study concludes" in said
+    assert "built from the residuals themselves and assume no distribution at all" in said
 
 
 def test_no_term_a_reader_outside_the_study_would_have_to_decode():
@@ -368,3 +402,53 @@ def test_no_term_a_reader_outside_the_study_would_have_to_decode():
                  "heteroscedastic", "kurtosis", "leptokurtic", "order statistic",
                  "maximum likelihood"):
         assert term not in said
+
+def test_the_key_sits_centred_between_the_panels_and_the_description():
+    """Three gaps, one number: under the subtitle, between the panels and the key,
+    and between the key and the description.
+
+    Measured from the key's *drawn* extent rather than from the axes it belongs
+    to. The legend is 120 px tall in a 92 px band and deliberately overflows
+    downward, so the axes rect ends 32.6 px above where the ink does; measuring
+    the axes would report the lower gap as 88 px when it is 55.
+    """
+    fig = figures.residual_distribution_check(four_panels())
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    subtitle, description = fig.texts[1], fig.texts[2]
+    drawn = [ax for ax in fig.axes if ax.get_legend() is None and ax.get_xlabel()]
+    key = next(ax for ax in fig.axes if ax.get_legend())
+
+    ink = [ax.get_tightbbox(renderer) for ax in drawn]
+    ink += [text.get_window_extent(renderer) for ax in drawn for text in ax.texts]
+    box = key.get_legend().get_window_extent(renderer)
+
+    above = subtitle.get_window_extent(renderer).y0 - max(b.y1 for b in ink)
+    between = min(b.y0 for b in ink) - box.y1
+    below = box.y0 - description.get_window_extent(renderer).y1
+    assert abs(above - between) < 1.0
+    assert abs(between - below) < 1.0
+    # The overflow is real and is why the axes may not stand in for the ink.
+    assert key.get_window_extent(renderer).y0 - box.y0 > 30
+    ps.plt.close(fig)
+
+
+def test_the_heading_rule_follows_the_key_to_its_final_seat():
+    """The key is moved by `seat_key` inside the balance, so the rule has to be
+    drawn after the balance returns. Ruling before it would leave the line at the
+    key's first position, which is the fault that has caught three other figures
+    in this set."""
+    fig = figures.residual_distribution_check(four_panels())
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    key = next(ax for ax in fig.axes if ax.get_legend())
+    headings = [text for text in key.get_legend().get_texts()
+                if text.get_text().startswith("$")]
+    rules = [artist for artist in fig.artists if hasattr(artist, "get_data")]
+    assert len(headings) == len(rules) == 1
+    box = headings[0].get_window_extent(renderer)
+    ends = rules[0].get_transform().transform(list(zip(*rules[0].get_data())))
+    assert ends[0, 1] < box.y0
+    assert box.y0 - ends[0, 1] < 6.0
+    ps.plt.close(fig)
+

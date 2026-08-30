@@ -429,11 +429,19 @@ def test_the_zero_line_entry_parenthesizes_its_gloss():
 def test_each_subtitle_sentence_does_one_job():
     """It carried five things in three sentences. One sentence each now, and
     methane's start date is not something a reader needs before looking at a
-    panel, so it moved to the description."""
+    panel, so it moved to the description.
+
+    Four sentences rather than five: what a panel holds and what a point is are
+    one job, and defining prediction error and giving its sign are another. The
+    cap is 175 rather than 160 because the definition sentence is the longest in
+    the set at 174 and splitting it puts the sign in a sentence of its own, where
+    it reads as a second fact about error rather than as part of the definition.
+    """
     said = figures.AGREEMENT_TEXT.subtitle
     sentences = [s.strip() for s in said.split(". ") if s.strip()]
-    assert max(len(s) for s in sentences) < 160
-    assert sentences[0] == "Each panel is one evaluated year"
+    assert len(sentences) == 4
+    assert max(len(s) for s in sentences) < 175
+    assert sentences[0].startswith("Each panel is one evaluated year")
     assert "sixty months" not in said
 
 
@@ -463,7 +471,12 @@ def test_the_description_is_short_enough_to_leave_the_panels_room():
     said = figures.AGREEMENT_TEXT.description
     sentences = [s.strip() for s in said.split(". ") if s.strip()]
     assert len(sentences) <= 3
-    assert len(said) < 500
+    # 510 rather than 500. The sentence count is the constraint that matters and
+    # it is unchanged at three; the character cap is a proxy for how many lines
+    # the block wraps to, and `balance_drawing_block` now gives whatever rows the
+    # description does not use back to the panels, so a line either way no longer
+    # decides how much canvas the words take. The block stands at 501.
+    assert len(said) < 510
 
 
 def test_the_description_keeps_only_what_can_be_read_off_the_panels():
@@ -471,11 +484,18 @@ def test_the_description_keeps_only_what_can_be_read_off_the_panels():
     alike, and that methane's 2015 differs in which months it holds."""
     said = figures.AGREEMENT_TEXT.description
     # What the alikeness means, rather than only that the panels look alike.
-    assert said.startswith("Across every evaluated year the methods fail in much "
-                           "the same way")
-    assert "regardless of which year they are predicting" in said
+    assert said.startswith("Across every evaluated year the methods miss by "
+                           "similar amounts")
     assert "Methane in 2015 is the one exception" in said
     assert "lower half of the axis" in said
+    # The alikeness is in the amount only. An earlier form claimed the methods
+    # also missed *in similar directions*, which nothing computed supports: the
+    # share of positive errors runs 25% in 2016 against 67% in 2018, and
+    # `same_way` measures the two methods agreeing with each other rather than
+    # the years agreeing with each other. The block now says the opposite, and
+    # says it explicitly rather than by omission.
+    assert "in similar directions" not in said
+    assert "the direction of the miss varies from year to year" in said
 
 
 def test_the_2015_claim_carries_both_halves_of_what_separates_it():
@@ -493,11 +513,20 @@ def test_the_2015_claim_carries_both_halves_of_what_separates_it():
     # The overcorrection this replaced: crediting the whole difference to which
     # months occurred, which denies a claim the data supports.
     assert "rather than how they were predicted" not in said
+    # And the mirror of it, which stood in the block for eleven commits: that
+    # 2015's months are *all small ones*. They are not. They sit in the middle
+    # third of methane's size distribution, which these notes recorded one commit
+    # before the sentence was written. The range is the true statement and it is
+    # what the block now carries.
+    assert "all small ones" not in said
+    assert "months run 17 to 52" in said and "record runs 10 to 104" in said
     # Every precise figure moved out: none of them is checkable against a panel.
-    # The size-controlled ratio stays: it is the one figure that says the year
-    # was predicted badly rather than merely made of small months. Everything
-    # else precise went to the notes.
-    for moved in ("16.5", "9.8", "8.3", "13.3", "0.21", "0.28",
+    # Two stay. The size-controlled ratio is the one figure that says the year
+    # was predicted badly rather than merely made of small months. The 4.1 to 8.3
+    # range is what makes *similar amounts* a claim rather than an impression,
+    # and it is the span of the row a reader is looking at. Everything else
+    # precise went to the notes.
+    for moved in ("16.5", "9.8", "13.3", "0.21", "0.28",
                   "56%", "16%", "81%", "87%", "January 2020", "sixty months",
                   "2020"):
         assert moved not in said
@@ -558,6 +587,116 @@ def test_the_key_falls_back_to_a_band_when_no_row_leaves_it_columns():
     fig.canvas.draw()
     lowest = min(ax.get_window_extent().y0 for ax in year_panels(fig))
     assert keys[0].get_window_extent().y0 < lowest
+    ps.plt.close(fig)
+
+
+def test_the_block_sits_evenly_between_its_two_text_blocks():
+    """It sat 85 px under the subtitle and 163 px over the description, the worst
+    split in the set.
+
+    Both gaps are measured to the nearest ink, and at neither end is that a panel.
+    A boxed gas name stands above the top row and the row's axis name hangs below
+    the bottom one, each an object in the margin at its own end. Balancing to the
+    panel border instead was built and measured: it comes out symmetric in the
+    numbers and bottom-heavy on the canvas, because the top gap then carries the
+    gas label inside it and the bottom gap carries nothing.
+    """
+    fig = figures.prediction_error_by_year(panels())
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    ink = [ax.get_tightbbox(renderer) for ax in year_panels(fig)]
+    ink += [text.get_window_extent(renderer) for text in fig.texts
+            if text.get_bbox_patch() is not None or "Measured" in text.get_text()]
+    # The key is an edge of the block too wherever it falls back to a band under
+    # the rows, which is the case these synthetic panels produce: both rows are
+    # full, so no row leaves it the columns it otherwise stands in.
+    ink += [ax.get_window_extent(renderer) for ax in fig.axes if ax.get_legend()]
+    above = fig.texts[1].get_window_extent(renderer).y0 - max(b.y1 for b in ink)
+    below = min(b.y0 for b in ink) - fig.texts[2].get_window_extent(renderer).y1
+    assert abs(above - below) < 1.0
+    ps.plt.close(fig)
+
+
+def test_nothing_in_the_block_comes_within_the_floor_of_a_text_block():
+    """Balancing to named references settles what should look symmetric and says
+    nothing about what may touch. The gas label stands above the border the
+    balance uses and the axis name below the tick labels, so both sit inside a
+    gap the balance treats as empty; the clearance check is what keeps them off
+    the subtitle and the description."""
+    fig = figures.prediction_error_by_year(panels())
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    ink = [ax.get_tightbbox(renderer) for ax in year_panels(fig)]
+    ink += [text.get_window_extent(renderer) for text in fig.texts
+            if text.get_bbox_patch() is not None or "Measured" in text.get_text()]
+    # The key is an edge of the block too wherever it falls back to a band under
+    # the rows, which is the case these synthetic panels produce: both rows are
+    # full, so no row leaves it the columns it otherwise stands in.
+    ink += [ax.get_window_extent(renderer) for ax in fig.axes if ax.get_legend()]
+    above = fig.texts[1].get_window_extent(renderer).y0 - max(b.y1 for b in ink)
+    below = min(b.y0 for b in ink) - fig.texts[2].get_window_extent(renderer).y1
+    assert min(above, below) >= ps.MIN_BLOCK_GAP_PX
+    ps.plt.close(fig)
+
+
+def test_the_axis_names_do_not_compete_with_the_year_labels():
+    """Both are bold and both were 9.0, so a reader had only position to tell a
+    panel's name from the row's quantity. The ladder now steps at every level."""
+    fig = figures.prediction_error_by_year(panels())
+    names = [t for t in fig.texts if "Measured" in t.get_text()]
+    years = [ax.title for ax in year_panels(fig) if ax.get_title()]
+    gases = [t for t in fig.texts if t.get_bbox_patch() is not None]
+    assert {t.get_fontsize() for t in names} == {figures.YEAR_AXIS_TITLE_SIZE}
+    year_size = {t.get_fontsize() for t in years}.pop()
+    gas_size = {t.get_fontsize() for t in gases}.pop()
+    assert year_size < figures.YEAR_AXIS_TITLE_SIZE < gas_size
+    ps.plt.close(fig)
+
+
+def test_the_key_takes_its_left_margin_from_the_description():
+    """It was set on the carbon dioxide axis name, which lined it up with the
+    nearest thing rather than with the page and left 10.1 px between its border
+    and the methane row's own axis name, the tightest gap on the figure. The
+    description's edge is the one a reader already reads down, and it is 31.2 px
+    further left, which is where that clearance comes from."""
+    built = panels()
+    key = figures.GAS_PANEL[0][0]
+    keep = drawn_years(built[key])[figures.YEAR_KEY_COLUMNS:]
+    built[key] = built[key][built[key].index.year.isin(keep)]
+    fig = figures.prediction_error_by_year(built)
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    box = next(ax for ax in fig.axes if ax.get_legend()).get_legend()
+    described = fig.texts[2].get_window_extent(renderer)
+    assert box.get_window_extent(renderer).x0 == pytest.approx(described.x0, abs=0.5)
+    # And it still clears the axis name of the row it stands in, which is what
+    # bounds its width.
+    names = sorted((t.get_window_extent(renderer) for t in fig.texts
+                    if t.get_rotation() == 90), key=lambda b: b.x0)
+    assert box.get_window_extent(renderer).x1 < names[-1].x0
+    ps.plt.close(fig)
+
+
+def test_the_gas_labels_ride_with_the_panels_they_name():
+    """They are figure text placed against a panel, and the balancer moves axes
+    and nothing else. Left behind they slide out from under the block, which is
+    the fault the seasonal figure hit; here `place` is handed to the balancer so
+    every round puts them back."""
+    fig = figures.prediction_error_by_year(panels())
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    labels = [t for t in fig.texts if t.get_bbox_patch() is not None]
+    assert len(labels) == len(figures.GAS_PANEL)
+    for label in labels:
+        box = label.get_window_extent(renderer)
+        below = [ax for ax in year_panels(fig)
+                 if ax.get_window_extent().y1 < box.y0
+                 and ax.get_window_extent().x0 < box.x1
+                 and ax.get_window_extent().x1 > box.x0]
+        assert below, "a gas label stands over no panel"
+        # Clear of the year labels standing under it, not resting on them.
+        titles = max(ax.title.get_window_extent(renderer).y1 for ax in below)
+        assert 0 < box.y0 - titles
     ps.plt.close(fig)
 
 

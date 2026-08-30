@@ -572,7 +572,8 @@ def canvas_area(text: FigureText, size: str = "wide", extra_left_px: int = 0,
     return fig, (left, axes_bottom, right - left, axes_top - axes_bottom)
 
 
-def balance_drawing_block(fig: Figure, *axes: plt.Axes, rounds: int = 6) -> None:
+def balance_drawing_block(fig: Figure, *axes: plt.Axes, rounds: int = 6,
+                          extra=(), reflow=None, grow: bool = True) -> None:
     """Give the drawing block the same air above it as below it.
 
     The gap above is what the title and subtitle blocks leave; the gap below is
@@ -595,9 +596,40 @@ def balance_drawing_block(fig: Figure, *axes: plt.Axes, rounds: int = 6) -> None
 
     Call after everything else is drawn on the axes, since the lower gap is
     measured to the tick labels and axis title rather than the frame.
+
+    `extra` names artists that are part of the block but are not axes and do not
+    move with one: figure-level text standing above or below the panels. They are
+    measured as ink like any other furniture. Without them the block balances to
+    the panels alone and drives whatever sits outside them into a text block,
+    which is what a boxed gas label above a row does.
+
+    `grow` may be turned off where the block's size is not the caller's to give
+    away. The residual check draws four panels that are square **in pixels**,
+    because the reference they carry is a line of equality and a panel that is not
+    square puts it at some other angle; growing them vertically to fill a gap
+    would break the one thing those panels have to be. With `grow=False` the block
+    is translated rather than scaled, both gaps meeting in the middle instead of
+    the smaller one being filled, and the caller keeps responsibility for the block
+    fitting at all.
+
+    `reflow` is called after every resize. Anything in `extra` has to be put back
+    against the panels it belongs to, since moving an axes does not move a figure
+    text placed relative to it, and the next round measures against where it now
+    is. A caller passing `extra` and no `reflow` gets a stale measurement.
+
     """
     height_px = fig.get_size_inches()[1] * fig.dpi
     subtitle, description = fig.texts[1], fig.texts[2]
+
+    def ink(renderer):
+        boxes = [ax.get_tightbbox(renderer) for ax in axes]
+        boxes += [artist.get_window_extent(renderer) for artist in extra]
+        return boxes
+
+    def bounds(renderer):
+        boxes = ink(renderer)
+        return max(b.y1 for b in boxes), min(b.y0 for b in boxes)
+
     # Iterated, because growing the block moves what it was measured against:
     # taller panels put their tick labels somewhere new, so one pass overshoots
     # wherever the block scales rather than simply shifts.
@@ -609,24 +641,30 @@ def balance_drawing_block(fig: Figure, *axes: plt.Axes, rounds: int = 6) -> None
         # The upper one was measured to the frame, which is right only where
         # nothing sits above it: the seasonal figure puts a boxed gas label
         # there, and balancing to the frame would push it into the subtitle.
-        furniture = [ax.get_tightbbox(renderer) for ax in axes]
-        above = subtitle.get_window_extent(renderer).y0 - max(f.y1 for f in furniture)
-        below = min(f.y0 for f in furniture) - description.get_window_extent(renderer).y1
+        ceiling, floor = bounds(renderer)
+        above = subtitle.get_window_extent(renderer).y0 - ceiling
+        below = floor - description.get_window_extent(renderer).y1
         if abs(above - below) < 0.05:
             break
-        grow = abs(above - below) / height_px
+        room = abs(above - below) / height_px
 
         boxes = [ax.get_position() for ax in axes]
         floor = min(b.y0 for b in boxes)
         ceiling = max(b.y1 for b in boxes)
         span = ceiling - floor
-        if below > above:
+        if not grow:
+            # Slid, not stretched. Half the difference moves from one gap to the
+            # other and the block keeps its size.
+            base, scale = floor - (below - above) / (2 * height_px), 1.0
+        elif below > above:
             # The block drops its floor and stretches down into the gap.
-            base, scale = floor - grow, (span + grow) / span
+            base, scale = floor - room, (span + room) / span
         else:
             # The block keeps its floor and stretches up.
-            base, scale = floor, (span + grow) / span
+            base, scale = floor, (span + room) / span
         _resize(axes, boxes, floor, base, scale)
+        if reflow is not None:
+            reflow()
 
     # Equal is not the whole job. A block can be taller than the space between
     # the two text blocks, and then equalising only shares the overlap out: the
@@ -636,16 +674,20 @@ def balance_drawing_block(fig: Figure, *axes: plt.Axes, rounds: int = 6) -> None
     # reservation to defend; shrinking happens only when the block does not fit.
     fig.canvas.draw()
     renderer = fig.canvas.get_renderer()
-    furniture = [ax.get_tightbbox(renderer) for ax in axes]
+    furniture = ink(renderer)
     gap = min(subtitle.get_window_extent(renderer).y0 - max(f.y1 for f in furniture),
               min(f.y0 for f in furniture) - description.get_window_extent(renderer).y1)
-    if gap >= MIN_BLOCK_GAP_PX:
+    if gap >= MIN_BLOCK_GAP_PX or not grow:
+        # Nothing to shrink where the caller has fixed the block's size: the only
+        # instrument left would be the one `grow=False` exists to withhold.
         return
     boxes = [ax.get_position() for ax in axes]
     floor = min(b.y0 for b in boxes)
     span = max(b.y1 for b in boxes) - floor
     shrink = 2 * (MIN_BLOCK_GAP_PX - gap) / height_px
     _resize(axes, boxes, floor, floor + shrink / 2, (span - shrink) / span)
+    if reflow is not None:
+        reflow()
 
 
 def _resize(axes, boxes, floor: float, base: float, scale: float) -> None:
@@ -939,7 +981,12 @@ def panel_name(ax: plt.Axes, name: str, y: float = 0.952, align: str = "left",
     name can sit outside the axes without a second way of drawing the same box.
     """
     if x is None:
-        x = 0.016 if align == "left" else 0.984
+        # Axes fractions are fractions of the drawn panel, not of the room it sits
+        # in: the rotated axis name and the tick labels stand outside the axes, so
+        # 0.5 is the middle of the frame a reader sees rather than the middle of
+        # the frame plus its left gutter. Centring on the tight bounding box
+        # instead would pull the name left by half the gutter.
+        x = {"left": 0.016, "center": 0.5}.get(align, 0.984)
     ax.annotate(name, xy=(x, y), xycoords="axes fraction", ha=align, va="top",
                 fontsize=LEGEND_SIZE + 1.6, fontweight="bold", color=INK, zorder=9,
                 bbox=dict(boxstyle="round,pad=0.42", facecolor="white",

@@ -17,6 +17,8 @@ import pandas as pd
 from matplotlib.figure import Figure
 from matplotlib.colors import LinearSegmentedColormap, to_rgba
 from matplotlib.lines import Line2D
+from matplotlib.legend_handler import HandlerBase, HandlerPatch
+from matplotlib.patches import FancyArrow
 from matplotlib.patches import Patch
 from matplotlib.patches import Rectangle
 from matplotlib.ticker import MaxNLocator, NullFormatter, ScalarFormatter
@@ -320,9 +322,13 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
     strip.tick_params(axis="x", which="minor", labelbottom=True,
                       labelsize=ps.TICK_SIZE)
 
+    ps.balance_drawing_block(fig, ax, strip)
+    # Ruled after the balance, never before. The rules are figure artists at fixed
+    # figure coordinates and the balance moves the axes their legend rides on, so
+    # ruling first leaves the line where the heading used to be. It struck through
+    # both headings here for as long as this figure has been balanced.
     _underline_legend_headings(fig, ax)
     _underline_legend_title(fig, strip_legend)
-    ps.balance_drawing_block(fig, ax, strip)
 
     return fig
 
@@ -930,7 +936,6 @@ def observed_and_predicted(panels: dict[str, pd.DataFrame]) -> Figure:
         ps.even_year_ticks(ax, first.year, last.year, label_every_year=True)
         if ax.get_legend() is not None:
             _raise_top_for_flux_legend(ax, panels[key])
-            _underline_legend_headings(fig, ax)
     ps.balance_drawing_block(fig, *axes)
     for ax in axes:
         if ax.get_legend() is not None:
@@ -1231,37 +1236,57 @@ def measurements_used(panels: dict[str, pd.DataFrame]) -> Figure:
 STABILITY_TEXT = ps.FigureText(
     title=("The water table coefficient refitted on drier months at "
            "Marcell Bog Lake Peatland"),
+    #: Three things left this block. The tenths and fifths named the old x-axis,
+    #: which counted the share of months dropped; the axis now counts the months
+    #: left in the fit, so the subtitle was describing a quantity the figure had
+    #: stopped drawing. "It climbs at every step" and the soil temperature
+    #: comparison are the description's to make. And the closing clause about
+    #: carrying the coefficient along the arrow is said where the arrow is, by the
+    #: annotation that also carries the distances.
+    #:
+    #: "All 115" stays where "ending with 69" went: the top axis draws both
+    #: numbers, but only the first of them needs saying, because a bare 115 on an
+    #: axis does not say it is the whole fit window.
     subtitle=(
-        "The model was fitted five times, each on a smaller set of months: first "
-        "all 115, then the same months with the wettest tenth removed, and on to "
-        "the wettest two fifths. The water table coefficient is how much predicted "
+        "The model was fitted five times, each on fewer months than the last, "
+        "starting with all 115. The water table coefficient is how much predicted "
         "emission changes per meter of water table, and each point is what that "
-        "coefficient came out as, placed at the wettest month still in the fit. It "
-        "climbs at every step, while the soil temperature coefficient beside it "
-        "moves a third as far. A coefficient that changes when its range of water "
-        "table shrinks is describing the months it was fitted on rather than the "
-        "peatland, so it cannot be carried out along the arrow, where the "
-        "reconstruction needs it."
+        "coefficient came out as, placed at the wettest month still in the fit. A "
+        "coefficient that changes when its range of water table shrinks is "
+        "describing the months it was fitted on rather than the peatland."
     ),
+    #: The four percentages are labeled on the panel at the end of each path, so
+    #: quoting them here read them back rather than adding to them. What is left
+    #: is the shape of the result, which no single label carries: that both
+    #: treatments climb, that they climb at every step, and that no one step
+    #: proves it.
     description=(
-        "The same analysis is drawn twice, once weighting each month by how well it "
-        "was measured and once not. Both fail and neither is the better treatment: "
-        "weighted, the coefficient rises 51%, from 2.704 to 4.077; unweighted, 38%, "
-        "from 2.385 to 3.299. Every step's range overlaps the first, so no single "
-        "step is decisive, and the evidence is that it climbs at all four and never "
-        "once falls. The soil temperature coefficient moves 16% along the same "
-        "path, and only without weighting is it flat."
+        "Weighting each month by how well it was measured changes the numbers but "
+        "not the outcome. The coefficient climbs at all four steps under both "
+        "treatments and never once falls. Every step's range overlaps the first, "
+        "so no single step is decisive and the pattern is the evidence. Soil "
+        "temperature, run through the same experiment, moves far less. The "
+        "percentage at the dry end of each line is its total change across all "
+        "five fits."
     ),
 )
 
 #: The two treatments, achromatic and separated by line style. Hue would make them
 #: read as two methods being compared, and they are one analysis run twice: the
 #: finding is that neither survives, not that one of them does.
+#: The markers are drawn open, and the two settings that make them open live here
+#: rather than at the `errorbar` call. They were added at the call, which the key
+#: does not go through: the panel drew hollow rings and the key drew solid marks
+#: for the same two paths, for as long as this figure has had a key. Keeping every
+#: property in the dict both readers share removes the way that happened rather
+#: than the instance of it.
 TREATMENTS = (
     ("weighted", "with weighting", {"color": ps.INK, "linestyle": "-", "linewidth": 1.8,
-                                    "marker": "o", "markersize": 6.0}),
+                                    "marker": "o", "markersize": 6.0,
+                                    "markerfacecolor": "white", "markeredgewidth": 1.4}),
     ("unweighted", "without weighting", {"color": "#767676", "linestyle": (0, (7, 2, 2, 2)),
-                                         "linewidth": 1.5, "marker": "^", "markersize": 6.2}),
+                                         "linewidth": 1.5, "marker": "^", "markersize": 6.2,
+                                         "markerfacecolor": "white", "markeredgewidth": 1.4}),
 )
 
 #: The two terms, the columns each is carried in, and the unit its axis is in.
@@ -1271,9 +1296,12 @@ TREATMENTS = (
 STABILITY_TERMS = (
     ("Water table", "water_table_coef", "water_table_lo", "water_table_hi",
      "Per meter of water table", None),
+    # No note on the control panel. "The control: the same experiment, on a
+    # coefficient that barely moves" carried a colon, restated the description's
+    # last sentence, and labeled a panel already carrying a bordered
+    # "Soil temperature" name three centimetres above it.
     ("Soil temperature", "soil_temp_coef", "soil_temp_lo", "soil_temp_hi",
-     "Per °C of soil temperature",
-     "The control: the same experiment, on a coefficient that barely moves"),
+     "Per °C of soil temperature", None),
 )
 
 STABILITY_X_AXIS = "Water table, in meters from the wettest month the model was fitted on"
@@ -1284,6 +1312,16 @@ BEYOND_LABEL = (
     "wettest month ever fitted ({ratio:.1f} times the {span:.2f} m this experiment covers)"
 )
 EDGE_LABEL = "The wettest month the model was fitted on"
+#: The arrow's own entry. It was the one mark on the panel carrying no key, while
+#: the dashed rule beside it in the same orange carried one, so a reader met two
+#: orange marks handled two different ways. Worded to name the mark rather than to
+#: repeat the annotation standing on it, which carries the two distances.
+BEYOND_KEY = "How far the reconstruction reaches past the fit"
+#: What the strip's mark is, rather than what it measures. It read "A distance in
+#: meters of water table", and a distance does not describe a bracket: the mark is
+#: a span with a tick at each end, and the ticks are where a reader takes the
+#: reading from.
+BRACKET_KEY = "A bracketed span, in meters of water table"
 
 
 def stability_paths(frame: pd.DataFrame) -> dict[str, pd.DataFrame]:
@@ -1326,8 +1364,7 @@ def _draw_stability_panel(ax, paths, reference, window, term) -> None:
         ax.errorbar(x, y, yerr=np.vstack([y - frame[low].to_numpy(),
                                           frame[high].to_numpy() - y]),
                     elinewidth=1.0, capsize=3.5, ecolor=style["color"], zorder=3,
-                    label=label, **style, markerfacecolor="white",
-                    markeredgewidth=1.4)
+                    label=label, **style)
         # Where it started, carried across, so the climb is read against a line
         # rather than against the axis.
         ax.plot([x.min(), 0.0], [y[0], y[0]], color=style["color"], linewidth=0.9,
@@ -1347,8 +1384,12 @@ def _draw_stability_panel(ax, paths, reference, window, term) -> None:
         ax.spines[side].set_visible(False)
     for side in ("left", "bottom"):
         ax.spines[side].set_color(ps.BOUNDARY)
-    # Off the data and into the ground the fill used to cover, on both panels.
-    ps.panel_name(ax, name, align="right")
+    # Centred over the panel, which is where the other two multi-panel figures in
+    # the set put a panel name. In the upper right it sat 722.7 px off centre and
+    # read as a note in the corner rather than as the name of the row; there is
+    # nothing in the upper middle of either panel to displace, since the fits
+    # occupy the leftmost third and everything else is furniture below them.
+    ps.panel_name(ax, name, align="center")
     if caption:
         ax.text(0.985, 0.46, caption, transform=ax.transAxes, ha="right", va="center",
                 fontsize=ps.ANNOTATION_SIZE, style="italic", color=ps.MUTED, zorder=5)
@@ -1360,10 +1401,12 @@ def _draw_beyond_arrow(ax, required: float, span: float) -> None:
                 xycoords=("data", "axes fraction"), textcoords=("data", "axes fraction"),
                 arrowprops=dict(arrowstyle="-|>", color=ps.OUTSIDE, linewidth=1.2,
                                 shrinkA=0, shrinkB=0), zorder=4)
-    ax.text(required / 2, 0.245, BEYOND_LABEL.format(required=required,
-                                                     ratio=required / span, span=span),
-            transform=ax.get_xaxis_transform(), ha="center", va="bottom",
-            fontsize=ps.ANNOTATION_SIZE, color=ps.OUTSIDE, linespacing=1.5, zorder=4)
+    return ax.text(required / 2, 0.245,
+                   BEYOND_LABEL.format(required=required, ratio=required / span,
+                                       span=span),
+                   transform=ax.get_xaxis_transform(), ha="center", va="bottom",
+                   fontsize=ps.ANNOTATION_SIZE, color=ps.OUTSIDE, linespacing=1.5,
+                   zorder=4)
 
 
 def _draw_stability_strip(ax, span, tested: float) -> None:
@@ -1382,35 +1425,128 @@ def _draw_stability_strip(ax, span, tested: float) -> None:
     ax.spines["bottom"].set_color(ps.BOUNDARY)
 
 
+class _MarkKey(Patch):
+    """A stand-in whose only job is to be recognised by a handler below.
+
+    Three marks on this figure cannot be keyed by a `Line2D`, because a legend
+    lays every handle on three sample points and draws the marker at each of them.
+    A marker-only entry therefore renders as **three** ticks where the panel draws
+    one interval, and the bracket renders with a third tick in its middle where
+    the strip has two at its ends. Neither was noticed: at this size three ticks
+    in a row read as one thick mark.
+    """
+
+
+class _ArrowKey(_MarkKey):
+    """The reach the reconstruction needs, drawn as an arrow."""
+
+
+class _IntervalKey(_MarkKey):
+    """Where the coefficient landed in the resamples: a capped interval."""
+
+
+class _BracketKey(_MarkKey):
+    """A span in meters, bracketed at both ends."""
+
+
+class _IntervalHandler(HandlerBase):
+    """A vertical interval with a cap at each end, as `errorbar` draws it."""
+
+    def create_artists(self, legend, orig_handle, xdescent, ydescent,
+                       width, height, fontsize, trans):
+        middle, cap = width / 2.0, 3.5
+        parts = [Line2D([middle, middle], [height * 0.02, height * 0.98])]
+        parts += [Line2D([middle - cap, middle + cap], [y, y])
+                  for y in (height * 0.02, height * 0.98)]
+        for part in parts:
+            part.set(color=ps.BOUNDARY, linewidth=1.0)
+            part.set_transform(trans)
+        return parts
+
+
+class _BracketHandler(HandlerBase):
+    """A horizontal span with a tick at each end, as the strip draws it.
+
+    Two ticks, not three. The end ticks are what make it a bracket rather than a
+    rule, and a third in the middle marks a place the strip does not.
+    """
+
+    def create_artists(self, legend, orig_handle, xdescent, ydescent,
+                       width, height, fontsize, trans):
+        parts = [Line2D([0.0, width], [height / 2.0, height / 2.0])]
+        parts += [Line2D([x, x], [height * 0.18, height * 0.82])
+                  for x in (0.0, width)]
+        for part in parts:
+            part.set(color=ps.BOUNDARY, linewidth=1.2)
+            part.set_transform(trans)
+        return parts
+
+
+class _ArrowHandler(HandlerPatch):
+    """Draw the arrow entry as an arrow.
+
+    Every other handle in this key is a line and needs no handler. An arrow drawn
+    as a plain line loses the head, which is the whole of what distinguishes it
+    from the dashed rule two rows above it in the same hue.
+    """
+
+    def create_artists(self, legend, orig_handle, xdescent, ydescent,
+                       width, height, fontsize, trans):
+        arrow = FancyArrow(0.0, height / 2.0, width, 0.0,
+                           length_includes_head=True, head_width=height * 0.75,
+                           head_length=width * 0.30, width=0.9,
+                           color=ps.OUTSIDE, linewidth=0.0)
+        arrow.set_transform(trans)
+        return [arrow]
+
+
 def _stability_legend(fig, ax) -> None:
     """One key for both panels, in the ground the shaded region used to cover.
 
     Two columns with ruled headings, as elsewhere in the set. Panel b carries the
-    same four marks and no key of its own, so a second one would repeat itself.
+    same marks and no key of its own, so a second one would repeat itself.
     """
     blank = Line2D([], [], linestyle="none", marker="none")
     entries = [(blank, r"$\bf{The\ two\ treatments}$")]
     entries += [(Line2D([], [], **style), label) for _, label, style in TREATMENTS]
-    entries += [(blank, ""), (blank, "")]
+    # Three spacers, not two. The columns fill top to bottom, so the first has to
+    # be padded to the length of the second or the second heading falls to the
+    # foot of the first column instead of standing over the marks it names. The
+    # arrow entry made the second column five long and this three.
+    entries += [(blank, ""), (blank, ""), (blank, "")]
     entries += [
         (blank, r"$\bf{What\ the\ marks\ show}$"),
-        (Line2D([], [], color=ps.BOUNDARY, linestyle="none", marker="|", markersize=11,
-                markeredgewidth=1.2),
-         "Where the coefficient landed in 500 resamples"),
+        (_IntervalKey(), "Where the coefficient landed in 500 resamples"),
         (Line2D([], [], color=ps.INK, linestyle=(0, (1, 2.4)), linewidth=0.9),
          "Its value on the whole range, carried across"),
         (Line2D([], [], color=ps.OUTSIDE, linestyle=(0, (5, 3)), linewidth=1.1),
          EDGE_LABEL),
-        (Line2D([], [], color=ps.BOUNDARY, linewidth=1.2, marker="|", markersize=8,
-                markeredgewidth=1.2),
-         "A distance in meters of water table"),
+        (_BracketKey(), BRACKET_KEY),
+        (_ArrowKey(), BEYOND_KEY),
     ]
     ps.legend(ax, handles=[h for h, _ in entries],
               labels=[label for _, label in entries],
-              loc="upper right", bbox_to_anchor=(0.998, 0.90), ncol=2, frameon=False,
+              handler_map={_ArrowKey: _ArrowHandler(),
+                           _IntervalKey: _IntervalHandler(),
+                           _BracketKey: _BracketHandler()},
+              # Seated over the orange annotation rather than in the upper right.
+              # There it sat 13.9 px under the bordered panel name and 3.3 px off
+              # the panel's own edge, crowding two things at once; the border made
+              # both visible. The anchor is set again after the balance, from the
+              # annotation's drawn position, since that is the object it is seated
+              # against and the balance moves the panel under both of them.
+              loc="lower center", bbox_to_anchor=(0.5, 0.42), ncol=2,
+              # Bordered. Five marks in two columns standing loose on the panel
+              # read as annotation scattered in empty ground; a frame says they
+              # are one object and that the ground around them is not part of it.
+              frameon=True, edgecolor=ps.BOUNDARY, facecolor="white",
               labelspacing=0.42, columnspacing=2.2, handlelength=2.4,
-              handletextpad=0.9, fontsize=ps.LEGEND_SIZE - 1.0, borderpad=0.0)
-    _underline_legend_headings(fig, ax)
+              handletextpad=0.9, fontsize=ps.LEGEND_SIZE - 1.0, borderpad=0.55,
+              # The inner padding was already taken to zero here, so the outer
+              # inset was the only thing left between the anchor and the corner
+              # it names. It was the default half a font size, 8.85 px, which
+              # put the key 12.2 px inside the axes where 3.3 px was chosen.
+              borderaxespad=0.0)
 
 
 #: Pixel allocations for the stability figure. The strip is thin because it now
@@ -1437,6 +1573,62 @@ def _seat_axis_names(fig, axes, pad_px: float = 17.0) -> None:
     for ax in axes:
         width_px = ax.get_window_extent().width
         ax.yaxis.set_label_coords(-(widest + pad_px) / width_px, 0.5)
+
+
+#: How far the key stands above the annotation it is seated over. Wider than the
+#: 18 px the set uses between a block and a text block, because these two are not
+#: a block and its margin: they are two objects in one field of empty ground, and
+#: at 18 px they read as one stack rather than as a key above a note.
+STABILITY_KEY_GAP_PX = 40.0
+
+#: How far the months axis name stands above its own numbers. The numbers are set
+#: outside the axes, so this cannot be expressed as an axes fraction and is
+#: measured off them.
+COUNT_AXIS_PAD_PX = 14.0
+
+
+def _seat_count_axis_name(fig, counts) -> None:
+    """Centre the months axis name on the numbers it names.
+
+    It was centred on the axes, which is 1652 px wide, while the five fits it
+    counts occupy the leftmost 466 of them. That put the name 528 px to the right
+    of anything it labeled, over the empty ground the arrow crosses.
+    """
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    boxes = [label.get_window_extent(renderer) for label in counts.get_xticklabels()
+             if label.get_text()]
+    middle = (min(box.x0 for box in boxes) + max(box.x1 for box in boxes)) / 2.0
+    # Above the numbers, not level with them. `set_label_coords` reads its pair in
+    # axes fractions, and 1.0 is the top of the axes rather than the top of the
+    # tick labels, which stand outside it: seating the name there dropped it into
+    # the row of numbers it names.
+    over = max(box.y1 for box in boxes) + COUNT_AXIS_PAD_PX
+    counts.xaxis.set_label_coords(
+        *counts.transAxes.inverted().transform((middle, over)),
+        transform=counts.transAxes)
+
+
+def _seat_stability_key(fig, ax, beyond) -> None:
+    """Centre the key over the annotation, once the panel has stopped moving.
+
+    Measured against the annotation rather than set at a fraction, because the
+    annotation's own height is fixed in points while the panel's is not: the
+    balance rescales the panel and a fraction chosen before it drifts.
+    """
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    note = beyond.get_window_extent(renderer)
+    panel = ax.get_window_extent(renderer)
+    # Centred in the ground above the annotation rather than set at a fixed gap
+    # over it. At 40 px it was nearer the annotation than anything else on the
+    # panel was to anything, which made the two read as one stack; the column
+    # above it is empty as far as the panel's own top, because the fits end well
+    # to the left, so there is nothing to spend it on but this.
+    seat = ax.transAxes.inverted().transform(
+        ((note.x0 + note.x1) / 2, (note.y1 + panel.y1) / 2))
+    ax.get_legend().set_bbox_to_anchor(tuple(seat))
+    ax.get_legend().set_loc("center")
 
 
 def coefficient_stability(paths: dict[str, pd.DataFrame], required: float,
@@ -1486,22 +1678,49 @@ def coefficient_stability(paths: dict[str, pd.DataFrame], required: float,
     # share dropped said the same thing counting down while the axis counted up.
     counts = axes[0].secondary_xaxis("top")
     counts.set_xticks(list(x))
+    # Bold, like the percentages at the other end of each path. They are the
+    # sample size every point rests on, which is a reading a reader takes rather
+    # than apparatus they read past. Not boxed: this set borders panel names and
+    # nothing else, so a second kind of box on one panel would cost the border
+    # the one meaning it has.
     counts.set_xticklabels([f"{n:.0f}" for n in reference["n_months"]],
-                           fontsize=ps.TICK_SIZE - 1.5, color=ps.MUTED)
+                           fontsize=ps.TICK_SIZE - 1.5, color=ps.MUTED,
+                           fontweight="bold")
     counts.set_xlabel(COUNT_AXIS, fontsize=ps.LABEL_SIZE, color=ps.INK, labelpad=6)
     counts.tick_params(length=3.2, width=0.9, colors=ps.MUTED)
     counts.spines["top"].set_visible(False)
 
     _seat_axis_names(fig, axes)
-    _draw_beyond_arrow(axes[0], required, abs(x.min()))
+    beyond = _draw_beyond_arrow(axes[0], required, abs(x.min()))
     _stability_legend(fig, axes[0])
+    # Ruled after the balance below, for the reason recorded on the reconstruction
+    # figure: the rules do not move with the legend.
+
 
     strip_base = bottom + label_band
     strip_ax = fig.add_axes((left, strip_base, width, strip))
     _draw_stability_strip(strip_ax, span, tested)
-    fig.text(left + width / 2, strip_base - 44 / height_px, STABILITY_X_AXIS,
-             ha="center", va="top", fontsize=ps.LABEL_SIZE, fontweight="bold",
-             color=ps.INK)
+    name = fig.text(left + width / 2, strip_base - 44 / height_px, STABILITY_X_AXIS,
+                    ha="center", va="top", fontsize=ps.LABEL_SIZE,
+                    fontweight="bold", color=ps.INK)
+    # The block sat 34 px under the subtitle and 147 px over the description, the
+    # widest split left in the set. The axis name below the strip is figure text
+    # and the panel names and key are axes text, so neither reaches the balancer
+    # through `get_tightbbox`; both are passed as ink. Nothing reflows, because
+    # every one of them is placed against the strip or the panel it belongs to
+    # and moves with it, except this name, which is put back afterwards.
+    def replace() -> None:
+        floor = min(ax.get_position().y0 for ax in (*axes, strip_ax))
+        name.set_position((left + width / 2, floor - 44 / height_px))
+        # The months axis name is seated in pixels off its own numbers, so it has
+        # to be seated again whenever the panel is rescaled. Seated only after the
+        # balance it becomes the block's top ink at a height the balance never
+        # measured, and the two gaps stop agreeing.
+        _seat_count_axis_name(fig, counts)
+
+    ps.balance_drawing_block(fig, *axes, strip_ax, extra=[name], reflow=replace)
+    _seat_stability_key(fig, axes[0], beyond)
+    _underline_legend_headings(fig, axes[0])
     return fig
 
 
@@ -2193,24 +2412,34 @@ def seasonal_cycle(panels: dict[str, pd.DataFrame]) -> Figure:
 AGREEMENT_TEXT = ps.FigureText(
     title=("Prediction error by year at Marcell Bog Lake Peatland "
            "(2013 to 2019)"),
+    #: The grey points had a sentence here naming them. It restated the key's
+    #: second entry word for word, and the key is the place a reader looks for
+    #: what a mark means.
     subtitle=(
-        "Each panel is one evaluated year. Each point is one month, placed at the "
-        "middle of what the eight fitted methods predicted for it. Prediction "
-        "error is how far a prediction fell from what was measured. It is taken "
-        "here as the measurement minus the prediction, so a point above the zero "
-        "line was predicted too low. The grey points are the months of every other "
-        "year, repeated behind every panel. Carbon dioxide runs negative because "
-        "the peatland takes up more carbon than it releases, and methane runs "
-        "positive because peatlands emit it. Every panel in a row shares its axes."
+        "Each panel is one evaluated year, and each point is one month placed at "
+        "the middle of what the eight fitted methods predicted for it. Prediction "
+        "error is how far a prediction fell from what was measured, taken here as "
+        "the measurement minus the prediction, so a point above the zero line was "
+        "predicted too low. Carbon dioxide runs negative because the peatland "
+        "takes up more carbon than it releases, while methane runs positive "
+        "because peatlands emit it. Every panel in a row shares its axes."
     ),
+    #: Two claims this block used to make were wrong and are gone. It said the
+    #: methods missed *in similar directions*, which nothing computed supports:
+    #: the share of positive errors runs 25% in 2016 to 67% in 2018, and
+    #: `same_way` measures the fitted and seasonal methods agreeing with each
+    #: other, not years agreeing with each other. And it said 2015's months were
+    #: *all small ones*, which these notes had already recorded as false one
+    #: commit before the sentence was written: they sit in the middle third of
+    #: the size distribution, and the true statement is the range, 17 to 52.
     description=(
-        "Across every evaluated year the methods fail in much the same way, "
-        "missing by similar amounts and in similar directions regardless of which "
-        "year they are predicting. Methane in 2015 is the one exception, and it "
-        "differs twice over: its months are all small ones, so a weak season "
-        "holding no large months puts its points entirely in the lower half of "
-        "the axis, and its months are also missed about 1.7 times as badly as "
-        "months of the same size across the record."
+        "Across every evaluated year the methods miss by similar amounts, running "
+        "4.1 to 8.3 on methane once 2015 is set aside, though the direction of the "
+        "miss varies from year to year. Methane in 2015 is the one exception and "
+        "it differs twice over. Its months run 17 to 52 where the evaluated record "
+        "runs 10 to 104, so a season with no large months puts its points entirely "
+        "in the lower half of the axis, and those months are also missed about 1.7 "
+        "times as badly as months of the same size across the record."
     ),
 )
 
@@ -2361,6 +2590,11 @@ YEAR_COLUMN_GAP_PX = 13
 #: blank and a key standing in them costs nothing, where a band under the rows
 #: cost 96 px of height that the panels now have instead. How many leading empty
 #: columns a row needs before the key will fit in them.
+#: How far the boxed gas label stands above its row's panels. It was 56, which
+#: the year labels cleared but only just: the frame's lower edge sat on top of
+#: them and the two read as one stack rather than as a name over a row of years.
+YEAR_GAS_LABEL_PX = 64
+
 YEAR_KEY_COLUMNS = 2
 
 #: The band under both rows the key falls back to when no row leaves that many
@@ -2434,7 +2668,24 @@ def _draw_year_panel(ax, errors: pd.DataFrame, year: int,
         ax.spines[side].set_color(ps.BOUNDARY)
 
 
-def _year_key(fig, rect: tuple[float, float, float, float]) -> None:
+#: The key's own size, set here rather than taken off `LEGEND_SIZE` because this
+#: key is the one in the set that stands inside the drawing block rather than
+#: beside it. It was two points under the set size, which is smaller than
+#: anything else a reader has to read on the canvas, and the columns it stands in
+#: are empty: there was nothing the extra height could collide with.
+YEAR_KEY_SIZE = 8.2
+
+#: The two axis names on each row. They were 9.0, the same as the bold year label
+#: over every panel, and two bold labels at one size in one figure compete: a
+#: reader has nothing but position to tell a panel's name from the row's quantity.
+#: 10.5 puts a step between them without reaching the boxed gas names at 11.1,
+#: which stay the largest thing in the block because they name the row. The
+#: ladder is 7.5 ticks, 9.0 year labels, 10.5 axis names, 11.1 gas names.
+YEAR_AXIS_TITLE_SIZE = 10.5
+
+
+def _year_key(fig, rect: tuple[float, float, float, float],
+              left_x: float | None = None):
     """One key for every panel, standing in the columns the methane row leaves
     empty at its left.
 
@@ -2463,19 +2714,33 @@ def _year_key(fig, rect: tuple[float, float, float, float]) -> None:
         (Line2D([], [], color=ps.BOUNDARY, linewidth=1.0, linestyle=(0, (5, 3))),
          AGREEMENT_KEYS[2]),
     ]
-    # Smaller than the set's legend size: the key now stands in two grid columns
-    # rather than across the whole canvas, and its longest entry has to fit them.
-    # Held right of and below the middle of its region. The row's rotated axis
-    # name is centered on the row, so a key centered there too sits at the same
-    # height and the two read as one band however far apart they are; dropping
-    # the key below that line is what separates them. Right of center as well,
-    # so it sits in the empty columns rather than against the canvas edge.
+    # Held below the middle of its region. The row's rotated axis name is
+    # centered on the row, so a key centered there too sits at the same height
+    # and the two read as one band however far apart they are; dropping the key
+    # below that line is what separates them.
+    #
+    # Horizontally its left edge is set on the left edge of the carbon dioxide
+    # row's axis name, passed in as `left_x`. Those two are the only things
+    # standing in this gutter and a reader reads down it, so one shared left
+    # margin is what makes them a column rather than two loose objects. Centering
+    # them on each other instead is not available: the key is 577 px wide against
+    # a 25 px axis name, and a shared center line would carry its left edge off
+    # the canvas. The edge is measured off the drawn name rather than written
+    # down as an offset, so it survives a change to the grid or to the key's own
+    # width, both of which have moved during this figure's life.
+    anchor = (0.54, "center") if left_x is None else (
+        (left_x - rect[0]) / rect[2], "center left")
     ps.legend(ax, handles=[handle for handle, _ in entries],
-              labels=[label for _, label in entries], loc="center",
-              bbox_to_anchor=(0.54, 0.34), ncol=1, framealpha=1.0, borderpad=0.7,
-              labelspacing=0.5, handlelength=1.9,
-              handletextpad=0.7, fontsize=ps.LEGEND_SIZE - 2.0)
+              labels=[label for _, label in entries], loc=anchor[1],
+              bbox_to_anchor=(anchor[0], 0.34), ncol=1, framealpha=1.0,
+              borderpad=1.0, labelspacing=1.0, handlelength=1.9,
+              handletextpad=0.7, fontsize=YEAR_KEY_SIZE,
+              # Otherwise matplotlib insets the box from the anchor by half a
+              # font size, which is 8.6 px here and is exactly the kind of
+              # almost-aligned that reads as a mistake rather than a margin.
+              borderaxespad=0.0)
     _underline_legend_headings(fig, ax, center=True)
+    return ax
 
 
 def prediction_error_by_year(panels: dict[str, pd.DataFrame]) -> Figure:
@@ -2540,6 +2805,7 @@ def prediction_error_by_year(panels: dict[str, pd.DataFrame]) -> Figure:
     down = (height - foot - banding
             - (len(GAS_PANEL) - 1) * row_gap) / len(GAS_PANEL)
 
+    rows = []
     for row, (key, gas, unit) in enumerate(GAS_PANEL):
         frame = errors[key]
         # One scale for the row, so a year that sits low is low against every
@@ -2562,6 +2828,7 @@ def prediction_error_by_year(panels: dict[str, pd.DataFrame]) -> Figure:
         # starts late is a fact about the record and it is in the description.
         filled = occupied[key]
 
+        drawn = []
         for column in filled:
             at = left + axis_room + column * (across + gap)
             ax = fig.add_axes((at, top - down, across, down))
@@ -2573,41 +2840,119 @@ def prediction_error_by_year(panels: dict[str, pd.DataFrame]) -> Figure:
             # of knowing that and will assume they do not.
             ax.set_title(str(years[column]), fontsize=ps.LABEL_SIZE - 0.5,
                          fontweight="bold", color=ps.INK, pad=5)
+            drawn.append(ax)
+        rows.append((key, gas, unit, drawn))
 
-        first = left + axis_room + filled[0] * (across + gap)
-        last = left + axis_room + filled[-1] * (across + gap) + across
-        # Framed and centered over the row, the treatment the gas labels take
-        # across this set. Set high in its band rather than at the middle of it,
-        # so the frame clears the year labels standing under it.
-        fig.text((first + last) / 2, row_top - 20 / height_px, gas, ha="center",
-                 va="center", fontsize=ps.LEGEND_SIZE + 1.6, fontweight="bold",
-                 color=ps.INK, zorder=9,
-                 bbox=dict(boxstyle="round,pad=0.42", facecolor="white",
-                           edgecolor=ps.BOUNDARY, linewidth=0.9))
-        # One axis name for the row, centered under the panels it belongs to,
-        # since every panel in the row shares the scale and one copy per panel
-        # would say so eight times. Close under the tick labels, so it reads as
-        # belonging to them rather than floating between the rows.
-        fig.text((first + last) / 2, top - down - 34 / height_px,
-                 f"{AGREEMENT_MEASURED} ({unit})", ha="center", va="top",
-                 fontsize=ps.LABEL_SIZE - 0.5, fontweight="bold", color=ps.INK)
-        # Clear of the tick labels beside it: one rotated line is about 30 px
-        # wide and a signed two-decimal tick label about 34 px, so anything
-        # closer than this puts the minus sign under the axis name.
-        fig.text(first - 68 / width_px, top - down / 2,
-                 f"{AGREEMENT_ERROR} ({unit})", ha="center", va="center",
-                 rotation=90, fontsize=ps.LABEL_SIZE - 0.5, fontweight="bold",
-                 color=ps.INK)
+    # Everything but the panels is placed against them rather than against the
+    # grid, and placed again whenever they move. `balance_drawing_block` resizes
+    # axes and nothing else, so a figure-level text put at a computed height
+    # stays where it was while the panel it names slides out from under it. That
+    # is the fault the seasonal figure hit; here there are six such texts and a
+    # key, so they are built by one function the balancer can call.
+    furniture: list = []
+    # What the balancer measures as the block's edges besides the panels. The gas
+    # labels stand above the top row, and where the key falls back to a band it
+    # stands below the bottom one; either would be walked into a text block by a
+    # balance that measured the panels alone.
+    measured: list = []
+    #: The row axis names, which are the lowest ink on the canvas and are what
+    #: the description is set against. They are figure text, so they were outside
+    #: the balance entirely: it equalised to the carbon dioxide tick labels and
+    #: left the axis name hanging 34 px below them, 1.5 px clear of the
+    #: description. The gap it reported as 35.6 px was 1.5 px of real air.
+    bottoms: list = []
 
-        # The key stands in the columns this row leaves empty at its left. It
-        # stops short of the row's rotated axis name, which stands in the gutter
-        # beside the first panel and would otherwise be drawn through the frame.
-        if key == in_gap:
-            _year_key(fig, (left, top - down,
-                            first - 84 / width_px - left, down))
+    def place() -> None:
+        while furniture:
+            furniture.pop().remove()
+        measured.clear()
+        bottoms.clear()
+        names: dict[str, object] = {}
+        boxes = {key: [ax.get_position() for ax in drawn]
+                 for key, _, _, drawn in rows}
+        edges = {key: (min(b.x0 for b in box), max(b.x1 for b in box),
+                       max(b.y1 for b in box), min(b.y0 for b in box))
+                 for key, box in boxes.items()}
+        for key, gas, unit, _ in rows:
+            first, last, ceiling, floor = edges[key]
+            # Framed and centered over the row, the treatment the gas labels take
+            # across this set. Held clear above the year labels standing under it.
+            label = fig.text((first + last) / 2,
+                             ceiling + YEAR_GAS_LABEL_PX / height_px, gas,
+                             ha="center", va="center",
+                             fontsize=ps.LEGEND_SIZE + 1.6, fontweight="bold",
+                             color=ps.INK, zorder=9,
+                             bbox=dict(boxstyle="round,pad=0.42",
+                                       facecolor="white", edgecolor=ps.BOUNDARY,
+                                       linewidth=0.9))
+            furniture.append(label)
+            measured.append(label)
+            # One axis name for the row, centered under the panels it belongs to,
+            # since every panel in the row shares the scale and one copy per panel
+            # would say so eight times. Close under the tick labels, so it reads
+            # as belonging to them rather than floating between the rows.
+            across_name = fig.text(
+                (first + last) / 2, floor - 34 / height_px,
+                f"{AGREEMENT_MEASURED} ({unit})", ha="center", va="top",
+                fontsize=YEAR_AXIS_TITLE_SIZE, fontweight="bold", color=ps.INK)
+            furniture.append(across_name)
+            bottoms.append(across_name)
+            measured.append(across_name)
+            # Clear of the tick labels beside it: one rotated line is about 30 px
+            # wide and a signed two-decimal tick label about 34 px, so anything
+            # closer than this puts the minus sign under the axis name.
+            names[key] = fig.text(
+                first - 68 / width_px, (ceiling + floor) / 2,
+                f"{AGREEMENT_ERROR} ({unit})", ha="center", va="center",
+                rotation=90, fontsize=YEAR_AXIS_TITLE_SIZE, fontweight="bold",
+                color=ps.INK)
+            furniture.append(names[key])
 
-    if not in_gap:
-        _year_key(fig, (left, bottom, width, YEAR_KEY_PX / height_px))
+        # The key stands in the columns one row leaves empty at its left, and
+        # takes its left margin from the description, which begins at the canvas
+        # margin below it. It was set on the carbon dioxide axis name instead,
+        # 31.2 px further right: that lined it up with the nearest thing rather
+        # than with the page, and it spent the difference on clearance to the
+        # methane row's own axis name, which was the tightest gap on the figure.
+        # The description's edge is the one a reader already reads down.
+        if in_gap:
+            first, _, ceiling, floor = edges[in_gap]
+            fig.canvas.draw()
+            target = (fig.texts[2].get_window_extent(fig.canvas.get_renderer()).x0
+                      / width_px)
+            standing = list(fig.artists)
+            axis = _year_key(fig, (left, floor, first - 84 / width_px - left,
+                                   ceiling - floor), left_x=target)
+            furniture.append(axis)
+            # The heading rule is added to the figure rather than to the key's
+            # own axes, so removing the axes alone would leave it behind and the
+            # next call would draw a second one under it.
+            furniture.extend(a for a in fig.artists if a not in standing)
+        else:
+            # Hung off the lowest row rather than set at the foot of the canvas.
+            # At the foot it does not move when the block grows, and the block
+            # grows downward by however much slack the description leaves, so the
+            # panels walk straight through it. Anchored here it descends with
+            # them, and it is measured as the block's floor so the gap below is
+            # the gap under the key rather than under the last row.
+            base = min(floor for _, _, _, floor in edges.values())
+            axis = _year_key(fig, (left,
+                                   base - (YEAR_XAXIS_PX + YEAR_KEY_PX) / height_px,
+                                   width, YEAR_KEY_PX / height_px))
+            furniture.append(axis)
+            measured.append(axis)
+
+    place()
+    # Ink to ink at both ends, which is the balancer's default and is what the
+    # two gaps have to be to look even. Both ends of this block are furniture
+    # rather than panel: a boxed gas name stands above the top row and the row's
+    # axis name hangs below the bottom one, each in the margin at its own end.
+    # Balancing to the panel border instead was tried and measures symmetric
+    # while reading bottom-heavy, because the top gap then carries the gas label
+    # inside it, 75.5 px of 111.1, and the bottom gap carries nothing. Treating
+    # the two objects alike is what makes the white space alike.
+    ps.balance_drawing_block(fig, *[ax for _, _, _, drawn in rows for ax in drawn],
+                             extra=measured, reflow=place)
     return fig
 
 
@@ -2623,24 +2968,45 @@ DISTRIBUTION_TEXT = ps.FigureText(
     #: way and the two words saved by dropping the possessive were enough.
     title=("Diagnostic check on model errors at Marcell Bog Lake Peatland "
            "(2009 to 2019)"),
+    #: "On a log scale" is gone: all four axes are linear and what is logged is
+    #: the quantity, which the axis names already carry as "(log flux)". And a
+    #: point on the line is one order statistic sitting where the fitted
+    #: distribution puts it, not "an error matching the distribution" — a
+    #: distribution is matched by the whole sample, not by a point.
+    #: Four sentences, not three: the band sentence carried three ideas at once and
+    #: "covers all 115 at once" was the heaviest with the least explanation, since
+    #: a reader does not know what the alternative would be. Split, "together" does
+    #: that work and the consequence follows the mechanism instead of sitting
+    #: beside it.
     subtitle=(
         "This is a quantile-quantile plot, which compares the errors the model "
-        "made against the errors a named distribution predicts, on a log scale. "
-        "Points falling on the 1:1 line are errors matching the distribution "
-        "exactly; the band covers all 115 points at once, so a single point "
-        "outside it is enough to say the distribution does not hold. The weighted "
-        "fit counts a month resting on many measurements more heavily than one "
-        "resting on few, and the study runs both throughout."
+        "made against the errors a named distribution predicts. Points sitting on "
+        "the 1:1 line are quantiles the distribution places exactly right. The "
+        "band is drawn so that all 115 points should fall inside it together, "
+        "which means a single point outside is enough to say the distribution "
+        "does not hold. The weighted fit counts a month resting on many "
+        "measurements more heavily than one resting on few, and the study runs "
+        "both throughout."
     ),
+    #: The block said the errors were *equally consistent with Laplace and with
+    #: Gaussian*, which the figure contradicts by the criterion the subtitle sets:
+    #: of the four panels exactly one has every point inside its band, and it is
+    #: Laplace unweighted. It also left both weighted panels uncaptioned, so half
+    #: the figure showed decisive rejection with no account of it anywhere.
+    #:
+    #: The weighted row is an artifact, but not for the reason a first draft gave.
+    #: A 554-fold weight span does not imply unequal spread: if the weights were
+    #: right, scale proportional to 1/w, multiplying by w would make the scaled
+    #: residuals homoscedastic, which is what inverse-variance weighting is for.
+    #: The spread is unequal because the weights are *wrong*, which is a finding of
+    #: the simulation in these notes and not something the span implies.
     description=(
-        "Fitting by least absolute deviations is optimal when errors follow a "
-        "Laplace distribution, which is why this study chose it. Tested directly, "
-        "the errors are equally consistent with Laplace and with Gaussian, so the "
-        "choice is not supported by the model's own residuals. The published "
-        "Laplace result came from comparing two instruments against each other, "
-        "which is a different quantity. Least absolute deviations remains robust "
-        "either way, and the study's intervals are empirical rather than "
-        "distributional, so nothing downstream changes."
+        "Of the four panels, only Laplace on the unweighted residuals has every "
+        "point inside its band. The two weighted panels fail for a reason of their "
+        "own, since the weights do not track how the errors actually vary, so that "
+        "row tests the weighting rather than the distribution. Nothing here changes "
+        "what the study concludes: its intervals are built from the residuals "
+        "themselves and assume no distribution at all."
     ),
 )
 
@@ -2665,11 +3031,16 @@ DISTRIBUTION_UNIT = "log flux"
 DISTRIBUTION_BAND_FILL = "#ECECEC"
 DISTRIBUTION_BAND_EDGE = "#A6A6A6"
 
+#: Parentheses rather than a colon on the third, and the coverage clause dropped
+#: because the subtitle carries it. What the parenthetical keeps is the property
+#: that separates a simultaneous band from a pointwise one, which is what this
+#: method's own literature stresses: the band holds for all 115 at once, not for
+#: each point on its own. Plain language on the canvas; "simultaneous testing
+#: band" is the term, and it is in the notes rather than here.
 DISTRIBUTION_KEYS = (
-    "One of the 115 months the model was fitted on",
+    "One month's error",
     "The 1:1 line",
-    "95% band: all 115 points fall inside it 95% of the time if the "
-    "distribution holds",
+    "95% band (covering all 115 points at once)",
 )
 
 DISTRIBUTION_AXIS_PX = 118
@@ -2747,7 +3118,11 @@ def _distribution_key(fig, left: float, bottom: float, width: float) -> None:
               bbox_to_anchor=(0.5, 0.30), ncol=1, framealpha=1.0, borderpad=0.7,
               labelspacing=0.5, handlelength=2.0, handletextpad=0.8,
               fontsize=ps.LEGEND_SIZE - 1.5)
-    _underline_legend_headings(fig, ax, center=True)
+    # Ruled by the caller, after the balance. The rule is a figure artist at fixed
+    # coordinates and the balance moves the axes this legend rides on; ruling here
+    # would leave the line where the heading used to be. This figure escaped that
+    # only because it did not balance.
+    return ax
 
 
 def residual_distribution_check(
@@ -2806,7 +3181,38 @@ def residual_distribution_check(
         box = ax.get_position()
         ax.set_position((box.x0 + shift, box.y0, box.width, box.height))
     # Centered on the canvas, as the block above it now is.
-    _distribution_key(fig, 0.5 - width / 2, bottom, width)
+    key = _distribution_key(fig, 0.5 - width / 2, bottom, width)
+
+    def seat_key() -> None:
+        """Centre the key in the band between the panels and the description.
+
+        Measured from the key's *drawn* extent, not from the axes it sits in: the
+        legend is 120 px tall in a 92 px band and deliberately overflows downward,
+        so the axes rect is 32.6 px short of where the ink actually ends.
+        """
+        fig.canvas.draw()
+        renderer = fig.canvas.get_renderer()
+        floor = min(ax.get_tightbbox(renderer).y0 for ax in drawn)
+        described = fig.texts[2].get_window_extent(renderer).y1
+        box = key.get_legend().get_window_extent(renderer)
+        shift = ((floor + described) / 2.0 - (box.y0 + box.y1) / 2.0) / height_px
+        seat = key.get_position()
+        key.set_position((seat.x0, seat.y0 + shift, seat.width, seat.height))
+
+    # Translated, not stretched. The panels are square in pixels because the
+    # reference they carry is a line of equality, so the block may move into the
+    # gap below it but may not grow into it.
+    #
+    # The key is measured as the block's floor but moved by `seat_key` rather than
+    # by the balancer, and the two settle together: centring the key makes the gap
+    # above it equal the gap below it, and the balance makes both equal the gap
+    # under the subtitle. Three gaps, one number. The legend itself goes in
+    # `extra`, not its axes, for the same reason `seat_key` measures it.
+    ps.balance_drawing_block(fig, *drawn, extra=[key.get_legend()],
+                             reflow=seat_key, grow=False)
+    # Ruled last, after the final seating. The rule is a figure artist at fixed
+    # coordinates: anything that moves the key after this leaves the line behind.
+    _underline_legend_headings(fig, key, center=True)
     return fig
 
 

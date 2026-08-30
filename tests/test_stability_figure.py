@@ -170,21 +170,50 @@ def test_the_total_change_is_labeled_at_the_end_of_each_path():
     ps.plt.close(fig)
 
 
-def test_the_control_panel_says_on_the_panel_what_it_is_for():
-    """A nearly flat line with no caption is the hardest mark on the figure."""
+def test_the_control_panel_carries_its_name_and_nothing_else():
+    """It used to carry a note as well: "The control: the same experiment, on a
+    coefficient that barely moves". That restated the description's last sentence,
+    took a colon into a caption, and labeled a panel already named in a bordered
+    box above it. The description says what the panel is for; the panel says what
+    it is."""
     fig = figures.coefficient_stability(paths(), required=0.29, tested=0.05)
     said = " ".join(note.get_text() for note in fig.axes[1].texts)
-    assert "control" in said and "barely moves" in said
+    assert "Soil temperature" in said
+    assert "control" not in said and "barely moves" not in said
+    assert figures.STABILITY_TERMS[1][5] is None
     ps.plt.close(fig)
 
 
-def test_the_key_sits_where_the_fill_used_to_be_rather_than_below_the_axis():
-    """Nothing in this set puts a legend under the panels."""
+def test_the_key_sits_over_the_annotation_rather_than_under_the_panel_name():
+    """Nothing in this set puts a legend under the panels, and this one stands in
+    the ground the fill used to cover.
+
+    Not in the upper right, where it started. Bordering it showed what being
+    frameless had hidden: 13.9 px under the bordered panel name and 3.3 px off the
+    panel's own edge, crowding two things at once. It is now centred on the orange
+    annotation, which is the only other object in that half of the panel.
+    """
     fig = figures.coefficient_stability(paths(), required=0.29, tested=0.05)
-    key = fig.axes[0].get_legend()
+    ax = fig.axes[0]
+    key = ax.get_legend()
     assert key is not None
-    box = key.get_window_extent().transformed(fig.axes[0].transAxes.inverted())
-    assert box.x0 > 0.4 and box.y1 > 0.7          # the freed upper right
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    box = key.get_window_extent(renderer)
+    note = next(text for text in ax.texts if "reconstruction" in text.get_text())
+    name = next(text for text in ax.texts if text.get_text() == "Water table")
+
+    # Above the annotation and centred on it.
+    assert box.y0 > note.get_window_extent(renderer).y1
+    assert ((box.x0 + box.x1) / 2 == pytest.approx(
+        sum(note.get_window_extent(renderer).intervalx) / 2, abs=1.0))
+    # Clear of the panel name it used to crowd, and of the panel's own edges.
+    assert name.get_window_extent(renderer).y0 - box.y1 > 100
+    frame = ax.get_window_extent(renderer)
+    assert min(box.x0 - frame.x0, frame.x1 - box.x1) > ps.MIN_BLOCK_GAP_PX
+    # Still off the data, which is what put it in this half of the panel at all.
+    assert box.x0 > max(line.get_window_extent().x1 for line in ax.lines
+                        if len(line.get_xdata()) and max(line.get_xdata()) < 0.001)
     ps.plt.close(fig)
 
 
@@ -203,9 +232,13 @@ def test_one_key_serves_both_panels_and_names_every_mark():
     assert len(keys) == 1
     labels = [text.get_text() for text in keys[0].get_texts()]
     for mark in ("resamples", "carried across", "wettest month the model",
-                 "distance in meters"):
+                 "bracketed span", "reaches past the fit"):
         assert any(mark in label for label in labels)
     assert sum(label.startswith("$") for label in labels) == 2      # two headings
+    # The arrow was the one mark on the panel with no entry, while the dashed
+    # rule beside it in the same orange had one. Two orange marks, handled two
+    # ways, is what a reader had to work out unaided.
+    assert figures.BEYOND_KEY in labels
     ps.plt.close(fig)
 
 
@@ -219,8 +252,13 @@ def test_the_two_treatments_carry_no_hue_between_them():
 
 
 def test_neither_treatment_is_named_as_the_better_one():
+    """Said now by the outcome rather than by a verdict on the two: weighting
+    changes the numbers and not the result, and the climb holds under both."""
     said = figures.STABILITY_TEXT.description
-    assert "Both fail" in said and "neither is the better treatment" in said
+    assert "changes the numbers but not the outcome" in said
+    assert "under both treatments" in said
+    for better in ("Both fail", "the better treatment", "neither survives"):
+        assert better not in said
 
 
 # --- what the words have to carry ---------------------------------------------
@@ -241,15 +279,24 @@ def test_the_subtitle_says_why_a_moving_coefficient_matters():
 def test_the_description_does_not_let_one_step_stand_for_the_result():
     said = figures.STABILITY_TEXT.description
     assert "no single step is decisive" in said
-    assert "climbs at all four and never once falls" in said
+    assert "climbs at all four steps under both treatments and never once falls" in said
+    assert "the pattern is the evidence" in said
 
 
 def test_the_control_is_not_reported_as_flat_where_it_is_not():
     """Under weighting it moves 16%, which is a third of the water table's 51%
-    rather than nothing at all."""
+    rather than nothing at all. The block says *moves far less*, not *is flat*,
+    and the two numbers it used to quote are labeled on the panel at the end of
+    each path, where a reader can check them against the lines they belong to."""
     said = figures.STABILITY_TEXT.description
-    assert "16%" in said and "51%" in said
-    assert "only without weighting is it flat" in said
+    assert "moves far less" in said
+    for flat in ("is flat", "does not move", "barely moves", "stays put"):
+        assert flat not in said
+    # Quoted on the panel instead, at the dry end of every path.
+    fig = figures.coefficient_stability(paths(), required=0.29, tested=0.05)
+    labeled = " ".join(note.get_text() for ax in fig.axes for note in ax.texts)
+    assert labeled.count("%") == 4
+    ps.plt.close(fig)
 
 
 def test_the_verdict_criterion_is_not_put_on_the_panel():
@@ -288,3 +335,91 @@ def test_the_committed_table_carries_both_treatments_and_every_step():
     for _, part in frame.groupby("treatment"):
         assert sorted(part["dropped_wettest_pct"]) == [0, 10, 20, 30, 40]
         assert (part["n_bootstrap_ok"] == 500).all()
+
+def test_every_ruled_legend_heading_is_ruled_under_its_own_text():
+    """The rules are figure artists at fixed figure coordinates and the balance
+    moves the axes the legend rides on, so ruling before balancing leaves the line
+    where the heading used to be and draws it through the letters.
+
+    Found by measuring, not by looking: at this size the strike sits in the lower
+    third of a bold capital and reads as a heavy baseline. It had been doing that
+    on the reconstruction figure for as long as that figure had been balanced, and
+    the flux figure ruled twice, leaving a stale artist under every correct one.
+    """
+    fig = figures.coefficient_stability(paths(), required=0.29, tested=0.05)
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+
+    headings = [text for ax in fig.axes if ax.get_legend()
+                for text in ax.get_legend().get_texts()
+                if text.get_text().startswith("$")]
+    rules = [artist for artist in fig.artists if hasattr(artist, "get_data")]
+    assert headings, "the key has no ruled headings"
+    assert len(rules) == len(headings), "a heading is ruled twice or not at all"
+
+    for text in headings:
+        box = text.get_window_extent(renderer)
+        middle = (box.x0 + box.x1) / 2
+        near = []
+        for artist in rules:
+            ends = artist.get_transform().transform(list(zip(*artist.get_data())))
+            if abs(ends[:, 0].mean() - middle) < 6:
+                near.append(ends[0, 1])
+        assert len(near) == 1, f"{text.get_text()} has {len(near)} rules under it"
+        assert near[0] < box.y0, (
+            f"{text.get_text()} is struck through: rule at {near[0]:.1f}, "
+            f"text starts at {box.y0:.1f}")
+    ps.plt.close(fig)
+
+def test_the_key_draws_the_marks_the_panel_draws():
+    """A key showing a mark the figure does not contain is wrong in the way a
+    wrong number is wrong.
+
+    Two faults, both structural. The open markers were made open at the
+    `errorbar` call, which the key does not go through, so the panel drew hollow
+    rings and the key drew solid ones. And a legend lays every handle on three
+    sample points and draws the marker at each, so a marker-only entry rendered
+    as three ticks where the panel draws one capped interval, and the bracket
+    rendered with a third tick in its middle where the strip has two at its ends.
+    Neither reads as an error at this size, which is why both survived.
+    """
+    fig = figures.coefficient_stability(paths(), required=0.29, tested=0.05)
+    ax, key = fig.axes[0], fig.axes[0].get_legend()
+    fig.canvas.draw()
+
+    # Every marker property the panel sets, the key shows.
+    panel = {bar.get_label(): bar[0] for bar in ax.containers}
+    shown = {line.get_marker(): line for line in key.get_lines()
+             if line.get_marker() in ("o", "^")}
+    assert len(shown) == len(panel)
+    for drawn in panel.values():
+        keyed = shown[drawn.get_marker()]
+        for read in ("get_markerfacecolor", "get_markeredgecolor",
+                     "get_markeredgewidth", "get_markersize"):
+            assert getattr(keyed, read)() == getattr(drawn, read)(), read
+
+    # The interval and the bracket are drawn by handlers, not by a marker laid on
+    # however many sample points the legend happens to use.
+    for stand_in, handler, pieces in (
+            (figures._IntervalKey, figures._IntervalHandler(), 3),
+            (figures._BracketKey, figures._BracketHandler(), 3)):
+        parts = handler.create_artists(key, stand_in(), 0, 0, 24.0, 12.0, 8.5,
+                                       ax.transData)
+        assert len(parts) == pieces
+        # The bracket's ticks are at its ends, which is what makes it a bracket.
+        if stand_in is figures._BracketKey:
+            ends = sorted(part.get_xdata()[0] for part in parts[1:])
+            assert ends == [0.0, 24.0]
+    ps.plt.close(fig)
+
+
+def test_the_percentages_on_the_panel_are_said_to_be_totals():
+    """Four numbers stood beside the line ends with nothing saying what they
+    measured. They are each coefficient's change from the 115-month fit to the
+    69-month one, which is not something the panel can show."""
+    said = figures.STABILITY_TEXT.description
+    assert "total change across all five fits" in said
+    fig = figures.coefficient_stability(paths(), required=0.29, tested=0.05)
+    labeled = " ".join(note.get_text() for ax in fig.axes for note in ax.texts)
+    assert labeled.count("%") == 4
+    ps.plt.close(fig)
