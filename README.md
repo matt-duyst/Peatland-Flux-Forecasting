@@ -1,277 +1,217 @@
-# Bog Lake Peatland methane flux: ingestion
+# Forecasting and reconstructing monthly methane and carbon dioxide flux at Marcell Bog Lake Peatland (2009 to 2024)
 
-This repository turns the raw eddy covariance record from a northern Minnesota
-peatland into a monthly dataset suitable for analysis, with every processing
-step expressed in code. It contains an ingestion pipeline, a test suite, and
-notes recording the decisions the pipeline embodies. It does not contain a
-model.
+A study of an eddy covariance tower in a poor fen in northern Minnesota, asking how far monthly flux can be predicted from what the site records. Statistical and machine learning methods are compared against seasonal benchmarks at horizons of one to twelve months, and relationships fitted on the measured years are projected backward into the two decades before measurement began. Both directions run into the same limit: the seasonal pattern of emission repeats reliably, the size of the season varies without trend, and none of the covariates recorded here predicted that variation once the seasonal cycle was accounted for.
 
-## Site and data
+That year-to-year variation is not a minor residual. Bousquet et al. (2006) attribute 70 percent of global methane emission anomalies between 1984 and 2003 to interannual variability in wetland emissions, which is the standing term for the quantity this study finds unpredictable at one site.
 
-Measurements come from AmeriFlux site **US-MBP**, Marcell Bog Lake Peatland, at
-47.505 N, −93.489 W, in the USDA Forest Service Marcell Experimental Forest,
-Minnesota. The data product is AmeriFlux BASE, DOI
-[10.17190/AMF/1767835](https://doi.org/10.17190/AMF/1767835), cited as Roman,
-Kolka, Griffis and Deventer (2022). BASE is AmeriFlux's standardized half-hourly
-product; its variable names carry a horizontal, vertical and replicate qualifier
-suffix, so `FCH4_1_1_1` and `FCH4_1_1_2` are two replicates at one position
-while unqualified `FCH4` is the site-aggregated series.
+This repository rebuilds an earlier analysis of the same site. What changed and why is recorded in `notes/`.
 
-Methane flux is reported throughout in **nanomoles per square meter per second**
-(nmol m⁻² s⁻¹). Annual budgets are expressed in grams of methane per square
-meter per year (g-CH₄ m⁻² yr⁻¹).
+---
 
-The instrumentation is described by Deventer et al. (2019), *Agricultural and
-Forest Meteorology* **278**, 107638, DOI
-[10.1016/j.agrformet.2019.107638](https://doi.org/10.1016/j.agrformet.2019.107638).
-Every threshold, detection limit and coverage rule in the pipeline traces to
-that paper, and the validation below compares the pipeline's output against its
-published statistics.
+## The site
 
-## What the pipeline does
+The tower stands at AmeriFlux **US-MBP**, Marcell Bog Lake Peatland, at 47.5051° N and 93.4893° W, within the USDA Forest Service Marcell Experimental Forest in northern Minnesota. The site appears in the older literature as Bog Lake Fen. Data come from the AmeriFlux BASE product, Version 5-5, DOI [10.17190/AMF/1767835](https://doi.org/10.17190/AMF/1767835), released under CC-BY-4.0.
 
-The raw sheet holds 227,904 half-hourly slots spanning 2009-01-01 to
-2021-12-31. Of these, 66,946 carry a methane measurement in at least one of the
-three methane columns, and 44,427 carry one in the site-aggregated column; the
-remainder are marked with the value −9999. The pipeline replaces that sentinel
-with a null value, identifies which analyzer produced each of the three columns,
-merges them into a single series by precedence while recording which instrument
-each retained value came from, reports diagnostics on negative fluxes against
-the published detection limit, and aggregates to daily and monthly resolution.
+The peatland is a poor fen, fed by groundwater that has contacted mineral soil but only weakly so, and the National Wetlands Inventory maps 35.7 hectares of continuously saturated organic-soil wetland around the tower. Mean annual temperature is 3.4 °C, mean annual precipitation 780 mm, and snow covers the ground for roughly 120 days a year. Methane has been measured since 2009 and carbon dioxide since 2007, while hydrological and meteorological records from the experimental forest extend back to 1990.
 
-Aggregation retains the weight of evidence behind every mean. A month built from
-two half-hourly observations is not interchangeable with one built from several
-hundred, so each aggregate carries its observation count, standard deviation and
-standard error. The monthly grid is explicit: every month in the target span has
-a row, including months with no methane data, so the series is regularly spaced
-by construction rather than silently collapsed.
+Methane emission here follows the calendar far more closely than the clock. Time of day accounts for 0.97 percent of half-hourly variance and month of year for 37.4 percent, so monthly averaging discards very little. Carbon dioxide is governed by photosynthesis and respiration and varies strongly through the day, so its monthly means are computed with every hour equally weighted; without that correction roughly 62 percent of its apparent seasonal cycle would reflect the hours the instrument happened to sample.
 
-Covariates are reconstructed from the primary files in `CSVs/` rather than from
-any pre-joined intermediate: soil temperature at 10 cm, air temperature,
-precipitation, carbon dioxide flux and water table elevation.
+The tower also sees only part of its surroundings. Flux arriving from bearings between 30° and 200° is discarded before publication, because those directions carry the surrounding upland forest into the measurement footprint. Across the study window that sector holds 40 percent of all half-hours. What the record contains is emission measured when the wind came off the peatland.
 
-## Validation against Deventer et al. (2019)
+![The flux tower and the wind directions it measures](figures/site_overview.png)
 
-Three results are reproduced from the published characterization of this site.
-These are the only figures in this document, and they are here because they are
-checks against an external result rather than findings of this work.
+The study's boundaries are set by what exists rather than by design. Air temperature and precipitation stop at the end of 2019, which ends the months a model can be fitted on and leaves 60 months of methane the tower recorded but no model here can use. Forecasting cannot begin until 48 months of flux have accumulated, which took 62 calendar months for methane because of gaps in 2013 and 2014.
 
-**Analyzer identification.** The two 2015–2018 methane columns are identified as
-`FCH4_1_1_1` = closed-path TGA-100A and `FCH4_1_1_2` = open-path LI-7700, on
-three independent grounds. Deventer et al. report that the LI-7700 was not
-operated before March 2015; `FCH4_1_1_2` begins 2015-03-17 while `FCH4_1_1_1`
-begins 2015-01-01. They report 15,033 retained TGA-100A fluxes; `FCH4_1_1_1`
-holds 15,030, a difference of three, while `FCH4_1_1_2` holds 16,534. They
-report a reduced major axis slope of 1.08 for the LI-7700 against the TGA-100A,
-implying the open-path instrument carries about 8% more spread; the data gives a
-ratio of standard deviations of 1.086 under outlier screening, which under the
-opposite assignment would have to be its reciprocal.
+![Which months each measurement and each analysis cover](figures/covariate_availability.png)
 
-**Paired differences.** On the 9,045 timestamps where both analyzers reported,
-taking the difference as TGA-100A minus LI-7700:
+---
 
-| Statistic | Published | This pipeline |
-|---|---|---|
-| Median | 0.1 | 0.130 |
-| Interquartile range | 8.2 | 8.645 |
-| Standard deviation | 8.5 | 8.819 |
-| Skewness | 0.32 | 0.436 |
+## Building the record
 
-The standard deviation here is the one implied by the interquartile range under
-a Laplace distribution, not the raw second moment. That distinction is not
-cosmetic: the raw second moment of these differences is 15.852 and their raw
-skewness is −1.432, both dominated by a tail heavier than Laplace, and the raw
-skewness even carries the opposite sign. A Laplace distribution with a standard
-deviation of 8.5 implies an interquartile range of 8.33, close to the published
-8.2, so the published figures are internally consistent only under the robust
-reading.
+The BASE product carries three methane columns: one site-aggregated series and two replicates covering 2015 to 2018, which are the years the aggregated column is empty. Those replicates are two analyzers that operated in parallel on a single sonic anemometer, one closed-path and one open-path, and the pipeline merges all three columns into a single series recording which instrument produced each value.
 
-**Error distribution.** Deventer et al. find that flux errors at this site are
-leptokurtic rather than normal. Fitting both distributions to the same 9,045
-differences by maximum likelihood:
+The file itself carries no instrument metadata, so the identification rests on statistics published for this site. On the 9,045 timestamps where both analyzers reported, the median difference between them comes out at 0.130 nmol m⁻² s⁻¹ against a published 0.1, and the interquartile range at 8.645 against a published 8.2. The paired differences follow a Laplace distribution over a Gaussian by a margin of 7,028 in the Akaike information criterion. That result concerns differences between two instruments; whether the model's own errors follow the same distribution is a separate question, tested below, and the answer is different.
 
-| Distribution | Log-likelihood | Akaike information criterion | Kolmogorov–Smirnov distance |
-|---|---|---|---|
-| Laplace | −34,313.5 | 68,631.1 | 0.058 |
-| Gaussian | −37,827.7 | 75,659.4 | 0.168 |
+Aggregation preserves the evidence behind each value. A day contributes a mean only where at least eight valid half-hours support it, and every monthly value carries its observation count, standard deviation and standard error, so a month built from two measurements remains distinguishable from one built from several hundred.
 
-The difference in the Akaike information criterion is 7,028 in favor of
-Laplace, and the Kolmogorov–Smirnov distance is smaller by a factor of three.
-The excess kurtosis of the differences is 72.3, against 0 for a Gaussian and 3
-for a Laplace, so the tail is heavier than either.
+Integrating the months that were observed, with no inference about the ones that were not, recovers 75.6 to 100.7 percent of published annual budgets across six comparable years. The agreement is close for 2015 to 2017, within 0.8 to 6.4 percent of Deventer et al. (2019). It falls 16 to 24 percent short for 2009 to 2011 against Olson et al. (2013), which gap-filled.
 
-## What is not implemented
+---
 
-There is no model here, and no gap-filling. That bounds what can be said about
-annual totals. Summing only the half-hours that were actually measured recovers
-25.1%, 29.1% and 36.1% of the published annual budget for 2015, 2016 and 2017
-respectively, against a published total uncertainty of 7 to 17%. Between 64 and
-75 percent of an annual budget at this site therefore rests on inference about
-unobserved periods rather than on measurement. Any gap-filling method chosen
-later will determine most of the answer, and is not a refinement of it.
+## What the record looks like
 
-## Installation
+Each gas separates cleanly into a seasonal cycle that repeats and a residual that does not. The repeating shape accounts for 74 percent of the variance on methane and 71 percent on carbon dioxide, and what it leaves is 0.51 of methane's spread and 0.53 of carbon dioxide's, so the residual is half the variation rather than a remainder.
 
-Requires Python 3.11. Dependencies are pinned exactly in `requirements.txt`.
+The size of the season is what varies. Methane's swing from lowest to highest month runs 33.7 to 150.6 across the years, a factor of 4.5, and carbon dioxide's 0.8 to 2.4, a factor of 3.0. Neither shows a trend (p = 0.215 and 0.505), so neither is drifting in a direction that could be extrapolated. Delwiche et al. (2021) report this quantity as a standard deviation on the annual mean, which is the form to use for comparison across sites; the fold-range above is the more legible form for one.
+
+![The seasonal cycle in monthly flux](figures/seasonal_cycle.png)
+
+---
+
+## Forecasting
+
+Four methods were compared, each run with and without lagged environmental covariates, against four simple benchmarks, at horizons of one to twelve months on both gases. Every method was evaluated on rolling origins and scored on the same months, so the comparison rests on common ground throughout.
+
+Nothing beat month-of-year climatology at any horizon on either gas. Predicting each month as the average of that month across the training years, the seasonal average referred to throughout, reduces scaled error by 23 to 28 percent on methane against repeating last year's same month. Fitted methods post a lower scaled error in three of the eight gas-and-horizon combinations: at one month on both gases, where on carbon dioxide all eight of them do, and at six months on methane. None does so by a margin that survives correcting for the overlap between rolling forecasts. At three, six and twelve months the fitted envelope's upper edge rises above the significance band, meaning some fitted methods are measurably worse than the seasonal average.
+
+The sharper form of that result is what climatology does across horizons rather than at any one of them. Its error barely changes between one month and twelve on either gas, because it uses no recent information at all. Persistence, which uses nothing else, does the opposite: it holds up only at the shortest horizon and collapses as the horizon lengthens, recovering at twelve months only because a value twelve months old is the same month a year earlier, which makes it the seasonal benchmark rather than a recent one. Nothing recent carries far enough forward to be worth having.
+
+![Monthly methane and carbon dioxide forecast error](figures/forecast_error_by_horizon.png)
+
+The methods get the timing of the season right and miss its size. In 12 of the 57 evaluated methane months the measured flux fell below every fitted model, and in 9 of those below the seasonal average too. July 2015 is the clearest case: the seasonal average predicted 94 nanomoles and the tower measured 40.
+
+![Observed and predicted monthly flux](figures/observed_and_predicted.png)
+
+The covariates explain why nothing improved on the average. Feature selection ran inside every evaluation fold, and what survived was almost always temperature, which at this site is largely a restatement of the season: 95 percent of soil and air temperature is predictable from the date alone. Lagging recovers nothing independent, since a six-month lag on an annual cycle inverts its phase and a twelve-month lag restores it. For carbon dioxide three months ahead, no environmental covariate survived selection in any fold.
+
+Water table behaves differently and arrives at the same place. The calendar explains 3.8 percent of it on methane and 6.0 percent on carbon dioxide, so it carries information the seasonal cycle does not. On methane it is also the measurement the models chose least often. That ordering holds at the top of the ranking on both gases and breaks at the bottom on carbon dioxide, where precipitation is chosen less than water table despite the calendar explaining far more of it.
+
+![Which measurements the models used](figures/measurements_used_across_forecast_horizons.png)
+
+Error does not depend on which year is being predicted. The methods miss by similar amounts across every evaluated year, though the direction of the miss varies from year to year. Methane in 2015 is the one exception, and it differs twice over: its months run 17 to 52 where the evaluated record runs 10 to 104, so a season with no large months puts its points entirely in the lower half of the axis, and those months are also missed about 1.7 times as badly as months of the same size across the record.
+
+![Prediction error by year](figures/prediction_error_by_year.png)
+
+---
+
+## Reconstruction
+
+Environmental records reach back to 1990 while flux begins in 2009, so relationships fitted on the measured years can be projected into the earlier period.
+
+The temperature response projects well. Fitting flux as an exponential function of soil temperature gives a Q10 of 2.41 weighted and 2.56 unweighted, both inside the interval of 1.9 to 4.3 measured independently at this site, and all sixteen holdout fits fall inside that interval too.
+
+The water table term does not project, and the reason is where the fitted months sit. Water table at this site declined through the 2000s and the flux record opens in 2009, after that decline had run its course. The fitted range spans 0.33 m; the reconstruction runs 0.29 m above its upper edge, so the excursion is nearly as wide as the whole fitted span. Of the 230 months the reconstruction covers, 107 sit above the highest water table the model ever observed, arriving in unbroken runs of 44, 22 and 21 months.
+
+![Monthly water table elevation](figures/water_table_support.png)
+
+Refitting on progressively drier subsets shows the coefficient describing the months it was fitted on rather than the peatland. Across five fits, from all 115 months down to 69, it climbs from 2.704 to 4.077 weighted and from 2.385 to 3.299 unweighted. Soil temperature moves 16 percent along the same path when weighted and barely at all without.
+
+No single step of that experiment is decisive on its own, since every step's interval overlaps the first. The evidence is the pattern: the coefficient rises at all four steps under both treatments and never once falls.
+
+![The water table coefficient refitted on drier months](figures/coefficient_stability.png)
+
+Projected back to 1990, three defensible treatments of the water table term beyond its fitted range produce annual estimates spanning 8 to 30 g C per square meter. They agree where the water table stays inside the fitted range and fan apart where it does not. Of the 19 reconstructed years, 17 have nothing to check against, since methane measurement stopped in 1992 and did not resume until 2009.
+
+![Reconstructed methane emission](figures/reconstruction_series.png)
+
+---
+
+## Checking the estimator
+
+The reconstruction models are fitted by least absolute deviations, which is optimal when errors follow a Laplace distribution and is why the study chose it. Tested directly against the model's own residuals, of the four panels exactly one has every point inside its band, and it is Laplace on the unweighted residuals. The two distributions cannot be told apart by fit there, with a difference of 0.31 in the Akaike information criterion against a conventional floor of 2.
+
+The two weighted panels fail, but they test the weighting rather than the distribution. Inverse-variance weights at this site span a factor of 554 and do not track how the errors actually vary, and they reduce the effective sample size from 115 months to 42. That is an independent reason to distrust the weighted variant, arrived at from a different direction than the coefficient experiment.
+
+The band drawn here is a simultaneous testing band, following Weine, McPeek and Abney (2023), rather than a confidence interval: it is a hypothesis test on the whole sample at once, which is why a single point outside it is decisive and why the pointwise level is 0.002079 rather than 0.05.
+
+The published Laplace result came from comparing two instruments against each other on tens of thousands of paired differences, which is a different quantity from a fitted model's 115 residuals. That conflation is the second of its kind this project has caught, and it is recorded in `notes/study.md` with the first.
+
+Least absolute deviations remains robust either way, and the study's intervals are empirical rather than distributional, so nothing downstream changes.
+
+![Diagnostic check on model errors](figures/residual_distribution_check.png)
+
+---
+
+## What this study does not claim
+
+**No gap-filling is performed.** The method chosen would determine most of an annual total, and establishing which method to trust is a separate question from the one asked here.
+
+**The reconstruction is reported for what it reveals about its own limits**, not as an estimate to be used. Each reconstructed year carries the share of its months falling outside the fitted range alongside its value.
+
+**Published comparisons are ranked by strength.** Shurpali et al. (1993) and Shurpali and Verma (1998) measured 1991 and 1992 and provide the only genuinely independent check available; their published totals have not been obtained. Olson et al. (2013) covers overlapping years but used the same backward-projection approach on a shorter flux record, so agreement with it would indicate consistent method rather than independent confirmation.
+
+**Carbon dioxide is treated as a second series** testing whether the methane finding generalizes, and not as a co-equal half of the study.
+
+**Scaled error is used within each gas and not across them,** because methane's scaling denominator is twice the difficulty of the period being scored while carbon dioxide's matches its test period closely.
+
+**This site is absent from FLUXNET-CH4,** so no community gap-filled product exists for it and no gap-filled comparison is available.
+
+---
+
+## Running it
+
+Requires Python 3.11, with dependencies pinned in `requirements.txt`.
 
 ```
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 ```
 
-## Running the pipeline
-
-Requires Python 3.11 and the pinned dependencies above.
-
-The ingestion scripts are numbered because they are meant to be read in that
-order, not because each depends on the last. Any one of them runs on its own;
-whichever runs first parses the Excel workbook, which takes a few seconds, and
-caches the parsed frame under `data/interim/` for every later run.
+The ingestion scripts are numbered because they are read in that order, not because each depends on the last. Any one runs alone, though `04` and `05` must each have run at least once before the study and forecast scripts, since they write the monthly series those read.
 
 ```
 .venv/bin/python scripts/01_investigate_raw.py
 .venv/bin/python scripts/02_build_monthly.py
 .venv/bin/python scripts/03_verify_analyzers.py
 .venv/bin/python scripts/04_merge_qc_aggregate.py
+.venv/bin/python scripts/05_build_co2.py
 ```
 
-`01_investigate_raw.py` reports how many valid observations each of the three
-methane columns holds, their temporal coverage and overlap, and which column
-supplied each value in the derived `CSVs/FCH4 Data.csv`. It also tests whether
-any threshold or dispersion rule reproduces that file's row selection. It writes
-`data/interim/derived_labelled.parquet`.
-
-`02_build_monthly.py` verifies each reconstructed covariate against known
-values, reports coverage against the target span, and writes the monthly dataset
-of methane aggregates and covariates to
-`data/processed/monthly_bog_lake_fen.{csv,parquet}`.
-
-`03_verify_analyzers.py` produces the identification evidence and the
-distributional comparisons in the validation section above. It prints only and
-writes nothing.
-
-`04_merge_qc_aggregate.py` merges the three methane columns with per-value
-provenance, reports negative-flux and coverage diagnostics, aggregates to daily
-and monthly resolution, and integrates annual budgets from observed half-hours.
-It writes `data/processed/halfhourly_merged.{csv,parquet}`,
-`data/processed/daily_fch4.{csv,parquet}` and
-`data/processed/monthly_fch4_from_daily.{csv,parquet}`.
-
-The merged half-hourly output is not tracked, being large and regenerable; the
-daily and monthly outputs are.
-
-## Running the study
-
-The study scripts are unnumbered because they do not form a sequence. Each is
-independent of the others and can be run alone, in any order. All four read
-`data/processed/monthly_fch4_from_daily.csv`, so `04_merge_qc_aggregate.py` must
-have run at least once first; nothing else is required.
+The study and forecast scripts are unnumbered because they do not form a sequence. Each is independent with two exceptions: `make_figures.py` reads outputs written by `forecast_models.py` and `reconstruct.py`, and `model_examinations.py` reads outputs written by `forecast_models.py`, so both must run after it.
 
 ```
 .venv/bin/python scripts/prepare_study.py
 .venv/bin/python scripts/holdout_experiments.py
 .venv/bin/python scripts/bias_and_validation.py
 .venv/bin/python scripts/reconstruct.py
+.venv/bin/python scripts/benchmark_forecasts.py
+.venv/bin/python scripts/forecast_models.py
+.venv/bin/python scripts/forecast_diagnostics.py
+.venv/bin/python scripts/model_examinations.py
+.venv/bin/python scripts/compare_base_products.py
+.venv/bin/python scripts/make_figures.py
 ```
 
-`prepare_study.py` establishes the window a model can be fitted on and the
-window it would have to answer for, and reports how far the second lies outside
-the range of the first.
-
-`holdout_experiments.py` withholds four blocks of the fit window in turn, each
-chosen to resemble the reconstruction problem, and reports error, interval
-coverage and covariate distance from the training set for each.
-
-`bias_and_validation.py` states the sign convention for error, reports the
-direction each holdout errs in, and compares withheld predictions for 2009 to
-2011 against Olson et al. (2013).
-
-`reconstruct.py` projects the fitted model back to 1990. It also runs the
-coefficient stability test, whose result determines how the projection can be
-read; that test has no separate entry point.
-
-None of the study scripts writes to `data/`.
-
-## Tests
+The test suite runs entirely offline on synthetic frames, reading no file in `CSVs/` or `data/`.
 
 ```
 .venv/bin/python -m pytest tests
 ```
 
-The suite runs entirely on synthetic frames built in memory. No test reads the
-workbook, any file in `CSVs/`, or anything under `data/`, and expected values
-are derivable by hand rather than taken from previous output. It covers the code
-paths a production run never exercises, such as a single-column merge precedence
-or a series containing no negative fluxes, together with the contracts the
-pipeline depends on: that provenance fractions sum to one, that merged values
-are selected from one instrument rather than averaged across two, and that no
-timestamp appears twice.
+---
 
 ## Layout
 
 ```
-CSVs/               seven primary source files, including the Excel workbook,
-                    and one external reference the pipeline does not read
-Project_Write-Up/   report from the earlier analysis of this data
+CSVs/               primary source files and external references
 data/processed/     pipeline output
-data/interim/       cached intermediates, not tracked
-notes/              decisions, judgment calls, and what could not be recovered
-scripts/            runnable entry points: ingestion numbered, study not
-src/ingest/         the ingestion pipeline
-src/study/          the analysis built on it
+figures/            generated figures
+geodata/            imagery and boundaries for the site map
+notes/              decisions, judgment calls, and what could not be resolved
+scripts/            entry points
+src/ingest/         half-hourly to monthly
+src/study/          reconstruction and its diagnostics
+src/forecast/       benchmarks, models and evaluation
+src/validation/     comparison against the published BASE product
 tests/              offline test suite
 ```
 
-`notes/ingestion.md` is the substantive record. It documents the merge
-precedence and its rationale, the quality-control diagnostics, the reasoning
-behind the aggregation rules, and the parts of the original processing that
-could not be reconstructed.
+`notes/ingestion.md`, `notes/study.md` and `notes/base_v55.md` hold the substantive record: the reasoning behind every decision, the results that did not survive checking, and the questions that could not be resolved.
 
-## Earlier analysis in this repository
+---
 
-This repository previously held a different analysis of the same site: five
-Jupyter notebooks, a set of figures, and a README describing the results. That
-work was removed from the working tree and remains in git history.
+## Sources
 
-Parts of it are sound. `Bog_Lake_Fen.ipynb` fits an ordinary least squares
-regression of methane flux on its covariates, then tests the assumptions that
-regression rests on with Breusch-Pagan, Anderson-Darling and Durbin-Watson
-tests and internally studentized residuals, and prints the results against
-itself: the residuals are not normally distributed and the errors are
-positively autocorrelated. `Multivariate Scalecast.ipynb` is built on a
-defensible forecasting design, checking stationarity with an Augmented
-Dickey-Fuller test, inspecting the autocorrelation and partial autocorrelation
-functions, splitting the series temporally with a separate validation partition
-for tuning, and using autoregressive lags of the target as predictors.
+Bousquet, P., et al. (2006). Contribution of anthropogenic and natural sources to atmospheric methane variability. *Nature* 443, 439–443.
 
-Its deepest problem is leakage. The Facebook Prophet target was rescaled to the
-unit interval using the minimum and maximum of the whole record, and the
-maximum falls at 2017-07, inside the held-out test period, so a test observation
-sets a constant applied to the training target. Beyond that, most of the models
-estimate flux from soil temperature, air temperature, carbon dioxide flux and
-precipitation measured at the same timestamp as the flux itself, which is a
-different task from forecasting flux that has not yet occurred, though the
-earlier README presents them as forecasts. Smaller errors compound this. The
-mean absolute percentage error was misread by a factor of one hundred, since
-scikit-learn returns a ratio and 5.5243 was reported as 5.5 percent when it
-means 552 percent. Model selection in the Scalecast notebook used test-set
-performance after tuning. And percentage error is not interpretable for the
-carbon dioxide flux series, which crosses zero.
+Delwiche, K. B., et al. (2021). FLUXNET-CH4: a global, multi-ecosystem dataset and analysis of methane seasonality from freshwater wetlands. *Earth System Science Data* 13, 3607–3689.
 
-Some reported figures cannot be traced to committed code. The earlier README
-describes a seasonal autoregressive integrated moving average model with
-exogenous regressors, abbreviated SARIMAX. No such code was committed, though
-two of the figures are output only a state-space model produces, so it was
-fitted in a notebook that never reached the repository. The mean absolute error
-of 4.23 attributed to it appears only as a chart title, where the committed
-notebooks give 7.23 and 7.383 from a gradient boosting model. The described
-ensemble of the three lowest-error models in fact combines those ranked first,
-fifth and sixth of seven. Stored outputs cannot settle these questions, because
-execution counts are non-monotonic in four of the five notebooks and the Prophet
-notebook reads one file twice with different columns, so the outputs span more
-than one version of the inputs. The notebooks also read from absolute filesystem
-paths on a personal machine, and of the thirteen filenames they load only
-`All Combined Variables Monthly.csv` exists here under that name, with different
-columns. That work is preserved in history as a record. It is not runnable, its
-numbers should not be cited, and `notes/ingestion.md` records the evidence
-behind each finding above.
+Deventer, M. J., et al. (2019). Error characterization of methane fluxes and budgets derived from a long-term comparison of open- and closed-path eddy covariance systems. *Agricultural and Forest Meteorology* 278, 107638.
+
+Irvin, J., et al. (2021). Gap-filling eddy covariance methane fluxes: comparison of machine learning model predictions and uncertainties at FLUXNET-CH4 wetlands. *Agricultural and Forest Meteorology* 308–309, 108528.
+
+Knox, S. H., et al. (2021). Identifying dominant environmental predictors of freshwater wetland methane fluxes across diurnal to seasonal time scales. *Global Change Biology* 27, 3582–3604.
+
+Li, M., et al. (2026). Machine-learning-based estimates of global natural vegetated wetland methane emissions (2000–2025). *Earth System Science Data* 18(5), 3507–3524.
+
+Makridakis, S., Spiliotis, E., and Assimakopoulos, V. (2018). Statistical and machine learning forecasting methods: concerns and ways forward. *PLOS ONE* 13(3), e0194889.
+
+Olson, D. M., et al. (2013). Interannual, seasonal, and retrospective analysis of the methane and carbon dioxide budgets of a temperate peatland. *Journal of Geophysical Research: Biogeosciences* 118, 226–238.
+
+Roman, T., et al. (2025). AmeriFlux BASE US-MBP Marcell Bog Lake Peatland, Version 5-5.
+
+Shurpali, N. J., and Verma, S. B. (1998). Micrometeorological measurements of methane flux in a Minnesota peatland during two growing seasons. *Biogeochemistry* 40, 1–15.
+
+Shurpali, N. J., et al. (1993). Seasonal distribution of methane flux in a Minnesota peatland measured by eddy correlation. *Journal of Geophysical Research* 98, 20,649–20,655.
+
+Weine, E., McPeek, M. S., and Abney, M. (2023). Application of equal local levels to improve Q-Q plot testing bands with R package qqconf. *Journal of Statistical Software* 106(10).
