@@ -438,10 +438,10 @@ FORECAST_TEXT = ps.FigureText(
         "could be told apart from noise."
     ),
     description=(
-        "Each panel is one gas. The green region covers all eight fitted models: "
-        "four methods, each run with and without lagged environmental "
-        "measurements. It sits mostly above the seasonal average, and where it "
-        "reaches beneath, the difference stays inside the band; where its upper "
+        "Each panel is one gas, in mean absolute error. The green region covers "
+        "all eight fitted models. It sits mostly above the seasonal average, "
+        "and where it reaches beneath, at one month on both gases and at six "
+        "months on methane, the difference stays inside the band; where its upper "
         "edge rises above the band, some fitted models are measurably worse than "
         "the average. The band is wide where the closest fitted model disagrees "
         "with the average erratically from month to month, not where the average "
