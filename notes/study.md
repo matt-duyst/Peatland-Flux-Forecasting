@@ -647,6 +647,11 @@ The 2015-2017 published values are the annual budgets of Deventer et al. (2019),
 The same pipeline agrees with one published source to within 0.8 to 6.4% and
 falls 16 to 24% short of the other, at the same site.
 
+Stated as recovery of the published totals, the ratio column spans **75.6% to
+100.7% across the six comparable years**, the extremes being 2011 at 0.756 and
+2017 at 1.007. That is the form the README uses, and it is written here so the
+range is recorded rather than derived afresh from the two statements above.
+
 What can be established. It is **not a uniform scaling**: the ratios differ by
 0.084 and decline monotonically. It is **not a coverage artifact**: half-hourly
 coverage is comparable across both eras at 25.5%, 36.3% and 34.9% for 2009-2011
@@ -956,10 +961,21 @@ much there is.
 
 ## For the README pass: what the unpredictable quantity is worth globally
 
-Meng et al. attribute **70% of global methane emission anomalies between 1984 and
-2003 to interannual variability in wetland emissions**. The quantity this study
-finds unpredictable at this site, the size of each season rather than its shape,
-is the one that dominates global methane variability.
+Bousquet et al. (2006) attribute **70% of global methane emission anomalies
+between 1984 and 2003 to interannual variability in wetland emissions**. The
+quantity this study finds unpredictable at this site, the size of each season
+rather than its shape, is the one that dominates global methane variability.
+
+Bousquet, P., et al. (2006), *Contribution of anthropogenic and natural sources
+to atmospheric methane variability*, Nature **443**, 439-443.
+
+**This entry read "Meng et al." until 2026-08-30, and the attribution was
+wrong.** Meng et al. (2015) quote the finding in their introduction and name its
+source: *"Using inverse methods, Bousquet et al. (2006) suggests that 70 % of the
+global emission anomalies CH4 for the period 1984-2003 are due to the
+interannual variability in wetland emissions."* Meng's own analysis period is
+1993 to 2004, and 1984-2003 appears nowhere in that paper except inside the
+sentence quoting Bousquet. Recorded in the drift table below.
 
 That is context beyond anything the figure set draws, so it belongs in the README
 above the figures rather than in a caption. Recorded here so the README pass
@@ -971,7 +987,9 @@ The sibling of the entry below, and the same class of failure running the other
 way. There, something that existed was not found and was written again. Here,
 something that existed in two places was changed in one. Which of the two places
 is the correct one varies: in the first three the figure was right and the record
-stale, in the fourth the record was right and the figure stale.
+stale, in the fourth the record was right and the figure stale. The fifth breaks
+the shape rather than extending it: both places agreed, and both were wrong,
+because the error entered from outside the repository.
 
 | | what changed | where it was applied | where it was not |
 |---|---|---|---|
@@ -979,6 +997,7 @@ stale, in the fourth the record was right and the figure stale.
 | 2 | the 2011 shortfall shares | prose in these notes | nothing computed them, so nothing could disagree |
 | 3 | the v5-5 correction to the seasonal numbers | the figure's description | these notes, which kept 0.54 and p = 0.119 |
 | 4 | the 2015 month-size correction | these notes, which say **middle** third | the figure's description, which went on saying *all small ones* |
+| 5 | nothing: the 70% anomaly finding was attributed to Meng et al. (2015) here and in the README draft taken from here | both places, identically | the source, which names Bousquet et al. (2006) |
 
 The third is the one that prompted this entry. Cutting six precise figures out of
 the seasonal description meant checking they were recorded, and four were not:
@@ -1007,6 +1026,37 @@ it draws without error and never that its prose agrees with the record.
 Nothing would have caught it but reading the description back against the notes
 line by line. A draft of the same description reproduced the error a second time,
 which is what finally surfaced it.
+
+**The fifth is a different shape again, and it is the one no check here could
+have caught.** The first four are a claim held in two places and updated in one.
+This one was never inconsistent: the 70% anomaly finding was attributed to Meng
+et al. (2015) in these notes, the README draft took the attribution from here,
+and the two agreed with each other perfectly. What they disagreed with was the
+paper. Meng quotes the finding and names Bousquet et al. (2006) as its source in
+the same sentence, so the error was visible only to someone who opened the
+source.
+
+**The error was in an attribution rather than in a number**, and that is what
+makes it distinct. Every guard this project has built watches numbers: the
+recorded-numbers test, the grep-before-changing rule, the reproduce-the-basis
+rule. All of them would have passed this, because there was no number to check
+and nothing computed disagrees with anything. A regenerated figure would have
+passed it. A spot check of the bibliography would also have passed it, since the
+citation is real, correctly formatted, and does contain the sentence: the volume,
+the pages and the year are all right, and only the names in front of it are
+wrong. That is the version of a citation error that survives every check short of
+reading the source.
+
+Two circumstantial signals were available without the source and were not used:
+Meng's own analysis period is 1993 to 2004, which does not contain 1984 to 2003,
+and a modeling paper is an unlikely home for an inversion result. Either should
+have prompted the check that a single fetch then settled.
+
+**What to check first, next time:** a claim carrying someone's name is two
+claims, and the citation being real does not make the attribution right. Before
+publishing an attributed finding, open the source and find the sentence. Where
+the finding turns out to be quoted rather than made there, cite what the source
+cites.
 
 **What to check first, next time:** before removing a number from a figure,
 confirm it is recorded somewhere a test can see. Before *changing* one, grep for
@@ -1056,6 +1106,50 @@ Two of these are recorded in more detail where they were found, and those notes
 stay: the window exclusion and `TARGET_END` above, and the orphaned residuals
 module in the 2011 section. Someone arriving at either should find this table
 from there.
+
+## The pattern: two right answers mistaken for one
+
+The climatology reduction against `seasonal naive` on methane is **23 to 28% in
+scaled error and 24 to 29% in mean absolute error**, on the same shared-target
+basis and the same four horizons. Per horizon, MASE gives 28.4, 27.9, 25.9 and
+23.0; MAE gives 28.6, 28.2, 26.5 and 23.9. Neither is a drifted version of the
+other. They are two valid computations of one relationship, and the difference
+between them is the measure, not the basis, not the months, and not the data.
+
+**A correction was made in the wrong direction on this, and it was neither a
+right answer nor a wrong one.** The README carried 23 to 28. A verification pass
+reported the relationship as 23.0 to 28.4 without saying it had computed in
+scaled error, the number was read as stale, and it was corrected to 24 to 29 --
+which is exactly right in mean absolute error. A correct value was replaced by a
+differently correct value, and both sides of the exchange believed they were
+reconciling one quantity.
+
+**This is a distinct failure from the four substitutions above and needs a
+different guard.** There the danger was a stale number replaced by a current one,
+and the check was to reproduce the basis the record was computed on. Here the
+basis was never in question and reproducing it would have changed nothing: both
+figures come off the same 243 shared horizon-target pairs. What was missing was
+the name of the measure. **The check that catches this is stating the measure
+alongside the number**, in the notes and in any report of them, so that two
+numbers can be seen to answer different questions rather than to disagree.
+
+**The document and the figure do not use the same measure, and this is not
+reconciled.** The README commits to scaled error within a gas, in its own terms:
+scaled error is used within each gas and not across them, because methane's
+scaling denominator is twice the difficulty of the period being scored while
+carbon dioxide's matches its test period closely. The forecast figure beside that
+paragraph is drawn in mean absolute error, in nanomoles and micromoles, because
+`forecast_panel` computes MAE and the significance band is in the same units.
+**A reader checking the paragraph's 23 to 28 against the figure will not recover
+it**, and will read 24 to 29 off the panel instead.
+
+That is deliberate and should stay deliberate. The paragraph is a comparison
+within one gas, where scaled error is the committed measure; the figure is a
+picture of error in the units the gas is measured in, where a scaled axis would
+be unreadable. **A later pass must not silently reconcile them.** Changing the
+paragraph to MAE breaks the document's stated rule, and changing the figure to
+MASE costs the units. If the gap is ever closed it should be closed by naming
+both measures where they meet, not by making one of them disappear.
 
 ## The pattern: assuming the record is the side that moved
 
