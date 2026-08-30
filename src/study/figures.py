@@ -327,8 +327,8 @@ def reconstruction_series(annual: pd.DataFrame) -> Figure:
     # figure coordinates and the balance moves the axes their legend rides on, so
     # ruling first leaves the line where the heading used to be. It struck through
     # both headings here for as long as this figure has been balanced.
-    _underline_legend_headings(fig, ax)
-    _underline_legend_title(fig, strip_legend)
+    ps.underline_legend_headings(fig, ax)
+    ps.underline_legend_title(fig, strip_legend)
 
     return fig
 
@@ -540,7 +540,7 @@ def forecast_error_by_horizon(panels: dict[str, pd.DataFrame]) -> Figure:
     # legend out from under them.
     ps.balance_drawing_block(fig, *axes)
     for ax in axes:
-        _underline_legend_headings(fig, ax)
+        ps.underline_legend_headings(fig, ax)
     return fig
 
 
@@ -641,83 +641,6 @@ def _forecast_legend(ax) -> None:
               labelspacing=0.34, columnspacing=2.0, handlelength=2.2,
               handletextpad=0.8, fontsize=ps.LEGEND_SIZE - 1.0, framealpha=1.0,
               borderaxespad=0.0)
-
-
-def _underline_legend_title(fig, legend) -> None:
-    """Rule a legend title, so it reads as the heading rows elsewhere do.
-
-    A title and a blank-handle row are the set's two ways of naming a group. They
-    differ in where the text sits, not in what it is, so the rule that marks one
-    marks the other and the two read as the same device.
-    """
-    fig.canvas.draw()
-    text = legend.get_title()
-    box = text.get_window_extent().transformed(fig.transFigure.inverted())
-    y = box.y0 - 0.10 * (box.y1 - box.y0)
-    fig.add_artist(Line2D([box.x0, box.x1], [y, y], transform=fig.transFigure,
-                          color=ps.INK, linewidth=0.9,
-                          zorder=legend.get_zorder() + 1))
-
-
-def _underline_legend_headings(fig, ax, center: bool = False) -> None:
-    """Rule each legend heading, which mathtext cannot do itself.
-
-    Drawn on the figure rather than the axes so it does not appear in `ax.lines`,
-    where the checks that keep the legend off the data would then see it.
-
-    With `center`, each heading is first moved to the middle of the column it
-    heads. A legend column runs from the left edge of its handles to the right
-    edge of its longest label, and a heading left-aligned with the labels sits
-    off to one side of that, reading as another entry rather than as the name of
-    the group. The rule is drawn after the move so it follows the text.
-    """
-    fig.canvas.draw()
-    legend = ax.get_legend()
-    headings = [text for text in legend.get_texts()
-                if text.get_text().startswith("$")]
-    if center:
-        _center_legend_headings(fig, legend, headings)
-        fig.canvas.draw()
-    for text in headings:
-        box = text.get_window_extent().transformed(fig.transFigure.inverted())
-        y = box.y0 - 0.10 * (box.y1 - box.y0)
-        fig.add_artist(Line2D([box.x0, box.x1], [y, y], transform=fig.transFigure,
-                              color=ps.INK, linewidth=0.9,
-                              zorder=legend.get_zorder() + 1))
-
-
-def _center_legend_headings(fig, legend, headings) -> None:
-    """Move each heading to the middle of its own column.
-
-    Columns are recovered from the drawn artists rather than from the layout
-    arguments: matplotlib does not expose which entry went into which column,
-    but every entry in one column shares a label left edge, so grouping on that
-    edge recovers the columns whatever `ncol` was.
-    """
-    renderer = fig.canvas.get_renderer()
-    columns: dict[int, list] = {}
-    for handle, text in zip(legend.legend_handles, legend.get_texts()):
-        label = text.get_window_extent()
-        try:
-            mark = handle.get_window_extent(renderer)
-            left = min(mark.x0, label.x0)
-        except (AttributeError, TypeError, RuntimeError):
-            left = label.x0
-        columns.setdefault(round(label.x0), []).append((text, left, label.x1))
-
-    for heading in headings:
-        column = next(rows for rows in columns.values()
-                      if any(text is heading for text, _, _ in rows))
-        spans = [(left, right) for text, left, right in column
-                 if text is not heading]
-        if not spans:
-            continue
-        middle = (min(left for left, _ in spans) + max(right for _, right in spans)) / 2
-        box = heading.get_window_extent()
-        _, y = heading.get_position()
-        moved = heading.get_transform().inverted().transform(
-            (box.x0 + middle - (box.x0 + box.x1) / 2, box.y0))
-        heading.set_position((moved[0], y))
 
 
 # --------------------------------------------------------------------------
@@ -939,7 +862,7 @@ def observed_and_predicted(panels: dict[str, pd.DataFrame]) -> Figure:
     ps.balance_drawing_block(fig, *axes)
     for ax in axes:
         if ax.get_legend() is not None:
-            _underline_legend_headings(fig, ax)
+            ps.underline_legend_headings(fig, ax)
     return fig
 
 
@@ -1720,7 +1643,7 @@ def coefficient_stability(paths: dict[str, pd.DataFrame], required: float,
 
     ps.balance_drawing_block(fig, *axes, strip_ax, extra=[name], reflow=replace)
     _seat_stability_key(fig, axes[0], beyond)
-    _underline_legend_headings(fig, axes[0])
+    ps.underline_legend_headings(fig, axes[0])
     return fig
 
 
@@ -1773,11 +1696,10 @@ BLOCK_HEADINGS = ("What was measured (monthly means)", "Which months the model u
 #: An unheaded row of four flattens the distinction: the first two say what the
 #: record holds and the second two say what the study decided about it, and that
 #: is the same division as the upper block against the lower.
-#: Bold and a colon, not bold and a rule. A rule beneath a heading is how a
-#: heading governs a column stacked under it, which is what these did when the
-#: key had two columns. At the left of a row it governs what is beside it, the
-#: rule marks nothing the boldness has not already marked, and a colon is the
-#: ordinary separator between a label and what it introduces.
+#: Bold and a colon, not bold and a rule, because these sit at the left of their
+#: rows. That is one of the set's two forms and the rule for choosing between
+#: them is in `plotstyle`, under "Naming a group inside a key"; this is the only
+#: key in the set the colon applies to.
 RECORD_HEADING = r"$\bf{What\ the\ record\ holds:}$"
 DECIDED_HEADING = r"$\bf{What\ the\ study\ decided:}$"
 TIME_AXIS = "Year"
@@ -1982,7 +1904,7 @@ def covariate_availability(rows: list[dict],
     # gap under what the title actually occupies and hands the difference to the
     # block, where the key needs it.
     fig, (left, bottom, width, height) = ps.canvas_area(
-        AVAILABILITY_TEXT, size="standard", measured_text=True)
+        AVAILABILITY_TEXT, size="standard")
     width_px, height_px = ps.SIZES["standard"]
     gutter = NAME_GUTTER_PX / width_px
     key_band = KEY_BAND_PX / height_px
@@ -2088,9 +2010,10 @@ def covariate_availability(rows: list[dict],
               columnspacing=1.6, labelspacing=LEGEND_ROW_GAP,
               borderpad=LEGEND_BORDER_PAD, borderaxespad=0.0,
               fontsize=ps.LEGEND_SIZE - 1.0)
-    # No rules here: the headings carry colons instead, so nothing has to be
-    # drawn after the block settles. `_underline_legend_headings` is untouched
-    # and still serves the three figures whose headings sit above their columns.
+    # No rules here: these headings sit at the left of their rows, which is the
+    # colon's case under the set-wide rule in `plotstyle`. Nothing has to be
+    # drawn after the block settles, which is the incidental benefit rather than
+    # the reason.
     ps.balance_drawing_block(fig, ax)
     # The key rides the panel at the same clearance the block keeps from the text
     # above and below it, so the four elements step down evenly. Set from the
@@ -2739,7 +2662,7 @@ def _year_key(fig, rect: tuple[float, float, float, float],
               # font size, which is 8.6 px here and is exactly the kind of
               # almost-aligned that reads as a mistake rather than a margin.
               borderaxespad=0.0)
-    _underline_legend_headings(fig, ax, center=True)
+    ps.underline_legend_headings(fig, ax, center=True)
     return ax
 
 
@@ -3138,7 +3061,7 @@ def residual_distribution_check(
     # Measured text blocks: the title wraps to two lines here, and the allotted
     # spacing gives a two-line title twice the air a one-line title gets.
     fig, (left, bottom, width, height) = ps.canvas_area(
-        DISTRIBUTION_TEXT, size="quad", measured_text=True)
+        DISTRIBUTION_TEXT, size="quad")
     width_px, height_px = ps.SIZES["quad"]
 
     axis_room = DISTRIBUTION_AXIS_PX / width_px
@@ -3212,7 +3135,7 @@ def residual_distribution_check(
                              reflow=seat_key, grow=False)
     # Ruled last, after the final seating. The rule is a figure artist at fixed
     # coordinates: anything that moves the key after this leaves the line behind.
-    _underline_legend_headings(fig, key, center=True)
+    ps.underline_legend_headings(fig, key, center=True)
     return fig
 
 

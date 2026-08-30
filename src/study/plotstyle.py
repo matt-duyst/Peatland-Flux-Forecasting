@@ -24,6 +24,7 @@ matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
+from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 
 from ingest import paths
@@ -281,9 +282,12 @@ SIZES = {
 #: is where growing cannot help and something has to give.
 MIN_BLOCK_GAP_PX = 18.0
 
-#: Fixed pixel allocations, so a figure's proportions do not depend on how much
-#: text it happens to carry.
-TITLE_BLOCK_PX = 96
+#: Fixed pixel allocation, so a figure's proportions do not depend on how much
+#: text it happens to carry. There was a `TITLE_BLOCK_PX = 96` floor beside this
+#: one, under the title and subtitle. It never bound: the block those two need is
+#: their own measured height, which runs 137 to 226 px across the set, so the
+#: floor was below every figure that ever tested it. It arrived with the original
+#: scaffolding and was never revisited, and it is gone rather than retuned.
 DESCRIPTION_BLOCK_PX = 156
 #: Room below the drawing area for tick labels and the axis label, so the
 #: description block never collides with the axis it sits under.
@@ -325,7 +329,19 @@ TEXT_GAP_PX = 26
 MAX_SENTENCES = 12
 
 #: Mean glyph advance of DejaVu Sans as a fraction of point size, used to turn an
-#: available width into a character count for wrapping.
+#: available width into a character count. Titles and subtitles still wrap this
+#: way; descriptions no longer do. Measured over the set's own description text
+#: the true mean is 0.5055, so this is 7.8% too wide and every line it sets falls
+#: short of the measure. It is not a bad estimate that can be corrected, though.
+#: A character count has to cover the widest line rather than the mean, and the
+#: widest line in the set runs 11.2% above the corpus mean, so no single value is
+#: both tight and safe: at the true mean seven of eleven descriptions overflowed,
+#: and the sequence is not even monotone, since 0.515 overflows more figures than
+#: 0.520 does. 0.545 is near the tightest value that never overflows, and the 3
+#: to 9% of width it leaves is the price of counting characters at all. That is
+#: why descriptions are measured instead. Titles and subtitles keep the estimate
+#: because changing how they wrap changes the height of the block above every
+#: panel, which is a separate decision from how the block below them is set.
 _CHAR_WIDTH = 0.545
 
 
@@ -404,11 +420,70 @@ class DescriptionOverflow(ValueError):
     """
 
 
-def _wrap_width(width_px: int) -> int:
-    """Characters per line, tied to the drawable width of the canvas."""
-    drawable_px = width_px - MARGIN_PX["left"] - MARGIN_PX["right"]
-    drawable_points = drawable_px / DPI * 72.0
-    return max(20, int(drawable_points / (_CHAR_WIDTH * DESCRIPTION_SIZE)))
+_MEASURING: Figure | None = None
+
+
+def _measurer() -> tuple[Figure, object]:
+    """A scratch canvas kept for measuring text, built once and reused.
+
+    Every measurement needs a renderer, and making one per string is what made
+    measuring look expensive enough to estimate around in the first place.
+    """
+    global _MEASURING
+    if _MEASURING is None:
+        _MEASURING = plt.figure(figsize=(1, 1), dpi=DPI)
+        _MEASURING.canvas.draw()
+    return _MEASURING, _MEASURING.canvas.get_renderer()
+
+
+def text_width_px(text: str, size: float) -> float:
+    """Rendered width of a string at the set's font, in pixels."""
+    if not text:
+        return 0.0
+    fig, renderer = _measurer()
+    drawn = fig.text(0, 0, text, fontsize=size)
+    width = drawn.get_window_extent(renderer=renderer).width
+    drawn.remove()
+    return width
+
+
+def _wrap_measured(body: str, limit_px: float, size: float) -> list[str]:
+    """Greedy wrap on rendered width rather than on a character count."""
+    lines: list[str] = []
+    current = ""
+    for word in body.split():
+        trial = f"{current} {word}".strip()
+        if current and text_width_px(trial, size) > limit_px:
+            lines.append(current)
+            current = word
+        else:
+            current = trial
+    if current:
+        lines.append(current)
+    return lines
+
+
+def _balance_measured(body: str, limit_px: float, size: float) -> list[str]:
+    """Wrap to the narrowest measure that still uses the same number of lines.
+
+    The measured analogue of `_balance`, and it is here for the same reason.
+    Filling to the edge leaves whatever the last line happens to inherit, which
+    on this set was a description ending in a four-character line under four
+    full ones. Holding the line count and pulling the measure in spreads the
+    words evenly instead, and because the count is held no block changes height
+    and nothing below the description moves.
+    """
+    lines = len(_wrap_measured(body, limit_px, size))
+    if lines <= 1:
+        return [body]
+    low, high = 1.0, limit_px
+    while high - low > 0.5:
+        middle = (low + high) / 2
+        if len(_wrap_measured(body, middle, size)) <= lines:
+            high = middle
+        else:
+            low = middle
+    return _wrap_measured(body, high, size)
 
 
 def emphasize(text: str, terms: tuple[str, ...]) -> str:
@@ -487,19 +562,32 @@ def wrap_subtitle(text: str, width_px: int) -> str:
     return _balance(text, width)
 
 
-def wrap_description(text: str, width_px: int, terms: tuple[str, ...] = ()) -> str:
-    """Wrap a description to the canvas width, refusing text that will not fit."""
-    width = _wrap_width(width_px) - (2 if terms else 0)
-    wrapped = textwrap.fill(" ".join(text.split()), width=width)
-    lines = wrapped.count("\n") + 1
+def wrap_description(text: str, width_px: int, terms: tuple[str, ...] = (),
+                     extra_left_px: int = 0) -> str:
+    """Wrap a description to its measured width, refusing text that will not fit.
+
+    `extra_left_px` is the same shift the drawing area takes, and the description
+    starts at it too. Wrapping ignored it while the width was estimated, which
+    was safe only because the estimate ran short by more than the shift: the flux
+    figure was set as though it had 1652 px when it had 1618, and came out at
+    96.9% of an edge it was never measured against. Measuring makes that the
+    first thing to overflow, so the shift is taken off the measure here.
+    """
+    limit = width_px - MARGIN_PX["left"] - extra_left_px - MARGIN_PX["right"]
+    if terms:
+        # Emphasis is applied after wrapping and bold is wider than regular, so
+        # the measure gives back about what two characters would take.
+        limit -= text_width_px("nn", DESCRIPTION_SIZE)
+    body = " ".join(text.split())
+    lines = _balance_measured(body, limit, DESCRIPTION_SIZE)
     line_px = DESCRIPTION_SIZE * 1.45 / 72.0 * DPI
-    if lines * line_px > DESCRIPTION_BLOCK_PX:
+    if len(lines) * line_px > DESCRIPTION_BLOCK_PX:
         allowed = int(DESCRIPTION_BLOCK_PX / line_px)
         raise DescriptionOverflow(
-            f"description wraps to {lines} lines at this width; the fixed "
+            f"description wraps to {len(lines)} lines at this width; the fixed "
             f"allocation holds {allowed}. Shorten it rather than enlarging the block."
         )
-    return emphasize(wrapped, terms)
+    return emphasize("\n".join(lines), terms)
 
 
 def _below(fig: Figure, drawn, height_px: int) -> float:
@@ -510,7 +598,6 @@ def _below(fig: Figure, drawn, height_px: int) -> float:
 
 
 def canvas_area(text: FigureText, size: str = "wide", extra_left_px: int = 0,
-                measured_text: bool = False
                 ) -> tuple[Figure, tuple[float, float, float, float]]:
     """A figure carrying its text blocks, and the rectangle left for drawing.
 
@@ -518,34 +605,34 @@ def canvas_area(text: FigureText, size: str = "wide", extra_left_px: int = 0,
     take the rectangle and subdivide it, so every figure in the set keeps the
     same blocks in the same places whatever it draws inside them.
 
-    With `measured_text`, the subtitle and the drawing area are placed against
-    what the blocks above them actually occupy rather than against the room
-    allotted for them. The allotment gives the title a share of its own height,
-    which is right for the one-line titles most of this set carries and leaves a
-    two-line title sitting under twice the air. Off by default, so no figure that
-    does not ask for it moves.
+    The subtitle and the drawing area are placed against what the blocks above
+    them actually occupy. This was `measured_text`, opt-in, so that no figure
+    moved without asking, and two figures asked. The allotment it replaces gave
+    a title 1.9 times its own point size, 59.4 px for 29 px of ink, so what a
+    reader saw below a one-line title was the leftover rather than a chosen
+    distance, and it doubled when a title wrapped. Measured, the gap is
+    TEXT_GAP_PX whatever the title does, and the drawing area gains the 10 to 20
+    px the allotment was holding. Now that every figure takes it there is no
+    second behaviour to select, and the flag is gone with the allotment.
     """
     apply_style()
     width_px, height_px = SIZES[size]
     fig = plt.figure(figsize=(width_px / DPI, height_px / DPI), dpi=DPI)
 
-    body = wrap_description(text.description, width_px, text.emphasize)
+    body = wrap_description(text.description, width_px, text.emphasize,
+                            extra_left_px)
     heading = wrap_subtitle(text.subtitle, width_px)
     title = wrap_title(text.title, width_px)
-
-    subtitle_line_px = SUBTITLE_SIZE * 1.5 / 72.0 * DPI
-    title_px = (title.count("\n") + 1) * TITLE_SIZE * 1.9 / 72.0 * DPI
-    title_block_px = max(
-        TITLE_BLOCK_PX,
-        title_px + (heading.count("\n") + 1) * subtitle_line_px + 18,
-    )
 
     # Wider tick labels need a wider margin, or a two-line axis name runs off the
     # canvas. Measured rather than guessed: the carbon dioxide panel's label
     # reached 7.6 px past the left edge before this was added.
     left = (MARGIN_PX["left"] + extra_left_px) / width_px
     right = 1 - MARGIN_PX["right"] / width_px
-    axes_top = 1 - (MARGIN_PX["top"] + title_block_px) / height_px
+    # `axes_top` is set from the drawn subtitle below. The allotment that used to
+    # compute it here, a title-height share plus a subtitle-line count plus 18,
+    # went dead the moment every figure measured instead, and it is not kept as a
+    # fallback: two ways of placing one edge is how the two drift apart.
     axes_bottom = (
         MARGIN_PX["bottom"] + DESCRIPTION_BLOCK_PX + XAXIS_BLOCK_PX
     ) / height_px
@@ -554,15 +641,12 @@ def canvas_area(text: FigureText, size: str = "wide", extra_left_px: int = 0,
     drawn_title = fig.text(middle, 1 - MARGIN_PX["top"] / height_px, title,
                            ha="center", va="top", fontsize=TITLE_SIZE,
                            fontweight="bold", color=INK, linespacing=1.35)
-    subtitle_at = 1 - (MARGIN_PX["top"] + title_px) / height_px
-    if measured_text:
-        subtitle_at = _below(fig, drawn_title, height_px)
+    subtitle_at = _below(fig, drawn_title, height_px)
     drawn_subtitle = fig.text(middle, subtitle_at,
                               emphasize(heading, text.emphasize), ha="center",
                               va="top", fontsize=SUBTITLE_SIZE, color=INK,
                               linespacing=1.5)
-    if measured_text:
-        axes_top = _below(fig, drawn_subtitle, height_px)
+    axes_top = _below(fig, drawn_subtitle, height_px)
     # Anchored to the floor of its block, not the ceiling. The block stays the
     # same fixed height either way, so `axes_bottom` above is untouched and no
     # panel moves; only where the slack sits changes.
@@ -696,6 +780,115 @@ def _resize(axes, boxes, floor: float, base: float, scale: float) -> None:
         ax.set_position((box.x0, base + (box.y0 - floor) * scale,
                          box.width, box.height * scale))
 
+
+
+# --------------------------------------------------------------------------
+# Naming a group inside a key
+# --------------------------------------------------------------------------
+#
+# The set names a group of legend entries two ways, and which one applies is set
+# by where the heading sits rather than by the figure.
+#
+# **A heading on top of a stacked column is ruled.** The rule is what makes the
+# heading govern the entries beneath it: without it a bold row at the head of a
+# column is just another entry that happens to be bold, and nothing says how far
+# down its authority reaches. Seven headings in the set are of this kind, on the
+# reconstruction, forecast, flux, stability, year-grid and residual-check
+# figures, and `underline_legend_headings` draws them.
+#
+# **A heading at the left of a row carries a colon and no rule.** There it
+# governs what is beside it rather than what is under it, the extent is given by
+# the row itself, and a rule marks nothing the boldness has not already marked.
+# A colon is the ordinary separator between a label and what it introduces. One
+# key in the set is of this kind, the availability figure's, and it sets its
+# headings as `$\bf{...:}$` with no call to the ruler.
+#
+# The rule lived as a comment on the availability figure's heading constants,
+# where it read as a decision about that figure. It is a decision about the set,
+# and either form is correct where its own geometry holds.
+#
+# Both forms have to be drawn after the block is balanced. The rules are figure
+# artists at fixed positions, so a panel that moves afterwards leaves them where
+# the headings used to be, which struck through two headings for as long as the
+# reconstruction figure had been balanced. Where a caller reflows during
+# balancing it must also remove the rules it drew, since the ruler adds an
+# artist rather than replacing one.
+
+def underline_legend_title(fig, legend) -> None:
+    """Rule a legend title, so it reads as the heading rows elsewhere do.
+
+    A title and a blank-handle row are the set's two ways of naming a group. They
+    differ in where the text sits, not in what it is, so the rule that marks one
+    marks the other and the two read as the same device.
+    """
+    fig.canvas.draw()
+    text = legend.get_title()
+    box = text.get_window_extent().transformed(fig.transFigure.inverted())
+    y = box.y0 - 0.10 * (box.y1 - box.y0)
+    fig.add_artist(Line2D([box.x0, box.x1], [y, y], transform=fig.transFigure,
+                          color=INK, linewidth=0.9,
+                          zorder=legend.get_zorder() + 1))
+
+
+def underline_legend_headings(fig, ax, center: bool = False) -> None:
+    """Rule each legend heading, which mathtext cannot do itself.
+
+    Drawn on the figure rather than the axes so it does not appear in `ax.lines`,
+    where the checks that keep the legend off the data would then see it.
+
+    With `center`, each heading is first moved to the middle of the column it
+    heads. A legend column runs from the left edge of its handles to the right
+    edge of its longest label, and a heading left-aligned with the labels sits
+    off to one side of that, reading as another entry rather than as the name of
+    the group. The rule is drawn after the move so it follows the text.
+    """
+    fig.canvas.draw()
+    legend = ax.get_legend()
+    headings = [text for text in legend.get_texts()
+                if text.get_text().startswith("$")]
+    if center:
+        _center_legend_headings(fig, legend, headings)
+        fig.canvas.draw()
+    for text in headings:
+        box = text.get_window_extent().transformed(fig.transFigure.inverted())
+        y = box.y0 - 0.10 * (box.y1 - box.y0)
+        fig.add_artist(Line2D([box.x0, box.x1], [y, y], transform=fig.transFigure,
+                              color=INK, linewidth=0.9,
+                              zorder=legend.get_zorder() + 1))
+
+
+def _center_legend_headings(fig, legend, headings) -> None:
+    """Move each heading to the middle of its own column.
+
+    Columns are recovered from the drawn artists rather than from the layout
+    arguments: matplotlib does not expose which entry went into which column,
+    but every entry in one column shares a label left edge, so grouping on that
+    edge recovers the columns whatever `ncol` was.
+    """
+    renderer = fig.canvas.get_renderer()
+    columns: dict[int, list] = {}
+    for handle, text in zip(legend.legend_handles, legend.get_texts()):
+        label = text.get_window_extent()
+        try:
+            mark = handle.get_window_extent(renderer)
+            left = min(mark.x0, label.x0)
+        except (AttributeError, TypeError, RuntimeError):
+            left = label.x0
+        columns.setdefault(round(label.x0), []).append((text, left, label.x1))
+
+    for heading in headings:
+        column = next(rows for rows in columns.values()
+                      if any(text is heading for text, _, _ in rows))
+        spans = [(left, right) for text, left, right in column
+                 if text is not heading]
+        if not spans:
+            continue
+        middle = (min(left for left, _ in spans) + max(right for _, right in spans)) / 2
+        box = heading.get_window_extent()
+        _, y = heading.get_position()
+        moved = heading.get_transform().inverted().transform(
+            (box.x0 + middle - (box.x0 + box.x1) / 2, box.y0))
+        heading.set_position((moved[0], y))
 
 def canvas(text: FigureText, size: str = "wide") -> tuple[Figure, plt.Axes]:
     """A figure with its text blocks and a single drawing area."""

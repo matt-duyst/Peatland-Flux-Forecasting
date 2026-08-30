@@ -249,6 +249,7 @@ def draw_site(ax, image, wetlands: dict, origin: tuple[float, float]) -> None:
                     bbox_to_anchor=(0.03, 0.945))
     key.get_title().set_fontsize(7.8)
     key.get_title().set_fontweight("bold")
+    # Ruled by `site_overview` once the panels have settled, not here. See there.
 
 
 def _coordinate_ticks(ax, origin: tuple[float, float]) -> None:
@@ -387,6 +388,17 @@ def site_overview(image, wetlands: dict, states: dict, sites: pd.DataFrame,
     _align_right_column(fig, ax_site, ax_net, ax_rose)
     _balance_gaps(fig, (ax_site, ax_net, ax_rose))
     _frame_rose(fig, ax_rose, ax_net, ax_site)
+    # The site key's title sits above a stacked column, which is the ruled case
+    # under the set-wide rule in `plotstyle`. It went unruled because the helper
+    # lived in `figures.py`, which this module does not import, so the one key
+    # outside that file quietly kept a form the set does not have.
+    #
+    # Drawn here rather than beside the key, for the reason the rest of the set
+    # draws it last: the rule is a figure artist at a fixed position and the
+    # three panels move afterwards. Placed with the key it came out 9.4 px below
+    # its title instead of 1.6, which is the same failure that once struck
+    # through two headings on the reconstruction figure.
+    ps.underline_legend_title(fig, ax_site.get_legend())
     return fig
 
 

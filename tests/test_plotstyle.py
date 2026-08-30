@@ -24,14 +24,42 @@ def test_a_description_must_be_more_than_one_sentence_and_not_unbounded():
 
 
 def test_wrap_width_is_tied_to_canvas_width():
-    narrow = ps._wrap_width(ps.SIZES["compact"][0])
-    wide = ps._wrap_width(ps.SIZES["wide"][0])
-    assert wide > narrow
+    body = "A sentence that keeps going and going and going. " * 3
+    narrow = ps.wrap_description(body, ps.SIZES["compact"][0]).count("\n")
+    wide = ps.wrap_description(body, ps.SIZES["wide"][0]).count("\n")
+    assert wide < narrow
+
+
+def test_the_left_shift_comes_off_the_measure():
+    """The description starts where the drawing area does, so it must end there too.
+
+    Balancing makes two blocks of the same line count identical, so the shift
+    shows up as a line that fits rather than as a narrower block. What has to
+    hold is that no line runs past the edge the shift leaves.
+    """
+    body = "A sentence that keeps going and going and going. " * 8
+    width_px = ps.SIZES["stacked"][0]
+    limit = width_px - ps.MARGIN_PX["left"] - 34 - ps.MARGIN_PX["right"]
+    shifted = ps.wrap_description(body, width_px, extra_left_px=34)
+    assert shifted.count("\n") >= 1
+    assert all(ps.text_width_px(line, ps.DESCRIPTION_SIZE) <= limit
+               for line in shifted.split("\n"))
+
+
+def test_a_description_is_balanced_rather_than_filled():
+    """Filling leaves the last line whatever it inherits; balancing evens them."""
+    body = ("The green region covers all eight fitted models and sits mostly above "
+            "the seasonal average, and where it reaches beneath the difference "
+            "stays inside the band drawn around it here.")
+    lines = ps.wrap_description(body, ps.SIZES["wide"][0]).split("\n")
+    assert len(lines) > 1
+    widths = [ps.text_width_px(line, ps.DESCRIPTION_SIZE) for line in lines]
+    assert widths[-1] > 0.35 * max(widths)
 
 
 def test_a_description_that_will_not_fit_raises_rather_than_being_clipped():
     """The block height is fixed, so overflow has to fail loudly."""
-    long_text = "A sentence that keeps going and going. " * 20
+    long_text = "A sentence that keeps going and going. " * 60
     with pytest.raises(ps.DescriptionOverflow, match="Shorten it"):
         ps.wrap_description(long_text, ps.SIZES["wide"][0])
 

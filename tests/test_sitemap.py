@@ -215,3 +215,31 @@ def test_a_white_casing_would_vanish_on_the_network_panel():
     # dark one is nine tenths of it away.
     assert abs(luminance("#FFFFFF") - luminance("#F4F4F4")) < 0.10
     assert abs(luminance(ps.INK) - luminance("#F4F4F4")) > 0.85
+
+
+def test_the_site_key_title_is_ruled_and_the_rule_follows_the_panels():
+    """The set rules a heading that tops a stacked column, and this is one.
+
+    It went unruled for as long as the helper lived in `figures.py`, which this
+    module does not import. Drawn beside the key it also came out 9.4 px below
+    its title rather than 1.6, because `_balance_gaps` moves the panels
+    afterwards and a rule is a figure artist at a fixed position. Both halves
+    are checked here: that the rule exists, and that it still sits under the
+    title once everything has settled.
+    """
+    from matplotlib.lines import Line2D
+
+    fig = sitemap.site_overview(image(), wetlands(), states(), sites(), shares())
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    width, height = (fig.get_size_inches() * fig.dpi)
+
+    rules = [a for a in fig.artists if isinstance(a, Line2D)]
+    assert len(rules) == 1, "the site key's title carries exactly one rule"
+
+    title = fig.axes[0].get_legend().get_title()
+    box = title.get_window_extent(renderer=renderer)
+    rule = rules[0]
+    assert abs(rule.get_ydata()[0] * height - box.y0) < 6
+    assert abs(rule.get_xdata()[0] * width - box.x0) < 2
+    assert abs(rule.get_xdata()[1] * width - box.x1) < 2
