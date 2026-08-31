@@ -1143,6 +1143,48 @@ stay: the window exclusion and `TARGET_END` above, and the orphaned residuals
 module in the 2011 section. Someone arriving at either should find this table
 from there.
 
+## Never state a count of a list beside the list
+
+The general form, and it earned its own entry by happening inside the table that
+records it.
+
+The drift table above grew two rows. The prose beside it read *in the first three
+the figure was right and the record stale, in the fourth the record was right and
+the figure stale*, and continued *the fifth breaks the shape*. The sentence in
+`notes/base_v55.md` that points at the same table said *the other four ran the
+other way*. Appending row 5 falsified both. Appending row 6 falsified them again.
+
+**Those were counts of a list, held somewhere other than the list.** That is the
+same object as every row in the table: one fact in two places, updated in one.
+The list is authoritative about its own length and nothing else can be, so any
+sentence that restates the length has taken a copy that only stays true until the
+next append, and appending is the one thing a growing list is for. It cost
+nothing here because the entry is prose. In a figure description it is what the
+adopted-window row records.
+
+**The rule.** A list carries its own count. Prose beside a list names shapes,
+kinds and directions, never how many. *Two shapes recur* survives an append;
+*the first three* does not. Where a number really must appear beside a list, it
+belongs in a test that reads the list, which is what
+`test_the_amplitudes_and_their_trend_tests_are_recorded` does for the seasonal
+figures. The same applies to ordinals: *the fourth* is a count wearing a
+different hat, and it goes stale the moment a row is inserted rather than
+appended.
+
+Both sentences are now count-free, and the rows carry the numbers.
+
+**A second-order instance, recorded because it is the same failure at one
+remove.** The survey that found the `CSVs/` drift called it *the eighth*
+instance. It is the sixth row of this table, and the seventh of the family
+counting the one recorded in `base_v55.md` that is not tabulated here. The
+"eighth" came from counting across two different tables at once, this one and the
+reimplemented-beside-itself list below, which is a count of a list taken from
+memory rather than from the list. It reached a report before it was checked. The
+correction is recorded rather than quietly fixed, because the instructive part is
+that the same failure appeared twice in one round, once in the notes and once in
+the prose describing them, and neither instance was noticed by writing more
+carefully. Both were caught by going back to the list and counting it.
+
 ## No references.bib, and what to do if a writeup ever needs one
 
 Considered and declined. The case for one is real: twelve works are cited across

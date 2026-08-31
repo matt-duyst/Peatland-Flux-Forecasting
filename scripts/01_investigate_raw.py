@@ -5,7 +5,8 @@ columns, the source column behind each value in the derived file, and tests of
 whether any threshold or dispersion rule reproduces that file's row selection.
 
 Run: .venv/bin/python scripts/01_investigate_raw.py
-Writes: data/interim/derived_labelled.parquet
+Writes nothing. This script reports; the frame it labels is used in memory and
+the selection rule it tests was never recovered, so there is no output to keep.
 """
 
 from __future__ import annotations
@@ -17,7 +18,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from ingest import clean, paths, raw  # noqa: E402
+from ingest import clean, raw  # noqa: E402
 
 
 def main() -> None:
@@ -44,8 +45,6 @@ def main() -> None:
 
     long = clean.to_long(halfhourly)
     labeled = clean.label_derived_subset(long)
-    paths.ensure_dirs()
-    labeled.to_parquet(paths.interim_dir() / "derived_labelled.parquet", index=False)
 
     print("\n" + "=" * 78)
     print("DERIVED FCH4 Data.csv — SOURCE COLUMN BY YEAR")

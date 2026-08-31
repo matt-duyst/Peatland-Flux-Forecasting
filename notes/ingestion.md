@@ -206,6 +206,18 @@ Ten files, and **every one of them is read.** Nothing in `CSVs/` is inert.
 The archive `AMF_US-MBP_BASE-BADM_5-5.zip` was an eleventh and is no longer
 carried; `notes/base_v55.md` records its checksum and how to reobtain it.
 
+`scripts/01_investigate_raw.py` used to write `data/interim/derived_labelled.parquet`
+and no longer does. Nothing read it, here or anywhere: the frame is used in memory
+by the two calls below the line that wrote it, and the investigation it served
+concluded that the selection rule behind `FCH4 Data.csv` is unrecoverable, so
+there was nothing downstream to keep it for. It read as a pipeline product because
+the script's docstring announced it under `Writes:`, which is the form the
+numbered scripts use for outputs later stages depend on. Removing the write took
+three other things with it: that docstring line, the `paths.ensure_dirs()` call
+that existed only to create the directory for it, and the `paths` import that
+call was the last user of. `ingest/raw.py` creates its own cache directory, so
+nothing else depended on that call.
+
 **On the primary-versus-reference division this section used to draw.** It was
 not a useful cut and it is not restored here. The Delwiche appendix was filed as
 a reference because nothing read it, which stopped being true; the 2022 workbook
