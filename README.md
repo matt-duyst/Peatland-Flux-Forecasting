@@ -199,6 +199,16 @@ The BASE product under `CSVs/AMF_US-MBP_BASE-BADM_5-5/` is the one input not car
 
 ---
 
+## Licence
+
+The code in this repository is MIT licensed; see `LICENSE`. **That covers the code and the prose, not the data.** The files under `CSVs/` and `geodata/` come from elsewhere and carry their own terms, and the licence at the root does not extend to them.
+
+The AmeriFlux BASE product for US-MBP is released under **CC-BY-4.0**, which requires attribution; cite it as the data providers state it, and `notes/base_v55.md` carries that citation verbatim. Appendix B of Delwiche et al. (2021) is also CC-BY-4.0. The site map's three geospatial layers are US federal works, credited inside the figure that draws them: NAIP imagery, the National Wetlands Inventory, and Census state outlines. The Marcell Experimental Forest station records held here as CSVs carry no licence statement this repository can point to, which is a gap in the record rather than a grant.
+
+Figures are generated from that data and inherit its attribution requirement.
+
+---
+
 ## Sources
 
 Bousquet, P., et al. (2006). Contribution of anthropogenic and natural sources to atmospheric methane variability. *Nature* 443, 439–443.

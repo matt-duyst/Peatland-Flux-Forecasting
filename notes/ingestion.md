@@ -635,19 +635,40 @@ is not an ancestor of `main` and neither is the commit, so this ref is the whole
 of what keeps that line alive.
 
 **It is deliberately not pushed, and that is a decision rather than an
-oversight.** The line stays local. What a reader needs from the earlier analysis
-is in this section already: what it contained, what it claimed, and which of its
-claims did not survive checking. The notebooks themselves carry leakage in the
-rescaled target, a percentage error reported on a series that crosses zero
-alongside a coefficient of determination of 0.0000, and two figures that are
-state-space output with no committed cell anywhere that produced them. Each is
-recorded below with the cell it came from. Published beside this work they
-invite being read as part of it rather than as the thing it replaced, and the
-corrections here would be doing their work at a disadvantage. The history is
-worth keeping for
-provenance and not worth publishing. `git push` sends no tags unless asked, so
-the default is already correct; the risk is a later pass running `--tags` and
+oversight.** What a reader needs from the earlier analysis is in this section
+already: what it contained, what it claimed, and which of its claims did not
+survive checking. The notebooks themselves carry leakage in the rescaled target,
+a percentage error reported on a series that crosses zero alongside a
+coefficient of determination of 0.0000, and two figures that are state-space
+output with no committed cell anywhere that produced them. Each is recorded
+below with the cell it came from. Published beside this work they invite being
+read as part of it rather than as the thing it replaced, and the corrections
+here would be doing their work at a disadvantage. The history is worth keeping
+for provenance and not worth publishing. `git push` sends no tags unless asked,
+so the default is already correct; the risk is a later pass running `--tags` and
 assuming the omission was accidental.
+
+**This paragraph said "the line stays local" and that was false when written.**
+`pre-squash-ingestion-layer` had been pushed at some earlier point, and deleting
+it locally did nothing to the remote, so the notebooks were reachable on GitHub
+through it the whole time. The remote tag was deleted on 2026-08-30 and the
+remote now carries `refs/heads/main` and nothing else; no ref there reaches
+`891f6d3~1`. The reasoning did not change, only the belief that it had already
+been given effect.
+
+**The error is the counts again, in a different subject.** The state of the
+remote was asserted from local evidence: the local tag had been deleted, no tag
+was an ancestor of `main`, therefore nothing was published. Each step was true
+and the conclusion did not follow, because a remote holds whatever was pushed to
+it and nothing local records that. `git ls-remote origin` answers it in one
+command and takes no judgment, and it was not run until a push made it
+incidental output.
+
+**What to check first, next time:** run `git ls-remote` before any claim about
+what a remote holds. Local refs describe a local object store. They are evidence
+about the remote only in the sense that a receipt is evidence about a shop's
+stock, and this project has now made the same substitution of inference for a
+one-command check three times over counts and once over a remote.
 
 **There was a second tag, `pre-squash-ingestion-layer`, and it is gone.** It was
 a descendant of the removal, so it held none of the notebooks while being, until
