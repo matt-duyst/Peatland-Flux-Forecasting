@@ -627,30 +627,37 @@ Detail behind the README's account of the analysis this work replaced. Every
 statement was checked against the five notebooks as committed, read out of git
 history at `891f6d3~1`, rather than against their figures or prose.
 
-**That commit, not the tag, is where the original analysis survives.** The
-notebooks, the `assets/` directory and the README that referenced them were
-removed by `891f6d3`, so its parent holds the last copy of all three. The tag
-`pre-squash-ingestion-layer` is a descendant of that removal and contains none of
-them: `assets/` is empty there and the README is the rebuilt one. Anyone reaching
-for the tag will find nothing and conclude the material is gone.
+**The tag `original-notebooks` is where the original analysis survives.** It
+points at `891f6d3~1`, the commit checked above, which is the last to hold the
+five notebooks, the 46 files in `assets/`, and the README that referenced them;
+`891f6d3` removed all three. Nothing else in the repository holds them: the tag
+is not an ancestor of `main` and neither is the commit, so this ref is the whole
+of what keeps that line alive.
 
-**Do not delete that tag, despite the above.** It was proposed for deletion when
-the repository was going public, on the grounds that it is the most misleading
-ref in the tree, and the check that would have justified deleting it reversed the
-conclusion instead. **The tag is the only ref from which `891f6d3~1` is
-reachable.** Neither it nor that commit is an ancestor of `main`, so the whole
-pre-rebuild line hangs off this one tag: delete it and the five notebooks and 46
-assets become unreachable, and the next `git gc` destroys the only copy of the
-analysis this repository was built to replace, along with the evidence behind
-every statement in this section.
+**It is deliberately not pushed, and that is a decision rather than an
+oversight.** The line stays local. What a reader needs from the earlier analysis
+is in this section already: what it contained, what it claimed, and which of its
+claims did not survive checking. The notebooks themselves carry leakage in the
+rescaled target, a percentage error reported on a series that crosses zero
+alongside a coefficient of determination of 0.0000, and two figures that are
+state-space output with no committed cell anywhere that produced them. Each is
+recorded below with the cell it came from. Published beside this work they
+invite being read as part of it rather than as the thing it replaced, and the
+corrections here would be doing their work at a disadvantage. The history is
+worth keeping for
+provenance and not worth publishing. `git push` sends no tags unless asked, so
+the default is already correct; the risk is a later pass running `--tags` and
+assuming the omission was accidental.
 
-So the tag is misleading and load-bearing at once, which is a worse combination
-than either alone: it names a thing it does not contain while anchoring a thing
-nothing else holds. The fix is a name that says what it anchors, not a deletion.
-Retagging the same commit, or tagging `891f6d3~1` directly since that is where
-this section sends a reader, costs nothing and removes the trap. Either way the
-old name should not be dropped until the new one exists, because dropping it is
-the operation that loses the history.
+**There was a second tag, `pre-squash-ingestion-layer`, and it is gone.** It was
+a descendant of the removal, so it held none of the notebooks while being, until
+`original-notebooks` existed, the only ref keeping them reachable: misleading and
+load-bearing at once. It was deleted only after the new tag was created and
+verified, in that order, because deleting it first is the operation that loses
+the history. Its own 13 commits, the unsquashed development of the ingestion
+layer, are now unreachable and that costs nothing: `072e739` and `14d5efb` on
+`main` have byte-identical trees, so the squash preserved the content exactly and
+only the step-by-step granularity is gone.
 
 ### The state-space model was fitted but never committed
 
