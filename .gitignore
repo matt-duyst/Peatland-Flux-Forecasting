@@ -5,3 +5,6 @@ __pycache__/
 *.pyc
 data/processed/halfhourly_merged.csv
 data/processed/halfhourly_merged.parquet
+
+# The BASE archive is not carried; see notes/base_v55.md for how to reobtain it.
+CSVs/AMF_US-MBP_BASE-BADM_5-5.zip

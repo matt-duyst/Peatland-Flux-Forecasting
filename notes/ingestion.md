@@ -182,23 +182,39 @@ approximation of it has been substituted.
 
 ## Source files
 
-Seven files in `CSVs/` are primary and are read by the pipeline:
+**Every file in `CSVs/`, and what reads it.** This is the whole inventory and it
+is kept here rather than split across two notes. It used to list seven files as
+"primary and read by the pipeline" and a Delwiche appendix as a reference that
+nothing read. Both claims have since become false, and the correction is recorded
+under the drift pattern in `notes/study.md`.
 
-| File | Used for |
-|---|---|
-| `FCH4 PivotTable 2009_2021 and Raw Ameriflux Data.xlsx` | raw half-hourly methane, the `raws` sheet |
-| `FCH4 Data.csv` | the sub-daily subset derived outside this pipeline |
-| `MEF_soil_temp_weekly.csv` | soil temperature readings at 10 cm |
-| `Monthly Temperature Average.csv` | air temperature |
-| `Monthly Precipitation Average .csv` | precipitation |
-| `All Combined Variables Monthly.csv` | carbon dioxide flux |
-| `Water Table Elevation (1990 - 2021).csv` | water table elevation |
+| File | Used for | Read by |
+|---|---|---|
+| `AMF_US-MBP_BASE-BADM_5-5/AMF_US-MBP_BASE_HH_5-5.csv` | half-hourly methane and carbon dioxide, the 2025 product | `validation/base_v55.py`, via scripts 04 and 05 |
+| `AMF_US-MBP_BASE-BADM_5-5/AMF_US-MBP_BIF_20260527.xlsx` | site metadata for the same product | `validation/base_v55.py` |
+| `FCH4 PivotTable 2009_2021 and Raw Ameriflux Data.xlsx` | raw half-hourly methane, the `raws` sheet, 2022 export | `ingest/raw.py`, via script 01 |
+| `FCH4 Data.csv` | the sub-daily subset derived outside this pipeline | `ingest/clean.py`, via script 01 |
+| `MEF_soil_temp_weekly.csv` | soil temperature readings at 10 cm | `ingest/covariates.py` |
+| `Monthly Temperature Average.csv` | air temperature | `ingest/covariates.py` |
+| `Monthly Precipitation Average .csv` | precipitation | `ingest/covariates.py` |
+| `All Combined Variables Monthly.csv` | carbon dioxide flux, 2022 vintage | `ingest/covariates.py` |
+| `Water Table Elevation (1990 - 2021).csv` | water table elevation | `ingest/covariates.py` |
+| `Delwiche_2020_ESSD_Appendix_B.xlsx` | FLUXNET-CH4 site coordinates, sheet B3 | `study/sitemap.py` |
 
-### External reference, not pipeline input
+Ten files, and **every one of them is read.** Nothing in `CSVs/` is inert.
 
-`CSVs/Delwiche_2020_ESSD_Appendix_B.xlsx` is a reference file. **No module reads
-it and it is not wired into the pipeline.** It sits in `CSVs/` alongside the
-seven primary files above, but it is not one of them.
+The archive `AMF_US-MBP_BASE-BADM_5-5.zip` was an eleventh and is no longer
+carried; `notes/base_v55.md` records its checksum and how to reobtain it.
+
+**On the primary-versus-reference division this section used to draw.** It was
+not a useful cut and it is not restored here. The Delwiche appendix was filed as
+a reference because nothing read it, which stopped being true; the 2022 workbook
+is filed as primary but the pipeline now reads the 2025 product for both gases,
+so "primary" had come to name the older source rather than the live one. The
+distinction that matters to someone reproducing this from scratch is **which
+files a fresh clone has to fetch**, and that cuts across the old division
+entirely: the BASE product must be downloaded, and the other eight are in the
+repository. That is the cut this table makes.
 
 It is Appendix B of Delwiche et al. (2021), *Earth System Science Data* **13**,
 3607-3689, doi:[10.5194/essd-13-3607-2021](https://doi.org/10.5194/essd-13-3607-2021),

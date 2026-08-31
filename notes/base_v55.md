@@ -44,8 +44,33 @@ README was right and this record was wrong. The other four ran the other way.
 | DOI | [10.17190/AMF/1767835](https://doi.org/10.17190/AMF/1767835) |
 | License | **CC-BY-4.0** |
 | Downloaded | 2026-08-09 |
-| Archive | `CSVs/AMF_US-MBP_BASE-BADM_5-5.zip`, 17,409,071 bytes, MD5 `0467d27993a28716ac6e6debd929e7f7` |
-| Extracted to | `CSVs/AMF_US-MBP_BASE-BADM_5-5/` |
+| Archive | **not carried in the repository.** 17,409,071 bytes, MD5 `0467d27993a28716ac6e6debd929e7f7` |
+| Held as | `CSVs/AMF_US-MBP_BASE-BADM_5-5/`, the extraction, which is what the code reads |
+| `AMF_US-MBP_BASE_HH_5-5.csv` | 69,296,494 bytes, MD5 `6bfad3e00a5dfb7345f87d3ca7a6b80f` |
+| `AMF_US-MBP_BIF_20260527.xlsx` | 9,282 bytes, MD5 `3633a0148a87b47a7f76172983d5bc83` |
+
+**The archive was tracked and is not any more.** It sat beside its own extraction,
+so the same product was carried twice: 16.6 MB of zip against 66.1 MB of files,
+and between them 80% of everything in the repository. Nothing read the zip.
+`validation.base_v55.PRODUCT_DIRECTORY` names the extracted directory and always
+has, and no module in this project opens an archive at all.
+
+What the archive was for was provenance, and the MD5 above is that provenance.
+It is the whole of it: a checksum is what lets a download be verified, and
+carrying the bytes the checksum describes adds nothing a reader could not
+establish without them. The two extracted files now carry their own checksums as
+well, so the copy in the working tree can be verified without reference to the
+archive at all.
+
+**To reobtain it.** Request BASE-BADM for US-MBP from
+[ameriflux.lbl.gov/data/download-data](https://ameriflux.lbl.gov/data/download-data)
+at BASE version 5-5 and BADM version 20260527, which arrives as
+`AMF_US-MBP_BASE-BADM_5-5.zip`. Check it against the MD5 above, extract it to
+`CSVs/AMF_US-MBP_BASE-BADM_5-5/`, and the pipeline reads it where it stands. The
+archive is in `.gitignore` so a re-download cannot be committed by accident.
+AmeriFlux may republish a version under the same number; if the MD5 differs, that
+is a finding about the product rather than about the download, and it belongs in
+these notes rather than being worked around.
 
 Citation, as the product states it in its own metadata:
 

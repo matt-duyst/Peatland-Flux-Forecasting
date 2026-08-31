@@ -998,6 +998,7 @@ because the error entered from outside the repository.
 | 3 | the v5-5 correction to the seasonal numbers | the figure's description | these notes, which kept 0.54 and p = 0.119 |
 | 4 | the 2015 month-size correction | these notes, which say **middle** third | the figure's description, which went on saying *all small ones* |
 | 5 | nothing: the 70% anomaly finding was attributed to Meng et al. (2015) here and in the README draft taken from here | both places, identically | the source, which names Bousquet et al. (2006) |
+| 6 | the Delwiche appendix gained a reader, and the pipeline's inputs gained the 2025 BASE product | `study/sitemap.py` and scripts 04 and 05 | `notes/ingestion.md`, which went on saying no module read the appendix and that seven files were the whole input set |
 
 The third is the one that prompted this entry. Cutting six precise figures out of
 the seasonal description meant checking they were recorded, and four were not:
@@ -1058,6 +1059,33 @@ publishing an attributed finding, open the source and find the sentence. Where
 the finding turns out to be quoted rather than made there, cite what the source
 cites.
 
+**The sixth is the `base_v55.md` shape again**, and it is the plainest form the
+pattern takes: a note that was true when it was written, falsified by a later
+commit that did not touch it. `notes/ingestion.md` said the Delwiche appendix was
+a reference file that no module read, which was true at `14d5efb`. The site
+figure arrived at `2d0747e`, later, and reads sheet B3 of that appendix for the
+FLUXNET-CH4 coordinates. Nothing connected the two: the commit that added the
+reader had no reason to look at an ingestion note, and the note had no test that
+could notice a new import.
+
+The same section drifted a second way at the same time. It listed seven files as
+the pipeline's inputs, and the switch to the 2025 BASE product added two more
+without amending it, because the switch was recorded in `base_v55.md` instead.
+Neither note was wrong about its own half. The inventory was wrong because it
+was split, and each half was maintained by whoever was working on that half.
+
+**The fix is one inventory rather than two.** `notes/ingestion.md` now lists every
+file in `CSVs/` with what reads it, including the BASE product documented at
+length elsewhere. A split inventory has no owner for the whole, which is the
+condition under which each half stays locally true and the union stops being.
+
+**The primary-versus-reference division went with it.** It was the thing that
+made the split feel natural, and it had quietly stopped meaning anything: the
+appendix was "reference" because nothing read it, which changed, and the 2022
+workbook was "primary" while the live source was the 2025 product. The division
+that survives is which files a fresh clone must fetch, which is one file, and
+which are carried, which is the rest.
+
 **What to check first, next time:** before removing a number from a figure,
 confirm it is recorded somewhere a test can see. Before *changing* one, grep for
 it across the repository rather than editing the place you are looking at. And in
@@ -1106,6 +1134,38 @@ Two of these are recorded in more detail where they were found, and those notes
 stay: the window exclusion and `TARGET_END` above, and the orphaned residuals
 module in the 2011 section. Someone arriving at either should find this table
 from there.
+
+## No references.bib, and what to do if a writeup ever needs one
+
+Considered and declined. The case for one is real: twelve works are cited across
+the README and these notes, the papers live outside the repository, and a
+bibliography would give each citation one canonical form. The case against is
+that it would be a fourth place a reference could drift from, beside the README's
+Sources section, these notes, and the prose around them.
+
+**What settles it is that a `.bib` would not have caught the only citation error
+this project has had.** The Meng-to-Bousquet misattribution had flawless
+bibliographic detail: author, year, title, journal, volume 12, pages 4029-4049,
+every field correct and verifiable. What was wrong was whose finding it was. A
+`.bib` file has a field for everything that was already right and no field at all
+for the thing that was wrong, so it would have stored the error faithfully and
+added a fourth copy of it. Against that, the failure it introduces is exactly the
+one this section of the notes exists to record: a value living in several places
+and updated in one.
+
+**Sources is already the project bibliography, not the README's references.**
+Five of its twelve entries, Irvin, Knox, Li and Makridakis by name and Roman by
+bare DOI, are never cited in the README's body at all; they are cited here. So a
+`.bib` would not serve a purpose Sources does not already serve. It would
+duplicate it wholesale.
+
+**If a writeup outside this repository ever needs one, generate it rather than
+keep it.** Make the README's Sources section canonical, emit the `.bib` from it,
+and have a test assert the two agree, which is the instrument
+`test_the_amplitudes_and_their_trend_tests_are_recorded` already uses on the
+seasonal numbers. A derived artifact regenerated from one source cannot drift. A
+maintained one standing beside three others will, and this project now has six
+recorded instances of precisely that.
 
 ## The pattern: two right answers mistaken for one
 
