@@ -1202,6 +1202,77 @@ that the same failure appeared twice in one round, once in the notes and once in
 the prose describing them, and neither instance was noticed by writing more
 carefully. Both were caught by going back to the list and counting it.
 
+## A history rewrite was attempted, measured, and abandoned
+
+Twelve commits near the tip carry a `Co-Authored-By` trailer. Removing them was
+proposed, estimated, attempted on 2026-08-31, and reverted. **A later pass seeing
+those trailers should not try again**, and this entry exists so the cost does not
+have to be rediscovered by paying it.
+
+**The estimate was that twelve commits would be rehashed and 152 would keep their
+SHAs.** The measurement was that all 164 changed and none were kept. The estimate
+was not wrong by degree; it was wrong in kind, and it was wrong for a reason no
+amount of care about the trailers would have surfaced.
+
+**The initial commit carries a GPG signature, and rewriting strips it.** A
+signature covers the content it signs, so a rewritten commit cannot carry the old
+one and `filter-repo` drops it. That changes the root, which changes its child,
+and the cascade runs the whole length of the history. There is no flag for this
+and no way around it: keeping a signature and rewriting the commit it signs are
+mutually exclusive.
+
+**Twenty-seven Verified badges would be lost permanently.** All 27 signed commits
+are the ones made through the GitHub web interface, signed by GitHub's key. They
+are the only cryptographic evidence that those commits are the author's, and on a
+public repository they are the part of the history that carries the most weight
+per byte. Trading them for twelve lines of trailer is a poor exchange on its own
+terms, and it works against the presentation the removal was meant to improve.
+
+**The decisive cost is that the rewrite orphans this repository's own audit
+trail.** These notes cite five commits by hash: `072e739`, `14d5efb`, `2d0747e`,
+`891f6d3` and `fbc39d2`. All five predate the twelve, so the pre-flight check
+said they were safe. **That was the wrong check.** It asked whether they were
+among the commits being edited, when what mattered was whether they survive a
+full-history rehash, and under a root-cascade rewrite nothing survives. After a
+garbage collection those five would resolve nowhere, in a repository whose whole
+argument is that its claims can be traced to what produced them. A visible
+blemish would have been traded for a broken provenance chain.
+
+**The benefit was already partial before any of this.** The repository went
+public roughly an hour before the rewrite was proposed. Force-pushing makes old
+commits unreachable, not absent: they stay fetchable by direct URL until GitHub
+garbage-collects, which is not on a published schedule. Genuine removal now needs
+a request to GitHub Support. Rewriting before publication would have avoided that
+window, and the ordering was proposed but overtaken by events.
+
+**Running it is what settled it.** The rewrite was executed on the real history
+with a backup tag in place, measured, and reverted before anything was pushed.
+That is the reason the entry can state 164 and 27 rather than estimate them. The
+attempt was not waste; it converted a prediction into a measurement, and the
+measurement reversed the decision. Where a change is cheap to try and expensive
+to guess at, trying it on a backup **is** the analysis.
+
+## The fourth instance: a scope estimate stated as a fact
+
+This belongs with the counts and the remote, and it is the same shape. A fact one
+command away was asserted from inference. The inference was that `filter-repo`
+rehashes only what it changes, which is true. The premise it missed is that
+stripping a signature changes the commit that carries it, and the commit that
+carried it was the root.
+
+The three earlier instances were counts: rows in a table, instances across two
+tables, commits on a branch. This one is a blast radius, which does not look like
+a count and is one. **The guard is the same.** The scope of a rewrite is a
+computation, not a prediction, and the way to run it is to run the rewrite on a
+backup and diff the ref lists. That takes a minute and returns an exact answer,
+against an estimate that was off by a factor of thirteen and silent about the
+thing that actually mattered.
+
+**What to check first, next time:** before quoting the blast radius of any
+history operation, do it on a copy and count. And before calling a referenced
+object safe, ask whether it survives the operation, not whether it is among the
+operation's targets.
+
 ## A licence file is a claim about everything a reader can see
 
 Recorded because the reasoning generalises past this repository and is easy to

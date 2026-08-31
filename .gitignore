@@ -8,3 +8,8 @@ data/processed/halfhourly_merged.parquet
 
 # The BASE archive is not carried; see notes/base_v55.md for how to reobtain it.
 CSVs/AMF_US-MBP_BASE-BADM_5-5.zip
+
+# Never been in this repository, and this is why it stays that way: a directory
+# created inside the root would otherwise be staged by `git add -A` without
+# anyone deciding to commit it, which is how tooling state usually lands.
+.claude/
