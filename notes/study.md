@@ -1202,6 +1202,43 @@ that the same failure appeared twice in one round, once in the notes and once in
 the prose describing them, and neither instance was noticed by writing more
 carefully. Both were caught by going back to the list and counting it.
 
+## A licence file is a claim about everything a reader can see
+
+Recorded because the reasoning generalises past this repository and is easy to
+get wrong in the safe-looking direction.
+
+Adding `LICENSE` at the root looked like pure gain: no licence means all rights
+reserved, which would have shipped CC-BY-4.0 data inside a container nobody may
+reuse, in a repository whose argument is that work should be checkable. That much
+is right. What it misses is that the file is not only a grant, it is a
+**statement about scope**, and a bare one takes the widest scope available.
+
+**Two things make a root licence overclaim.** GitHub renders a badge in the
+sidebar that names the licence and nothing else, and a reader takes it as
+covering what they can see. Here what they can see is 72 MB of third-party data
+under different terms, most of the repository by weight. And MIT cannot grant
+what the author does not hold: the AmeriFlux product is not this project's to
+license, so an unqualified file at the root makes a claim about `CSVs/` that is
+not the author's to make. Neither failure is visible from the licence file, which
+is correct in isolation; both come from where it sits.
+
+**The fix is a boundary, not a different licence.** The README says what the
+licence does not cover before saying anything else about it, then states what
+each outside source actually carries. The MIT file stays exactly as it is.
+
+**And the honest form of an unknown is a gap, not a grant.** The Marcell station
+records carry no licence statement this repository can point to. The tempting
+moves are to leave them unmentioned, which lets the root badge cover them by
+implication, or to describe them as open, which is unsupported. Recording that
+nothing states their terms is the only claim the evidence carries, and it also
+tells a later reader what to go and find out.
+
+**What to check first, next time:** before adding a licence to a repository that
+carries data, ask what the badge will appear to cover rather than what the file
+grants. Any repository holding material it did not produce needs the boundary
+written down, and the check is to list what a reader sees at the root and ask, of
+each item, whether the author holds the right to license it.
+
 ## No references.bib, and what to do if a writeup ever needs one
 
 Considered and declined. The case for one is real: twelve works are cited across
