@@ -986,10 +986,18 @@ picks it up rather than rediscovering it.
 The sibling of the entry below, and the same class of failure running the other
 way. There, something that existed was not found and was written again. Here,
 something that existed in two places was changed in one. Which of the two places
-is the correct one varies: in the first three the figure was right and the record
-stale, in the fourth the record was right and the figure stale. The fifth breaks
-the shape rather than extending it: both places agreed, and both were wrong,
-because the error entered from outside the repository.
+is the correct one varies, and the table says which for each. Two shapes recur:
+the figure or the code moved and the record did not, or the record moved and the
+figure did not. Two rows are neither. In one both places agreed and both were
+wrong, because the error entered from outside the repository; in another the
+inventory was split across two notes, each of which stayed true about its own
+half while their union stopped being true.
+
+The rows are numbered and the prose below does not count them, deliberately.
+An earlier version of this paragraph enumerated *the first three*, *the fourth*
+and *the fifth*, and the sentence beside it in `notes/base_v55.md` said *the
+other four*. Appending a row falsified both, in the section whose whole subject
+is a claim in two places updated in one.
 
 | | what changed | where it was applied | where it was not |
 |---|---|---|---|

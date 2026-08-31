@@ -31,8 +31,10 @@ reading that misleads:
   is what `src/study` reads. The sentence was accurate about imports and wrong
   about provenance, which is the more useful thing for a reader to know.
 
-This is the notes-versus-code drift pattern, and it is the one instance where the
-README was right and this record was wrong. The other four ran the other way.
+This is the notes-versus-code drift pattern, tabulated in `notes/study.md`, and
+it is the instance where the README was right and this record was wrong. The
+others in that table run the other way, with the record right and the figure,
+the code or the source disagreeing with it.
 
 ## Provenance
 
