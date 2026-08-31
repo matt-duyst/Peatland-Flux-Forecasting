@@ -634,6 +634,24 @@ removed by `891f6d3`, so its parent holds the last copy of all three. The tag
 them: `assets/` is empty there and the README is the rebuilt one. Anyone reaching
 for the tag will find nothing and conclude the material is gone.
 
+**Do not delete that tag, despite the above.** It was proposed for deletion when
+the repository was going public, on the grounds that it is the most misleading
+ref in the tree, and the check that would have justified deleting it reversed the
+conclusion instead. **The tag is the only ref from which `891f6d3~1` is
+reachable.** Neither it nor that commit is an ancestor of `main`, so the whole
+pre-rebuild line hangs off this one tag: delete it and the five notebooks and 46
+assets become unreachable, and the next `git gc` destroys the only copy of the
+analysis this repository was built to replace, along with the evidence behind
+every statement in this section.
+
+So the tag is misleading and load-bearing at once, which is a worse combination
+than either alone: it names a thing it does not contain while anchoring a thing
+nothing else holds. The fix is a name that says what it anchors, not a deletion.
+Retagging the same commit, or tagging `891f6d3~1` directly since that is where
+this section sends a reader, costs nothing and removes the trap. Either way the
+old name should not be dropped until the new one exists, because dropping it is
+the operation that loses the history.
+
 ### The state-space model was fitted but never committed
 
 No committed cell in any of the five notebooks contains `sarimax`, `arima`,

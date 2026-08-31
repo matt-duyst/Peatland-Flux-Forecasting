@@ -1173,6 +1173,23 @@ appended.
 
 Both sentences are now count-free, and the rows carry the numbers.
 
+**It happened a third time, in the report that proposed this rule.** Asked what
+merging the working branch would involve, the survey said `main` was *eleven
+commits behind*. It was 132. Nothing was counted; the number was supplied from
+an impression of the log and then repeated back by the reader, who had no reason
+to doubt it. `git rev-list --count main..<branch>` is one command and takes no
+judgment, and it was not run until the next round asked a question the wrong
+answer would have made unanswerable.
+
+Three instances, in one session, in the same class: the enumerations beside this
+table, the "eighth" taken across two tables, and this. **All three were counts of
+something countable, asserted rather than counted.** None was caught by care;
+each was caught by eventually running the count. The rule is not to be more
+careful with numbers of this kind, because that has now failed three times. The
+rule is that a count of a list is a computation, not a recollection, and prose
+that states one without running it is unsupported no matter how obvious the
+number seems.
+
 **A second-order instance, recorded because it is the same failure at one
 remove.** The survey that found the `CSVs/` drift called it *the eighth*
 instance. It is the sixth row of this table, and the seventh of the family

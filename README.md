@@ -184,12 +184,14 @@ src/study/          the reconstruction, its diagnostics, and the figure set
 src/forecast/       benchmarks, models and evaluation
 src/validation/     comparison against the published BASE product
 tests/              offline test suite
-Project_Write-Up/   the visiting scholar report this work grew out of
+writeup/            the 2022 write-up of the analysis this repository rebuilds
 ```
 
 Most of `src/study/` is the figure set rather than the study: `figures.py`, `plotstyle.py` and `sitemap.py` are about seventy percent of its lines, and the fitting, reconstruction and diagnostic modules are the rest.
 
 `data/processed/` holds two kinds of file and the difference is not visible from the names. `monthly_fch4_from_daily`, `monthly_fco2_diurnally_balanced`, `monthly_bog_lake_fen`, the six `forecasts_*` tables and `coefficient_stability` are read by later stages. `daily_fch4`, `daily_fc`, `monthly_fco2_from_daily` and `halfhourly_merged` are read by nothing here and are written to be checked rather than consumed: they are the intermediate a reader recomputes an aggregate from. `monthly_fco2_from_daily` in particular is superseded for study use by `monthly_fco2_diurnally_balanced`, which weights the hours equally, and is kept so the two can be compared.
+
+`writeup/Forecasting_Methane_Flux_2022.pdf` is the write-up of the earlier analysis this repository rebuilds, dated December 2022. It describes the state-space and machine learning models fitted then, over 2009 to 2021, and is kept because it is the only account of the work this repository replaced; `notes/ingestion.md` records what of it survived checking and what did not.
 
 The BASE product under `CSVs/AMF_US-MBP_BASE-BADM_5-5/` is the one input not carried in this repository as an archive. `notes/base_v55.md` records its checksums and how to reobtain it.
 
