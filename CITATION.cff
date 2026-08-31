@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use this software or its analysis, please cite it as below."
+title: "Forecasting and reconstructing monthly methane and carbon dioxide flux at Marcell Bog Lake Peatland"
+abstract: >-
+  A study of monthly methane and carbon dioxide flux at AmeriFlux US-MBP,
+  comparing statistical and machine learning forecasts against seasonal
+  benchmarks at horizons of one to twelve months, and projecting fitted
+  relationships backward into the two decades before measurement began.
+type: software
+authors:
+  - family-names: Duyst
+    given-names: Matthew
+repository-code: "https://github.com/matt-duyst/Peatland-Flux-Forecasting"
+license: MIT
+date-released: 2026-08-31
+references:
+  - type: data
+    title: "AmeriFlux BASE US-MBP Marcell Bog Lake Peatland, Ver. 5-5"
+    doi: "10.17190/AMF/1767835"
+    year: 2025
+    authors:
+      - family-names: Roman
+        given-names: Tyler
+      - family-names: Hill
+        given-names: "Andrew C."
+      - family-names: Kolka
+        given-names: Randy
+      - family-names: Griffis
+        given-names: Timothy
+      - family-names: Deventer
+        given-names: Julian

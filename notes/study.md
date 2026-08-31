@@ -1252,6 +1252,31 @@ attempt was not waste; it converted a prediction into a measurement, and the
 measurement reversed the decision. Where a change is cheap to try and expensive
 to guess at, trying it on a backup **is** the analysis.
 
+## The trailer convention, settled
+
+Read this with the entry above; either one alone gives the wrong impression.
+
+**No `Co-Authored-By` trailer on new commits. The twelve that exist stay.**
+
+The two halves look inconsistent and are not. The rewrite was abandoned on cost,
+not because the attribution was wanted: 27 lost signatures, every SHA moved, and
+five of this file's own provenance hashes orphaned, against twelve lines. Nothing
+about that verdict says the trailers are desirable. It says removing *these
+particular twelve* costs more than they do, which is a fact about a root
+signature and a cascade rather than a preference about trailers.
+
+So adding more would be the worst of both readings. Each new one grows the thing
+that was judged too expensive to remove and raises the price of any future
+attempt, since the argument for leaving them rests on there being twelve rather
+than on there being any number at all. A later pass finding this entry without
+the one above might conclude the trailers should be stripped; a pass finding that
+one without this might conclude they should keep being added. Both would be
+wrong, which is why the two sit together.
+
+**What to check first, next time:** when a removal is abandoned on cost, say
+whether the thing removed is still wanted. "Too expensive to fix" and "fine as it
+is" are different conclusions and they imply opposite behaviour going forward.
+
 ## The fourth instance: a scope estimate stated as a fact
 
 This belongs with the counts and the remote, and it is the same shape. A fact one
